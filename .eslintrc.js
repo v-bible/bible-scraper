@@ -37,6 +37,7 @@ module.exports = {
       'warn',
       {
         devDependencies: true,
+        packageDir: __dirname,
       },
     ],
     'import/no-unresolved': 'warn',
