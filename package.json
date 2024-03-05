@@ -5,8 +5,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "npx eslint --ext .jsx,.js,.tsx,.ts src/",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
     "@babel/core": "7.24.0",
@@ -31,6 +33,7 @@
     "playwright": "1.42.0",
     "prettier": "3.2.5",
     "tsx": "4.7.1",
+    "turbo": "1.12.4",
     "typescript": "5.3.3"
   }
 }
