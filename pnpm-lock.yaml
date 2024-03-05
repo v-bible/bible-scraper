@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+dependencies:
+  '@cliqz/adblocker-playwright':
+    specifier: 1.26.16
+    version: 1.26.16(playwright@1.42.0)
+
 devDependencies:
   '@babel/core':
     specifier: 7.24.0
@@ -290,6 +295,40 @@ packages:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
     dev: true
+
+  /@cliqz/adblocker-content@1.26.16:
+    resolution: {integrity: sha512-N1pKg1gxfpnz47w2Sjs2sg3fxFZb113ClUhitgAFSVXeIhZ+S+bCaQtvwtP0mJT+SDfUx2NsPiLwZoPjVRI3wQ==}
+    dependencies:
+      '@cliqz/adblocker-extended-selectors': 1.26.16
+    dev: false
+
+  /@cliqz/adblocker-extended-selectors@1.26.16:
+    resolution: {integrity: sha512-ePXS3aD1R+0XfCnOj0L2ms0NA5AxKHfFLfw92cZ87IPY8ZEZK/sWwQCv5wawbwBmXksr0YkMfFVCiH/IQgUNBQ==}
+    dev: false
+
+  /@cliqz/adblocker-playwright@1.26.16(playwright@1.42.0):
+    resolution: {integrity: sha512-w0CcMsD/eTSGg0uW0vc/qzI2FMs4wqVE3EPSUtCIrSutQSfGo8YB98vqhlskT3k6p8/yVJq4qzV0TkSi6zkFOw==}
+    peerDependencies:
+      playwright: ^1.x
+    dependencies:
+      '@cliqz/adblocker': 1.26.16
+      '@cliqz/adblocker-content': 1.26.16
+      playwright: 1.42.0
+      tldts-experimental: 6.1.11
+    dev: false
+
+  /@cliqz/adblocker@1.26.16:
+    resolution: {integrity: sha512-NQ5WdNeiWiggDhhT/IXbsjKgH44nA9k5GlW00gUWRUpfKHCCInyDJYjM5pbHqxhgC3LkMVmXmU5vIsMUZ4RxFQ==}
+    dependencies:
+      '@cliqz/adblocker-content': 1.26.16
+      '@cliqz/adblocker-extended-selectors': 1.26.16
+      '@remusao/guess-url-type': 1.2.1
+      '@remusao/small': 1.2.1
+      '@remusao/smaz': 1.9.1
+      '@types/chrome': 0.0.260
+      '@types/firefox-webext-browser': 120.0.1
+      tldts-experimental: 6.1.11
+    dev: false
 
   /@commitlint/cli@19.0.3(@types/node@20.11.24)(typescript@5.3.3):
     resolution: {integrity: sha512-mGhh/aYPib4Vy4h+AGRloMY+CqkmtdeKPV9poMcZeImF5e3knQ5VYaSeAM0mEzps1dbKsHvABwaDpafLUuM96g==}
@@ -781,11 +820,65 @@ packages:
       playwright-core: 1.42.1
     dev: true
 
+  /@remusao/guess-url-type@1.2.1:
+    resolution: {integrity: sha512-rbOqre2jW8STjheOsOaQHLgYBaBZ9Owbdt8NO7WvNZftJlaG3y/K9oOkl8ZUpuFBisIhmBuMEW6c+YrQl5inRA==}
+    dev: false
+
+  /@remusao/small@1.2.1:
+    resolution: {integrity: sha512-7MjoGt0TJMVw1GPKgWq6SJPws1SLsUXQRa43Umht+nkyw2jnpy3WpiLNqGdwo5rHr5Wp9B2W/Pm5RQp656UJdw==}
+    dev: false
+
+  /@remusao/smaz-compress@1.9.1:
+    resolution: {integrity: sha512-E2f48TwloQu3r6BdLOGF2aczeH7bJ/32oJGqvzT9SKur0cuUnLcZ7ZXP874E2fwmdE+cXzfC7bKzp79cDnmeyw==}
+    dependencies:
+      '@remusao/trie': 1.4.1
+    dev: false
+
+  /@remusao/smaz-decompress@1.9.1:
+    resolution: {integrity: sha512-TfjKKprYe3n47od8auhvJ/Ikj9kQTbDTe71ynKlxslrvvUhlIV3VQSuwYuMWMbdz1fIs0H/fxCN1Z8/H3km6/A==}
+    dev: false
+
+  /@remusao/smaz@1.9.1:
+    resolution: {integrity: sha512-e6BLuP8oaXCZ9+v46Is4ilAZ/Vq6YLgmBP204Ixgk1qTjXmqvFYG7+AS7v9nsZdGOy96r9DWGFbbDVgMxwu1rA==}
+    dependencies:
+      '@remusao/smaz-compress': 1.9.1
+      '@remusao/smaz-decompress': 1.9.1
+    dev: false
+
+  /@remusao/trie@1.4.1:
+    resolution: {integrity: sha512-yvwa+aCyYI/UjeD39BnpMypG8N06l86wIDW1/PAc6ihBRnodIfZDwccxQN3n1t74wduzaz74m4ZMHZnB06567Q==}
+    dev: false
+
+  /@types/chrome@0.0.260:
+    resolution: {integrity: sha512-lX6QpgfsZRTDpNcCJ+3vzfFnFXq9bScFRTlfhbK5oecSAjamsno+ejFTCbNtc5O/TPnVK9Tja/PyecvWQe0F2w==}
+    dependencies:
+      '@types/filesystem': 0.0.35
+      '@types/har-format': 1.2.15
+    dev: false
+
   /@types/conventional-commits-parser@5.0.0:
     resolution: {integrity: sha512-loB369iXNmAZglwWATL+WRe+CRMmmBPtpolYzIebFaX4YA3x+BEfLqhUAV9WanycKI3TG1IMr5bMJDajDKLlUQ==}
     dependencies:
       '@types/node': 20.11.24
     dev: true
+
+  /@types/filesystem@0.0.35:
+    resolution: {integrity: sha512-1eKvCaIBdrD2mmMgy5dwh564rVvfEhZTWVQQGRNn0Nt4ZEnJ0C8oSUCzvMKRA4lGde5oEVo+q2MrTTbV/GHDCQ==}
+    dependencies:
+      '@types/filewriter': 0.0.33
+    dev: false
+
+  /@types/filewriter@0.0.33:
+    resolution: {integrity: sha512-xFU8ZXTw4gd358lb2jw25nxY9QAgqn2+bKKjKOYfNCzN4DKCFetK7sPtrlpg66Ywe3vWY9FNxprZawAh9wfJ3g==}
+    dev: false
+
+  /@types/firefox-webext-browser@120.0.1:
+    resolution: {integrity: sha512-IR+NpPC+/o9TSTelcvT/w3fXTanX3LrpVxC5EQrlQyTjyWOKFz8O2mCJQ9VuejBz4NtovCGGKacXQ/VyY63L0A==}
+    dev: false
+
+  /@types/har-format@1.2.15:
+    resolution: {integrity: sha512-RpQH4rXLuvTXKR0zqHq3go0RVXYv/YVqv4TnPH95VbwUxZdQlK1EtcMvQvMpDngHbt13Csh9Z4qT9AbkiQH5BA==}
+    dev: false
 
   /@types/json-schema@7.0.15:
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -2054,7 +2147,6 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /fsevents@2.3.3:
@@ -3015,7 +3107,6 @@ packages:
     resolution: {integrity: sha512-0HD9y8qEVlcbsAjdpBaFjmaTHf+1FeIddy8VJLeiqwhcNqGCBe4Wp2e8knpqiYbzxtxarxiXyNDw2cG8sCaNMQ==}
     engines: {node: '>=16'}
     hasBin: true
-    dev: true
 
   /playwright-core@1.42.1:
     resolution: {integrity: sha512-mxz6zclokgrke9p1vtdy/COWBH+eOZgYUVVU34C73M+4j4HLlQJHtfcqiqqxpP0o8HhMkflvfbquLX5dg6wlfA==}
@@ -3031,7 +3122,6 @@ packages:
       playwright-core: 1.42.0
     optionalDependencies:
       fsevents: 2.3.2
-    dev: true
 
   /possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
@@ -3422,6 +3512,16 @@ packages:
   /through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
     dev: true
+
+  /tldts-core@6.1.11:
+    resolution: {integrity: sha512-ZFcT+/fdEc5VRndQIJtArNBHsaq4udRoeE4E6cwLzGaH0dq7Ng2L7cAoea6riM2uhNFD09EDa1bN8lrfrOBCLg==}
+    dev: false
+
+  /tldts-experimental@6.1.11:
+    resolution: {integrity: sha512-4Ij/BzPUYS33PcAo9cprPm8qmKNBeYw2U7WsBAMtseqbQvCIyDsnXlOWy/SKmldalPdMPsL2CLjt27+KlWBH7g==}
+    dependencies:
+      tldts-core: 6.1.11
+    dev: false
 
   /to-fast-properties@2.0.0:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
