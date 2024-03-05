@@ -1,3 +1,5 @@
+const path = require('node:path');
+
 module.exports = {
   extends: [
     'airbnb-base',
@@ -36,8 +38,12 @@ module.exports = {
     'import/no-extraneous-dependencies': [
       'warn',
       {
-        devDependencies: true,
-        packageDir: __dirname,
+        devDependencies: false,
+        packageDir: [
+          __dirname,
+          path.join(__dirname, 'packages/**/*'),
+          path.join(__dirname, 'apps/**/*'),
+        ],
       },
     ],
     'import/no-unresolved': 'warn',
