@@ -11,12 +11,7 @@
     "outDir": "dist",
     /* Strictness */
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    /* Path Aliases */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "noUncheckedIndexedAccess": true
   },
   "exclude": ["node_modules"]
 }
