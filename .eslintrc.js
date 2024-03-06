@@ -1,5 +1,3 @@
-const path = require('node:path');
-
 module.exports = {
   extends: [
     'airbnb-base',
@@ -21,7 +19,11 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     tsconfigRootDir: __dirname,
-    project: './tsconfig.eslint.json',
+    project: [
+      './apps/*/tsconfig.json',
+      './packages/*/tsconfig.json',
+      './tsconfig.node.json', // Include .eslintrc.js file
+    ],
   },
   plugins: ['react', 'import', 'prettier'],
   rules: {
@@ -39,11 +41,6 @@ module.exports = {
       'warn',
       {
         devDependencies: false,
-        packageDir: [
-          __dirname,
-          path.join(__dirname, 'packages/**/*'),
-          path.join(__dirname, 'apps/**/*'),
-        ],
       },
     ],
     'import/no-unresolved': 'warn',
