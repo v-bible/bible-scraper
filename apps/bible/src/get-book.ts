@@ -4,6 +4,7 @@
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
+import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 (async () => {
@@ -65,6 +66,8 @@ import prisma from '@/prisma/prisma';
         },
       },
     });
+
+    logger.info(`getting chapters for book: ${bookTitle} (${bookCode})`);
 
     const chapters = await row
       .getByRole('cell')

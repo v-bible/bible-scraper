@@ -18,6 +18,7 @@
     "@cliqz/adblocker-playwright": "1.27.3",
     "@prisma/client": "5.14.0",
     "lodash": "4.17.21",
-    "playwright": "1.44.0"
+    "playwright": "1.44.0",
+    "winston": "3.13.0"
   }
 }

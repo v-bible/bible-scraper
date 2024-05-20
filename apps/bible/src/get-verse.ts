@@ -5,6 +5,7 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { Prisma } from '@prisma/client';
 import lo from 'lodash';
 import { chromium, devices } from 'playwright';
+import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 const getVerse = async (
@@ -59,6 +60,8 @@ const getVerse = async (
         let content = await textEl.textContent();
 
         content = content!.replace(/^\d+/, '').trim();
+
+        logger.info(`verse ${match.groups.verseNum}: ${content}`);
 
         verses = [
           ...verses,

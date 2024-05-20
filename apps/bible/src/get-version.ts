@@ -3,6 +3,7 @@
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { chromium, devices } from 'playwright';
+import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 (async () => {
@@ -167,6 +168,8 @@ import prisma from '@/prisma/prisma';
           },
         },
       });
+
+      logger.info(`getting format: ${format.type} for version: ${versionName}`);
     }
   }
 
