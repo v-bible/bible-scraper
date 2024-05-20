@@ -11,11 +11,13 @@
     "prisma:studio": "prisma studio"
   },
   "devDependencies": {
-    "prisma": "5.10.2"
+    "@types/lodash": "4.17.4",
+    "prisma": "5.14.0"
   },
   "dependencies": {
-    "@cliqz/adblocker-playwright": "1.26.16",
-    "@prisma/client": "5.10.2",
-    "playwright": "1.42.1"
+    "@cliqz/adblocker-playwright": "1.27.3",
+    "@prisma/client": "5.14.0",
+    "lodash": "4.17.21",
+    "playwright": "1.44.0"
   }
 }
