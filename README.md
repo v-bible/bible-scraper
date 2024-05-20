@@ -45,131 +45,15 @@
 
 # :notebook_with_decorative_cover: Table of Contents
 
-- [About the Project](#star2-about-the-project)
-  - [Screenshots](#camera-screenshots)
-  - [Tech Stack](#space_invader-tech-stack)
-  - [Features](#dart-features)
-  - [Color Reference](#art-color-reference)
-  - [Environment Variables](#key-environment-variables)
 - [Getting Started](#toolbox-getting-started)
   - [Prerequisites](#bangbang-prerequisites)
   - [Run Locally](#running-run-locally)
-  - [Running Tests](#test_tube-running-tests)
-  - [Deployment](#triangular_flag_on_post-deployment)
-- [Usage](#eyes-usage)
-- [Roadmap](#compass-roadmap)
 - [Contributing](#wave-contributing)
   - [Code of Conduct](#scroll-code-of-conduct)
 - [FAQ](#grey_question-faq)
 - [License](#warning-license)
 - [Contact](#handshake-contact)
 - [Acknowledgements](#gem-acknowledgements)
-
-<!-- About the Project -->
-
-## :star2: About the Project
-
-<!-- Screenshots -->
-
-### :camera: Screenshots
-
-<div align="center">
-  <img src="https://github.com/DuckyMomo20012/scraping/assets/64480713/8673949a-f7b5-4ff7-8352-61b0d70dade3" alt="screenshot" />
-</div>
-
-<!-- TechStack -->
-
-### :space_invader: Tech Stack
-
-<details>
-  <summary>Client</summary>
-  <ul>
-    <li><a href="https://www.javascript.com/">Javascript</a></li>
-    <li><a href="https://reactjs.org/">React.js</a></li>
-    <li><a href="https://reactrouter.com/">React Router</a></li>
-    <li><a href="https://redux-toolkit.js.org/">Redux Toolkit</a></li>
-    <li><a href="https://tanstack.com/query/latest">TanStack Query</a></li>
-    <li><a href="https://react-hook-form.com/">React Hook Form</a></li>
-    <li><a href="https://tailwindcss.com/">TailwindCSS</a></li>
-    <li><a href="https://mantine.dev/">Mantine</a></li>
-    <li><a href="https://eslint.org/">ESLint</a></li>
-    <li><a href="https://prettier.io/">Prettier</a></li>
-    <li><a href="https://vitejs.dev/">Vite</a></li>
-    <li><a href="https://vitest.dev/">Vitest</a></li>
-    <li><a href="https://playwright.dev/">Playwright</a></li>
-    <li><a href="https://iconify.design/">Iconify</a></li>
-  </ul>
-</details>
-
-<details>
-  <summary>Server</summary>
-  <ul>
-    <li><a href="https://www.typescriptlang.org/">Typescript</a></li>
-    <li><a href="https://expressjs.com/">Express.js</a></li>
-    <li><a href="https://go.dev/">Golang</a></li>
-    <li><a href="https://nestjs.com/">Nest.js</a></li>
-    <li><a href="https://socket.io/">SocketIO</a></li>
-    <li><a href="https://www.prisma.io/">Prisma</a></li>
-    <li><a href="https://www.apollographql.com/">Apollo</a></li>
-    <li><a href="https://graphql.org/">GraphQL</a></li>
-  </ul>
-</details>
-
-<details>
-<summary>Database</summary>
-  <ul>
-    <li><a href="https://www.mongodb.com/">MongoDB</a></li>
-  </ul>
-</details>
-
-<details>
-<summary>DevOps</summary>
-  <ul>
-    <li><a href="https://www.docker.com/">Docker</a></li>
-    <li><a href="https://www.jenkins.io/">Jenkins</a></li>
-    <li><a href="https://circleci.com/">CircleCLI</a></li>
-  </ul>
-</details>
-
-<!-- Features -->
-
-### :dart: Features
-
-- Feature 1.
-- Feature 2.
-- Feature 3.
-
-<!-- Color Reference -->
-
-### :art: Color Reference
-
-| Color           | Hex                                                              |
-| --------------- | ---------------------------------------------------------------- |
-| Primary Color   | ![#222831](https://placehold.jp/222831/222831/10x10.png) #222831 |
-| Secondary Color | ![#393E46](https://placehold.jp/393E46/393E46/10x10.png) #393E46 |
-| Accent Color    | ![#00ADB5](https://placehold.jp/00ADB5/00ADB5/10x10.png) #00ADB5 |
-| Text Color      | ![#EEEEEE](https://placehold.jp/EEEEEE/EEEEEE/10x10.png) #EEEEEE |
-
-<!-- Env Variables -->
-
-### :key: Environment Variables
-
-To run this project, you will need to add the following environment variables to
-your `.env` file:
-
-- **App configs:**
-
-  `VITE_TEST_VAR`: Description of this environment variable.
-
-E.g:
-
-```
-# .env
-VITE_TEST_VAR="my secret key"
-```
-
-You can also check out the file `.env.example` to see all required environment
-variables.
 
 <!-- Getting Started -->
 
@@ -183,6 +67,20 @@ This project uses [pnpm](https://pnpm.io/) as package manager:
 
 ```bash
 npm install --global pnpm
+```
+
+This project uses [turborepo](https://turbo.build/repo) as monorepo manager:
+
+```bash
+npm install turbo --global
+```
+
+Playwright:
+
+Run the following command to download new browser binaries:
+
+```bash
+npx playwright install
 ```
 
 <!-- Run Locally -->
@@ -206,55 +104,6 @@ Install dependencies:
 ```bash
 pnpm install
 ```
-
-Start the server:
-
-```bash
-pnpm dev
-```
-
-<!-- Running Tests -->
-
-### :test_tube: Running Tests
-
-To run tests, run the following command:
-
-```bash
-pnpm test
-```
-
-<!-- Deployment -->
-
-### :triangular_flag_on_post: Deployment
-
-To deploy this project run:
-
-```bash
-pnpm deploy
-```
-
-<!-- Usage -->
-
-## :eyes: Usage
-
-Use this space to tell a little more about your project and how it can be used.
-Show additional screenshots, code samples, demos, or links to other resources.
-
-```jsx
-// foo.jsx
-import Component from 'scraping';
-
-function App() {
-  return <Component />;
-}
-```
-
-<!-- Roadmap -->
-
-## :compass: Roadmap
-
-- [x] Todo 1.
-- [ ] Todo 2.
 
 <!-- Contributing -->
 
