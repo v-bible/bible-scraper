@@ -1,0 +1,20 @@
+services:
+  bible-db:
+    image: postgres:16.2
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'bible'
+    ports:
+      - '5432:5432'
+    networks:
+      - bible-net
+    healthcheck:
+      test: pg_isready -U postgres -d bible
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  bible-net:
+    driver: bridge

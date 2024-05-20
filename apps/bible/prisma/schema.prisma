@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model Version {
+  id            String          @id @default(uuid())
+  code          String          @unique
+  name          String
+  onlyNT        Boolean         @default(false)
+  onlyOT        Boolean         @default(false)
+  withApocrypha Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  language      VersionLanguage @relation(fields: [languageId], references: [id])
+  languageId    String
+  books         Book[]
+  formats       VersionFormat[]
+}
+
+model VersionFormat {
+  id        String   @id @default(uuid())
+  type      String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Version  @relation(fields: [versionId], references: [id])
+  versionId String
+
+  @@unique([type, url])
+}
+
+model VersionLanguage {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  versions  Version[]
+}
+
+model Book {
+  id        String        @id @default(uuid())
+  code      String        @unique
+  title     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  version   Version       @relation(fields: [versionId], references: [id])
+  versionId String
+  chapters  BookChapter[]
+}
+
+model BookChapter {
+  id        String      @id @default(uuid())
+  number    Int
+  url       String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  book      Book        @relation(fields: [bookId], references: [id])
+  bookId    String
+  verses    BookVerse[]
+
+  @@unique([number, bookId])
+}
+
+model BookVerse {
+  id        String      @id @default(uuid())
+  number    Int
+  content   String
+  order     Int
+  parNum    Int
+  parIdx    Int
+  isPoetry  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  chapterId String
+
+  @@unique([number, chapterId, order])
+}
