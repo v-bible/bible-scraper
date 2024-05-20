@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./prod.db"
+  provider = "postgresql"
+  url      = env("DB_URL")
 }
 
 model Version {
@@ -73,14 +73,15 @@ model BookChapter {
 model BookVerse {
   id        String      @id @default(uuid())
   number    Int
-  text      String
-  order     Int         @default(0)
-  paragraph Int
+  content   String
+  order     Int
+  parNum    Int
+  parIdx    Int
   isPoetry  Boolean     @default(false)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
   chapterId String
 
-  @@unique([number, chapterId])
+  @@unique([number, chapterId, order])
 }
