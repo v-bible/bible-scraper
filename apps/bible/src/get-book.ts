@@ -7,7 +7,9 @@ import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
-(async () => {
+const getBook = async (
+  targetVersion: Required<Prisma.VersionFormatTypeUrlCompoundUniqueInput>,
+) => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
@@ -17,36 +19,35 @@ import prisma from '@/prisma/prisma';
     blocker.enableBlockingInPage(page),
   );
 
-  const targetVersion = {
-    type_url: {
-      type: 'ebook',
-      url: '/versions/Bản-Dịch-BD2011/#booklist',
-    },
-  } satisfies Prisma.VersionFormatWhereUniqueInput;
-
   const { versionId } = await prisma.versionFormat.findUniqueOrThrow({
-    where: targetVersion,
+    where: { type_url: targetVersion },
     select: {
       versionId: true,
     },
   });
 
-  await page.goto(`https://www.biblegateway.com${targetVersion.type_url.url}`);
+  await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
 
   const books = await page.getByRole('row').all();
 
   for (const row of books) {
-    const bookData = row
+    const bookClassAttr = await row.getAttribute('class');
+
+    if (!bookClassAttr) continue;
+
+    const reBookCode = /(?<code>\w+)-list/;
+    const reBookType = /(?<type>\w+)-book/;
+
+    const bookCode = bookClassAttr.match(reBookCode)?.groups!.code;
+
+    const bookType = bookClassAttr.match(reBookType)?.groups!.type;
+
+    const bookTitle = await row
       .getByRole('cell')
-      .and(page.locator('css=[data-target]'));
+      .and(page.locator('css=[data-target]'))
+      .innerText();
 
-    const reBookCode = /\.(\w+)-list/;
-    const bookCode = (await bookData.getAttribute('data-target'))?.match(
-      reBookCode,
-    )?.[1];
-    const bookTitle = await bookData.innerText();
-
-    if (!bookCode || !bookTitle) continue;
+    if (!bookCode || !bookTitle || !bookType) return;
 
     const book = await prisma.book.upsert({
       where: {
@@ -55,10 +56,12 @@ import prisma from '@/prisma/prisma';
       update: {
         code: bookCode,
         title: bookTitle,
+        type: bookType,
       },
       create: {
         code: bookCode,
         title: bookTitle,
+        type: bookType,
         version: {
           connect: {
             id: versionId,
@@ -110,4 +113,6 @@ import prisma from '@/prisma/prisma';
 
   await context.close();
   await browser.close();
-})();
+};
+
+export { getBook };

@@ -50,6 +50,7 @@ model Book {
   id        String        @id @default(uuid())
   code      String        @unique
   title     String
+  type      String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   version   Version       @relation(fields: [versionId], references: [id])
