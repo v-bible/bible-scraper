@@ -6,6 +6,8 @@
     Scraping biblegateway
   </p>
 
+</div>
+
 <br />
 
 ## Getting started
@@ -36,20 +38,21 @@ pnpm prisma:generate
 
 ## Scripts
 
-Scrap versions:
+Scrap bible:
 
 ```bash
-npx tsx ./src/get-version.ts
+npx tsx ./src/main.ts
 ```
 
-Scrap books:
+> [!NOTE]
+> To prevent the error `net::ERR_NETWORK_CHANGED`, you can temporarily disable
+> the ipv6 on your network adapter:
+>
+> ```bash
+> sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+> sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+> ```
 
-```bash
-npx tsx ./src/get-book.ts
-```
-
-Scrap verses:
-
-```bash
-npx tsx ./src/get-verse.ts
-```
+> [!NOTE]
+> In some cases, the error `code: 'ETIMEDOUT', syscall: 'read'` might occur.
+> However, I don't get this error when I keep browsing.
