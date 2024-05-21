@@ -6,7 +6,7 @@ import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
-(async () => {
+const getVersion = async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
@@ -175,4 +175,6 @@ import prisma from '@/prisma/prisma';
 
   await context.close();
   await browser.close();
-})();
+};
+
+export { getVersion };
