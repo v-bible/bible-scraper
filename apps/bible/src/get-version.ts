@@ -12,9 +12,8 @@ const getVersion = async () => {
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) =>
-    blocker.enableBlockingInPage(page),
-  );
+  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  await blocker.enableBlockingInPage(page);
 
   await page.goto('https://www.biblegateway.com/versions/');
 

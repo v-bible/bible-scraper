@@ -15,9 +15,8 @@ const getBook = async (
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) =>
-    blocker.enableBlockingInPage(page),
-  );
+  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  await blocker.enableBlockingInPage(page);
 
   const { versionId } = await prisma.versionFormat.findUniqueOrThrow({
     where: { type_url: targetVersion },
