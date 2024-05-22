@@ -23,6 +23,8 @@ model Version {
   languageId    String
   books         Book[]
   formats       VersionFormat[]
+
+  @@map("version")
 }
 
 model VersionFormat {
@@ -35,6 +37,7 @@ model VersionFormat {
   versionId String
 
   @@unique([type, url])
+  @@map("version_format")
 }
 
 model VersionLanguage {
@@ -44,6 +47,8 @@ model VersionLanguage {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   versions  Version[]
+
+  @@map("version_language")
 }
 
 model Book {
@@ -56,6 +61,8 @@ model Book {
   version   Version       @relation(fields: [versionId], references: [id])
   versionId String
   chapters  BookChapter[]
+
+  @@map("book")
 }
 
 model BookChapter {
@@ -69,6 +76,7 @@ model BookChapter {
   verses    BookVerse[]
 
   @@unique([number, bookId])
+  @@map("book_chapter")
 }
 
 model BookVerse {
@@ -85,4 +93,5 @@ model BookVerse {
   chapterId String
 
   @@unique([number, chapterId, order])
+  @@map("book_verse")
 }
