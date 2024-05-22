@@ -66,32 +66,50 @@ model Book {
 }
 
 model BookChapter {
-  id        String      @id @default(uuid())
+  id        String         @id @default(uuid())
   number    Int
   url       String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  book      Book        @relation(fields: [bookId], references: [id])
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  book      Book           @relation(fields: [bookId], references: [id])
   bookId    String
   verses    BookVerse[]
+  footnotes BookFootnote[]
 
   @@unique([number, bookId])
   @@map("book_chapter")
 }
 
 model BookVerse {
-  id        String      @id @default(uuid())
-  number    Int
-  content   String
-  order     Int
-  parNum    Int
-  parIdx    Int
-  isPoetry  Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
-  chapterId String
+  id         String        @id @default(uuid())
+  number     Int
+  content    String
+  order      Int
+  parNum     Int
+  parIdx     Int
+  isPoetry   Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  chapter    BookChapter   @relation(fields: [chapterId], references: [id])
+  chapterId  String
+  footnote   BookFootnote?
+  footnoteId String?
 
   @@unique([number, chapterId, order])
   @@map("book_verse")
+}
+
+model BookFootnote {
+  id        String      @id @default(uuid())
+  content   String
+  position  Int
+  order     Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  verseId   String      @unique
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  chapterId String
+
+  @@map("book_footnote")
 }
