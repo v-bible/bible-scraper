@@ -32,7 +32,12 @@ const getVerse = async (
     .getByRole('paragraph')
     .all();
 
-  const re = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the chap and verse num in the verse string. Ex: "Gen-2-4".
+  const reVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the verse number at the beginning of the string. Ex: "1".
+  const reVerseNum = /^\d+/;
+  // NOTE: Match the footnote character in the square brackets. Ex: "[a]".
+  const reFootnote = /\[\w+\]/;
 
   const verseInfo = await Promise.all(
     paragraphs.map(async (par, idx) => {
@@ -60,13 +65,17 @@ const getVerse = async (
 
         if (!classAttr) continue;
 
-        const match = classAttr.match(re);
+        const match = classAttr.match(reVerse);
 
         if (!match?.groups) continue;
 
         let content = await textEl.textContent();
 
-        content = content!.replace(/^\d+/, '').trim();
+        // NOTE: Remove verse number in content
+        content = content!.replace(reVerseNum, '').trim();
+
+        // NOTE: Remove footnote
+        content = content.replace(reFootnote, '').trim();
 
         logger.info(`verse ${match.groups.verseNum}: ${content}`);
 
@@ -124,7 +133,7 @@ const getVerse = async (
 
       if (!classAttr) return;
 
-      const match = classAttr.match(re);
+      const match = classAttr.match(reVerse);
 
       if (!match?.groups) return;
 

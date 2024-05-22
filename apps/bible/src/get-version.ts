@@ -22,6 +22,9 @@ const getVersion = async () => {
     .filter({ hasNot: page.locator('css=th') })
     .all();
 
+  // NOTE: The versionCode is the part inside the parentheses
+  const reVersionCode = /\(([\w|-]+)\)/;
+
   for (const row of versions) {
     const langCode = await row.getAttribute('data-language');
     let langName: string | null = null;
@@ -54,8 +57,6 @@ const getVersion = async () => {
 
     const versionName = await colVersion.textContent();
 
-    // NOTE: The versionCode is the part inside the parentheses
-    const reVersionCode = /\(([\w|-]+)\)/;
     const versionCode = versionName?.match(reVersionCode)?.[1];
 
     const colFormat = row.getByRole('cell').last();

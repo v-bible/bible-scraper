@@ -29,13 +29,15 @@ const getBook = async (
 
   const books = await page.getByRole('row').all();
 
+  // NOTE: Match book code in class. Ex: "gen-list".
+  const reBookCode = /(?<code>\w+)-list/;
+  // NOTE: Match book type in class. Ex: "ot-book", "nt-book" or "ap-book".
+  const reBookType = /(?<type>\w+)-book/;
+
   for (const row of books) {
     const bookClassAttr = await row.getAttribute('class');
 
     if (!bookClassAttr) continue;
-
-    const reBookCode = /(?<code>\w+)-list/;
-    const reBookType = /(?<type>\w+)-book/;
 
     const bookCode = bookClassAttr.match(reBookCode)?.groups!.code;
 
