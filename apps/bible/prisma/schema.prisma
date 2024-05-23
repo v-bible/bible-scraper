@@ -75,6 +75,7 @@ model BookChapter {
   bookId    String
   verses    BookVerse[]
   footnotes BookFootnote[]
+  headings  BookHeading[]
 
   @@unique([number, bookId])
   @@map("book_chapter")
@@ -94,6 +95,8 @@ model BookVerse {
   chapterId  String
   footnote   BookFootnote?
   footnoteId String?
+  heading    BookHeading?
+  headingId  String?
 
   @@unique([number, chapterId, order])
   @@map("book_verse")
@@ -112,4 +115,17 @@ model BookFootnote {
   chapterId String
 
   @@map("book_footnote")
+}
+
+model BookHeading {
+  id        String      @id @default(uuid())
+  content   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  verseId   String      @unique
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  chapterId String
+
+  @@map("book_heading")
 }
