@@ -2,26 +2,37 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
+
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
-(async () => {
+const getVersion = async () => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) =>
-    blocker.enableBlockingInPage(page),
-  );
+  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  await blocker.enableBlockingInPage(page);
 
-  await page.goto('https://www.biblegateway.com/versions/');
+  await retry(
+    async () => {
+      await page.goto('https://www.biblegateway.com/versions/');
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const versions = await page
     .getByRole('row')
     .filter({ hasNot: page.locator('css=th') })
     .all();
+
+  // NOTE: The versionCode is the part inside the parentheses
+  const reVersionCode = /\(([\w|-]+)\)/;
 
   for (const row of versions) {
     const langCode = await row.getAttribute('data-language');
@@ -55,8 +66,6 @@ import prisma from '@/prisma/prisma';
 
     const versionName = await colVersion.textContent();
 
-    // NOTE: The versionCode is the part inside the parentheses
-    const reVersionCode = /\(([\w|-]+)\)/;
     const versionCode = versionName?.match(reVersionCode)?.[1];
 
     const colFormat = row.getByRole('cell').last();
@@ -175,4 +184,6 @@ import prisma from '@/prisma/prisma';
 
   await context.close();
   await browser.close();
-})();
+};
+
+export { getVersion };

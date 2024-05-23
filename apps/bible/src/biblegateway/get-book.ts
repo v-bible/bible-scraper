@@ -3,50 +3,60 @@
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { Prisma } from '@prisma/client';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
-(async () => {
+const getBook = async (
+  targetVersion: Required<Prisma.VersionFormatTypeUrlCompoundUniqueInput>,
+) => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) =>
-    blocker.enableBlockingInPage(page),
-  );
-
-  const targetVersion = {
-    type_url: {
-      type: 'ebook',
-      url: '/versions/Bản-Dịch-BD2011/#booklist',
-    },
-  } satisfies Prisma.VersionFormatWhereUniqueInput;
+  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  await blocker.enableBlockingInPage(page);
 
   const { versionId } = await prisma.versionFormat.findUniqueOrThrow({
-    where: targetVersion,
+    where: { type_url: targetVersion },
     select: {
       versionId: true,
     },
   });
 
-  await page.goto(`https://www.biblegateway.com${targetVersion.type_url.url}`);
+  await retry(
+    async () => {
+      await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const books = await page.getByRole('row').all();
 
+  // NOTE: Match book code in class. Ex: "gen-list".
+  const reBookCode = /(?<code>\w+)-list/;
+  // NOTE: Match book type in class. Ex: "ot-book", "nt-book" or "ap-book".
+  const reBookType = /(?<type>\w+)-book/;
+
   for (const row of books) {
-    const bookData = row
+    const bookClassAttr = await row.getAttribute('class');
+
+    if (!bookClassAttr) continue;
+
+    const bookCode = bookClassAttr.match(reBookCode)?.groups!.code;
+
+    const bookType = bookClassAttr.match(reBookType)?.groups!.type;
+
+    const bookTitle = await row
       .getByRole('cell')
-      .and(page.locator('css=[data-target]'));
+      .and(page.locator('css=[data-target]'))
+      .innerText();
 
-    const reBookCode = /\.(\w+)-list/;
-    const bookCode = (await bookData.getAttribute('data-target'))?.match(
-      reBookCode,
-    )?.[1];
-    const bookTitle = await bookData.innerText();
-
-    if (!bookCode || !bookTitle) continue;
+    if (!bookCode || !bookTitle || !bookType) return;
 
     const book = await prisma.book.upsert({
       where: {
@@ -55,10 +65,12 @@ import prisma from '@/prisma/prisma';
       update: {
         code: bookCode,
         title: bookTitle,
+        type: bookType,
       },
       create: {
         code: bookCode,
         title: bookTitle,
+        type: bookType,
         version: {
           connect: {
             id: versionId,
@@ -110,4 +122,6 @@ import prisma from '@/prisma/prisma';
 
   await context.close();
   await browser.close();
-})();
+};
+
+export { getBook };

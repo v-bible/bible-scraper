@@ -11,12 +11,14 @@
     "prisma:studio": "prisma studio"
   },
   "devDependencies": {
+    "@types/async-retry": "1.4.8",
     "@types/lodash": "4.17.4",
     "prisma": "5.14.0"
   },
   "dependencies": {
     "@cliqz/adblocker-playwright": "1.27.3",
     "@prisma/client": "5.14.0",
+    "async-retry": "1.3.3",
     "lodash": "4.17.21",
     "playwright": "1.44.0",
     "winston": "3.13.0"

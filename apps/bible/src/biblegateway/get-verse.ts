@@ -3,6 +3,7 @@
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { Prisma } from '@prisma/client';
+import retry from 'async-retry';
 import lo from 'lodash';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
@@ -20,22 +21,39 @@ const getVerse = async (
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) =>
-    blocker.enableBlockingInPage(page),
-  );
+  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  await blocker.enableBlockingInPage(page);
 
-  await page.goto(`https://www.biblegateway.com${chap.url}`);
+  await retry(
+    async () => {
+      await page.goto(`https://www.biblegateway.com${chap.url}`, {
+        timeout: 36000, // In milliseconds is 36 seconds
+      });
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const paragraphs = await page
     .locator('[data-translation]')
     .getByRole('paragraph')
     .all();
 
-  const re = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the chap and verse num in the verse string. Ex: "Gen-2-4".
+  const reVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the verse number at the beginning of the string. Ex: "1".
+  const reVerseNum = /^\d+/;
+  // NOTE: Match the footnote character in the square brackets. Ex: "[a]".
+  const reFootnote = /\[\w+\]/;
 
   const verseInfo = await Promise.all(
     paragraphs.map(async (par, idx) => {
-      const verseCount = await par.locator('css=[class*="Gen-"]').count();
+      // NOTE: The book code is not case sensitive
+      // Ref: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors#attr_operator_value_i
+      const verseCount = await par
+        .locator(`css=[class*="${chap.book.code}-" i]`)
+        .count();
 
       let verses: Array<{
         bookName: string;
@@ -47,19 +65,25 @@ const getVerse = async (
       }> = [];
 
       for (let i = 0; i < verseCount; i += 1) {
-        const textEl = par.locator('css=[class*="Gen-"]').nth(i);
+        const textEl = par
+          .locator(`css=[class*="${chap.book.code}-" i]`)
+          .nth(i);
 
         const classAttr = await textEl.getAttribute('class');
 
         if (!classAttr) continue;
 
-        const match = classAttr.match(re);
+        const match = classAttr.match(reVerse);
 
         if (!match?.groups) continue;
 
         let content = await textEl.textContent();
 
-        content = content!.replace(/^\d+/, '').trim();
+        // NOTE: Remove verse number in content
+        content = content!.replace(reVerseNum, '').trim();
+
+        // NOTE: Remove footnote
+        content = content.replace(reFootnote, '').trim();
 
         logger.info(`verse ${match.groups.verseNum}: ${content}`);
 
@@ -84,7 +108,7 @@ const getVerse = async (
 
   const groupByVerseNum = lo.groupBy(verseInfoFlat, (val) => val.number);
 
-  Object.keys(groupByVerseNum).forEach(async (key) => {
+  for (const key of Object.keys(groupByVerseNum)) {
     const data = groupByVerseNum[key]?.map((val, idx) => {
       return {
         number: val.number,
@@ -102,20 +126,22 @@ const getVerse = async (
       data,
       skipDuplicates: true,
     });
-  });
+  }
 
   const poetryEl = await page.locator('css=[class="poetry"]').all();
+
+  logger.info(`getting poetry for ${chap.book.title} ${chap.number}`);
 
   await Promise.all(
     poetryEl.map(async (val) => {
       const classAttr = await val
-        .locator('css=[class*="Gen-"]')
+        .locator(`css=[class*="${chap.book.code}-" i]`)
         .first()
         .getAttribute('class');
 
       if (!classAttr) return;
 
-      const match = classAttr.match(re);
+      const match = classAttr.match(reVerse);
 
       if (!match?.groups) return;
 
@@ -133,27 +159,5 @@ const getVerse = async (
   await context.close();
   await browser.close();
 };
-
-(async () => {
-  const book = await prisma.book.findFirstOrThrow({
-    where: {
-      code: 'gen',
-    },
-  });
-
-  const chap = await prisma.bookChapter.findUniqueOrThrow({
-    where: {
-      number_bookId: {
-        number: 2,
-        bookId: book.id,
-      },
-    },
-    include: {
-      book: true,
-    },
-  });
-
-  await getVerse(chap);
-})();
 
 export { getVerse };
