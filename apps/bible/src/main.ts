@@ -1,9 +1,9 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-import { getVerse } from './get-verse';
-import { getBook } from '@/get-book';
-import { getVersion } from '@/get-version';
+import { getBook } from '@/biblegateway/get-book';
+import { getVerse } from '@/biblegateway/get-verse';
+import { getVersion } from '@/biblegateway/get-version';
 import prisma from '@/prisma/prisma';
 
 (async () => {
