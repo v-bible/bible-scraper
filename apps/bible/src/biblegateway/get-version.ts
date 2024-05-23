@@ -2,7 +2,9 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
+
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
@@ -15,7 +17,14 @@ const getVersion = async () => {
   const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
   await blocker.enableBlockingInPage(page);
 
-  await page.goto('https://www.biblegateway.com/versions/');
+  await retry(
+    async () => {
+      await page.goto('https://www.biblegateway.com/versions/');
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const versions = await page
     .getByRole('row')

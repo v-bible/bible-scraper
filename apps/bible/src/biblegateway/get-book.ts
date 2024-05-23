@@ -3,6 +3,7 @@
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { Prisma } from '@prisma/client';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
@@ -25,7 +26,14 @@ const getBook = async (
     },
   });
 
-  await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
+  await retry(
+    async () => {
+      await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const books = await page.getByRole('row').all();
 

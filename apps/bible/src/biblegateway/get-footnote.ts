@@ -3,6 +3,7 @@
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { Prisma } from '@prisma/client';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
@@ -22,9 +23,16 @@ const getFootnote = async (
   const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
   await blocker.enableBlockingInPage(page);
 
-  await page.goto(`https://www.biblegateway.com${chap.url}`, {
-    timeout: 36000, // In milliseconds is 36 seconds
-  });
+  await retry(
+    async () => {
+      await page.goto(`https://www.biblegateway.com${chap.url}`, {
+        timeout: 36000, // In milliseconds is 36 seconds
+      });
+    },
+    {
+      retries: 5,
+    },
+  );
 
   const footnotes = await page
     .locator('css=[class="footnotes"]')
