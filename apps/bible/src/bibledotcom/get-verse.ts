@@ -26,7 +26,7 @@ const getVerse = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.biblegateway.com${chap.url}`, {
+      await page.goto(`https://www.bible.com${chap.url}`, {
         timeout: 36000, // In milliseconds is 36 seconds
       });
     },
@@ -36,52 +36,73 @@ const getVerse = async (
   );
 
   const paragraphs = await page
-    .locator('[data-translation]')
-    .getByRole('paragraph')
+    // NOTE: Paragraph
+    .locator('css=[class*="ChapterContent_p" i]')
+    // NOTE: Poetry
+    .or(page.locator('css=[class*="ChapterContent_q" i]'))
+    // NOTE: End paragraph
+    .or(page.locator('css=[class*="ChapterContent_m" i]'))
+    // NOTE: Heading
+    .or(page.locator('css=[class*="ChapterContent_s" i]'))
     .all();
 
-  // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
-  const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the chap and verse num in the class string. Ex: "GEN.2.4".
+  const reClassVerse = /(?<name>\w+)\.(?<chap>\d+)\.(?<verseNum>\d+)/;
   // NOTE: Match the verse number at the beginning of the string. Ex: "1".
   const reVerseNum = /^\d+/;
-  // NOTE: Match the footnote character in the square brackets. Ex: "[a]".
-  const reFootnote = /\[\w+\]/;
 
   const verseInfo = await Promise.all(
     paragraphs.map(async (par, idx) => {
-      // NOTE: The book code is not case sensitive
-      // Ref: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors#attr_operator_value_i
-      const verseCount = await par
-        .locator(`css=[class*="${chap.book.code}-" i]`)
-        .count();
+      const classAttr = await par.getAttribute('class');
+
+      let isPoetry = false;
+
+      // NOTE: Check if the class attribute contains poetry class
+      if (classAttr?.search(/_q.+__/) !== -1) {
+        isPoetry = true;
+      }
+
+      // Ref: https://playwright.dev/docs/other-locators#css-elements-that-contain-other-elements
+      const verseCount = await par.locator('css=[data-usfm]').count();
 
       let verses: Array<{
         number: number;
         parNum: number;
         parIdx: number;
         content: string;
+        isPoetry: boolean;
       }> = [];
 
       for (let i = 0; i < verseCount; i += 1) {
-        const textEl = par
-          .locator(`css=[class*="${chap.book.code}-" i]`)
-          .nth(i);
+        const verseEl = par.locator('css=[data-usfm]').nth(i);
 
-        const classAttr = await textEl.getAttribute('class');
+        const usfmData = await verseEl.getAttribute('data-usfm');
 
-        if (!classAttr) continue;
+        if (!usfmData) continue;
 
-        const match = classAttr.match(reClassVerse);
+        const match = usfmData.match(reClassVerse);
 
         if (!match?.groups) continue;
 
-        let content = await textEl.textContent();
+        let content = await verseEl.textContent();
 
-        // NOTE: Remove verse number in content
+        const fnElList = await verseEl
+          .locator('css=[class*="ChapterContent_note" i]')
+          .all();
+
+        for (const fnEl of fnElList) {
+          const fnContent = await fnEl.textContent();
+
+          if (!fnContent) continue;
+
+          // NOTE: Remove footnote from content
+          content = content!.replace(fnContent, '');
+        }
+
+        // // NOTE: Remove verse number in content
         content = content!.replace(reVerseNum, '').trim();
 
-        // NOTE: Remove footnote
-        content = content.replace(reFootnote, '').trim();
+        if (!content) continue;
 
         logger.info(
           `verse ${match.groups.verseNum} (${chap.book.title} ${chap.number}): ${content}`,
@@ -94,6 +115,7 @@ const getVerse = async (
             parNum: idx,
             parIdx: i,
             content: content!,
+            isPoetry,
           },
         ];
       }
@@ -115,6 +137,7 @@ const getVerse = async (
         parNum: val.parNum,
         parIdx: val.parIdx,
         chapterId: chap.id,
+        isPoetry: val.isPoetry,
       };
     });
 
@@ -125,34 +148,6 @@ const getVerse = async (
       skipDuplicates: true,
     });
   }
-
-  const poetryEl = await page.locator('css=[class="poetry"]').all();
-
-  logger.info(`getting poetry for ${chap.book.title} ${chap.number}`);
-
-  await Promise.all(
-    poetryEl.map(async (val) => {
-      const classAttr = await val
-        .locator(`css=[class*="${chap.book.code}-" i]`)
-        .first()
-        .getAttribute('class');
-
-      if (!classAttr) return;
-
-      const match = classAttr.match(reClassVerse);
-
-      if (!match?.groups) return;
-
-      await prisma.bookVerse.updateMany({
-        where: {
-          number: Number(match.groups?.verseNum),
-        },
-        data: {
-          isPoetry: true,
-        },
-      });
-    }),
-  );
 
   await context.close();
   await browser.close();
