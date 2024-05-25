@@ -83,7 +83,9 @@ const getVerse = async (
         // NOTE: Remove footnote
         content = content.replace(reFootnote, '').trim();
 
-        logger.info(`verse ${match.groups.verseNum}: ${content}`);
+        logger.info(
+          `verse ${match.groups.verseNum} (${chap.book.title} ${chap.number}): ${content}`,
+        );
 
         verses = [
           ...verses,
