@@ -40,8 +40,8 @@ const getVerse = async (
     .getByRole('paragraph')
     .all();
 
-  // NOTE: Match the chap and verse num in the verse string. Ex: "Gen-2-4".
-  const reVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
+  const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
   // NOTE: Match the verse number at the beginning of the string. Ex: "1".
   const reVerseNum = /^\d+/;
   // NOTE: Match the footnote character in the square brackets. Ex: "[a]".
@@ -56,8 +56,6 @@ const getVerse = async (
         .count();
 
       let verses: Array<{
-        bookName: string;
-        bookChap: number;
         number: number;
         parNum: number;
         parIdx: number;
@@ -73,7 +71,7 @@ const getVerse = async (
 
         if (!classAttr) continue;
 
-        const match = classAttr.match(reVerse);
+        const match = classAttr.match(reClassVerse);
 
         if (!match?.groups) continue;
 
@@ -90,8 +88,6 @@ const getVerse = async (
         verses = [
           ...verses,
           {
-            bookName: String(match.groups?.name).toLowerCase(),
-            bookChap: Number(match.groups?.chap),
             number: Number(match.groups?.verseNum),
             parNum: idx,
             parIdx: i,
@@ -141,7 +137,7 @@ const getVerse = async (
 
       if (!classAttr) return;
 
-      const match = classAttr.match(reVerse);
+      const match = classAttr.match(reClassVerse);
 
       if (!match?.groups) return;
 
