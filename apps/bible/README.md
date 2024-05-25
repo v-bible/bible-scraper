@@ -3,7 +3,7 @@
   <h1>Scraping bible</h1>
 
   <p>
-    Scraping biblegateway
+    Scraping bible from various sources
   </p>
 
 </div>
@@ -38,10 +38,16 @@ pnpm prisma:generate
 
 ## Scripts
 
-Scrap bible:
+Scrap bible (from [biblegateway.com](https://www.biblegateway.com/)):
 
 ```bash
-npx tsx ./src/main.ts
+npx tsx ./src/biblegateway/main.ts
+```
+
+Scrap bible (from [bible.com](https://www.bible.com/)):
+
+```bash
+npx tsx ./src/bibledotcom/main.ts
 ```
 
 > [!NOTE]
