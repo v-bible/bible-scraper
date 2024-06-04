@@ -73,6 +73,8 @@ const getHeading = async (
       return [
         {
           content,
+          // NOTE: Set 0 for post-processing
+          order: 0,
           verseId: verseData.id,
           chapterId: chap.id,
         },
@@ -81,6 +83,13 @@ const getHeading = async (
   );
 
   const headingDataFlat = headingData.flat();
+
+  // NOTE: Increase the order if the verse has multiple headings
+  for (let i = 1; i < headingDataFlat.length; i += 1) {
+    if (headingDataFlat[i]?.verseId === headingDataFlat[i - 1]?.verseId) {
+      headingDataFlat[i]!.order = headingDataFlat[i - 1]!.order + 1;
+    }
+  }
 
   await prisma.bookHeading.createMany({
     data: headingDataFlat,

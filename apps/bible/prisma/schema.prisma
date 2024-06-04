@@ -124,6 +124,7 @@ model BookFootnote {
 model BookHeading {
   id        String      @id @default(uuid())
   content   String
+  order     Int
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   verse     BookVerse   @relation(fields: [verseId], references: [id])
