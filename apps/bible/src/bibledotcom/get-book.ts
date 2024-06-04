@@ -26,7 +26,7 @@ const getBook = async (
     const book = await prisma.book.upsert({
       where: {
         code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        versionId: targetVersion.versionId,
       },
       create: {
         code: bookData.usfm.toLowerCase(),

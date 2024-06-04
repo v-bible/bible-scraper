@@ -61,6 +61,7 @@ const getBook = async (
     const book = await prisma.book.upsert({
       where: {
         code: bookCode,
+        versionId,
       },
       update: {
         code: bookCode,
