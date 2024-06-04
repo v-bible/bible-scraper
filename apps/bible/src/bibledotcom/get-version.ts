@@ -48,6 +48,9 @@ const getVersionByLang = async (langCode: string) => {
     const version = await prisma.version.upsert({
       where: {
         code: data.abbreviation.toUpperCase(),
+        language: {
+          webOrigin: 'https://www.bible.com',
+        },
       },
       create: {
         code: data.abbreviation.toUpperCase(),
@@ -62,10 +65,12 @@ const getVersionByLang = async (langCode: string) => {
           connectOrCreate: {
             where: {
               code: data.language.language_tag.toLowerCase(),
+              webOrigin: 'https://www.bible.com',
             },
             create: {
               code: data.language.language_tag.toLowerCase(),
               name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
+              webOrigin: 'https://www.bible.com',
             },
           },
         },

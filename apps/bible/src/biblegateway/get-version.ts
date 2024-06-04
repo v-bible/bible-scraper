@@ -54,10 +54,12 @@ const getVersion = async () => {
         update: {
           code: langCode,
           name: langName,
+          webOrigin: 'https://www.biblegateway.com',
         },
         create: {
           code: langCode,
           name: langName,
+          webOrigin: 'https://www.biblegateway.com',
         },
       });
     }
@@ -83,6 +85,9 @@ const getVersion = async () => {
     const version = await prisma.version.upsert({
       where: {
         code: versionCode,
+        language: {
+          webOrigin: 'https://www.biblegateway.com',
+        },
       },
       update: {
         code: versionCode,

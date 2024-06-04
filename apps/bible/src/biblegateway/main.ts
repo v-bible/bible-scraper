@@ -14,6 +14,9 @@ import prisma from '@/prisma/prisma';
   const version = await prisma.version.findFirstOrThrow({
     where: {
       code: 'BD2011',
+      language: {
+        webOrigin: 'https://www.biblegateway.com',
+      },
     },
     include: {
       formats: true,
