@@ -28,7 +28,7 @@ const getBook = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
+      await page.goto(targetVersion.url);
     },
     {
       retries: 5,
@@ -105,11 +105,11 @@ const getBook = async (
         },
         update: {
           number: +chapterNumber,
-          url: chapterUrl,
+          url: `https://www.biblegateway.com${chapterUrl}`,
         },
         create: {
           number: +chapterNumber,
-          url: chapterUrl,
+          url: `https://www.biblegateway.com${chapterUrl}`,
           book: {
             connect: {
               code: bookCode,

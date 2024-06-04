@@ -90,12 +90,12 @@ const getVersionByLang = async (langCode: string) => {
       where: {
         type_url: {
           type: 'ebook',
-          url: liHref,
+          url: `https://www.bible.com${liHref}`,
         },
       },
       create: {
         type: 'ebook',
-        url: liHref,
+        url: `https://www.bible.com${liHref}`,
         version: {
           connect: {
             id: version.id,
@@ -104,7 +104,7 @@ const getVersionByLang = async (langCode: string) => {
       },
       update: {
         type: 'ebook',
-        url: liHref,
+        url: `https://www.bible.com${liHref}`,
       },
     });
 
@@ -119,7 +119,7 @@ const getVersionByLang = async (langCode: string) => {
       // the base audio link
       const resourceName = liHref.split('/').at(-1);
 
-      const audioHref = `/audio-bible-app-versions/${resourceName}`;
+      const audioHref = `https://www.bible.com/audio-bible-app-versions/${resourceName}`;
 
       await prisma.versionFormat.upsert({
         where: {

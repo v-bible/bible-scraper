@@ -25,7 +25,7 @@ const getHeading = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.biblegateway.com${chap.url}`, {
+      await page.goto(chap.url, {
         timeout: 36000, // In milliseconds is 36 seconds
       });
     },

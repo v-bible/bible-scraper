@@ -155,12 +155,12 @@ const getVersion = async () => {
           versionId: version.id,
           type_url: {
             type: format.type,
-            url: format.url,
+            url: `https://www.biblegateway.com${format.url}`,
           },
         },
         update: {
           type: format.type,
-          url: format.url,
+          url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
               code: versionCode,
@@ -169,7 +169,7 @@ const getVersion = async () => {
         },
         create: {
           type: format.type,
-          url: format.url,
+          url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
               code: versionCode,
