@@ -12,7 +12,7 @@ datasource db {
 
 model Version {
   id            String          @id @default(uuid())
-  code          String          @unique
+  code          String
   name          String
   onlyNT        Boolean         @default(false)
   onlyOT        Boolean         @default(false)
@@ -24,6 +24,7 @@ model Version {
   books         Book[]
   formats       VersionFormat[]
 
+  @@unique([code, languageId])
   @@map("version")
 }
 
@@ -42,19 +43,20 @@ model VersionFormat {
 
 model VersionLanguage {
   id        String    @id @default(uuid())
-  code      String    @unique
+  code      String
   name      String
   webOrigin String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   versions  Version[]
 
+  @@unique([code, webOrigin])
   @@map("version_language")
 }
 
 model Book {
   id        String        @id @default(uuid())
-  code      String        @unique
+  code      String
   title     String
   type      String
   createdAt DateTime      @default(now())
@@ -63,6 +65,7 @@ model Book {
   versionId String
   chapters  BookChapter[]
 
+  @@unique([code, versionId])
   @@map("book")
 }
 
@@ -99,7 +102,7 @@ model BookVerse {
   heading    BookHeading?
   headingId  String?
 
-  @@unique([number, chapterId, order])
+  @@unique([number, order, chapterId])
   @@map("book_verse")
 }
 

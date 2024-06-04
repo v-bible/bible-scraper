@@ -42,27 +42,28 @@ const getVersion = async () => {
       langName = await row.locator('css=[data-target]').innerText();
     }
 
-    if (!langCode) {
+    if (!langCode || !langName) {
       continue;
     }
 
-    if (langName) {
-      await prisma.versionLanguage.upsert({
-        where: {
+    const langData = await prisma.versionLanguage.upsert({
+      where: {
+        code_webOrigin: {
           code: langCode,
-        },
-        update: {
-          code: langCode,
-          name: langName,
           webOrigin: 'https://www.biblegateway.com',
         },
-        create: {
-          code: langCode,
-          name: langName,
-          webOrigin: 'https://www.biblegateway.com',
-        },
-      });
-    }
+      },
+      update: {
+        code: langCode,
+        name: langName,
+        webOrigin: 'https://www.biblegateway.com',
+      },
+      create: {
+        code: langCode,
+        name: langName,
+        webOrigin: 'https://www.biblegateway.com',
+      },
+    });
 
     const colVersion = row.locator('css=[data-translation]');
 
@@ -84,9 +85,9 @@ const getVersion = async () => {
 
     const version = await prisma.version.upsert({
       where: {
-        code: versionCode,
-        language: {
-          webOrigin: 'https://www.biblegateway.com',
+        code_languageId: {
+          code: versionCode,
+          languageId: langData.id,
         },
       },
       update: {
@@ -94,7 +95,7 @@ const getVersion = async () => {
         name: versionName,
         language: {
           connect: {
-            code: langCode,
+            id: langData.id,
           },
         },
         onlyNT,
@@ -106,7 +107,7 @@ const getVersion = async () => {
         name: versionName,
         language: {
           connect: {
-            code: langCode,
+            id: langData.id,
           },
         },
         onlyNT,
@@ -168,7 +169,10 @@ const getVersion = async () => {
           url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
-              code: versionCode,
+              code_languageId: {
+                code: versionCode,
+                languageId: langData.id,
+              },
             },
           },
         },
@@ -177,7 +181,10 @@ const getVersion = async () => {
           url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
-              code: versionCode,
+              code_languageId: {
+                code: versionCode,
+                languageId: langData.id,
+              },
             },
           },
         },

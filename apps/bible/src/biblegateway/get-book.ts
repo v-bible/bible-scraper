@@ -60,8 +60,10 @@ const getBook = async (
 
     const book = await prisma.book.upsert({
       where: {
-        code: bookCode,
-        versionId,
+        code_versionId: {
+          code: bookCode,
+          versionId,
+        },
       },
       update: {
         code: bookCode,
@@ -113,7 +115,10 @@ const getBook = async (
           url: `https://www.biblegateway.com${chapterUrl}`,
           book: {
             connect: {
-              code: bookCode,
+              code_versionId: {
+                code: bookCode,
+                versionId,
+              },
             },
           },
         },

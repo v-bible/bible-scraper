@@ -45,11 +45,30 @@ const getVersionByLang = async (langCode: string) => {
 
     const hasAudio = data.audio;
 
+    const langData = await prisma.versionLanguage.upsert({
+      where: {
+        code_webOrigin: {
+          code: data.language.language_tag.toLowerCase(),
+          webOrigin: 'https://www.bible.com',
+        },
+      },
+      update: {
+        code: data.language.language_tag.toLowerCase(),
+        name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
+        webOrigin: 'https://www.bible.com',
+      },
+      create: {
+        code: data.language.language_tag.toLowerCase(),
+        name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
+        webOrigin: 'https://www.bible.com',
+      },
+    });
+
     const version = await prisma.version.upsert({
       where: {
-        code: data.abbreviation.toUpperCase(),
-        language: {
-          webOrigin: 'https://www.bible.com',
+        code_languageId: {
+          code: data.abbreviation.toUpperCase(),
+          languageId: langData.id,
         },
       },
       create: {
@@ -62,16 +81,8 @@ const getVersionByLang = async (langCode: string) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         withApocrypha: data.books.some((book: any) => book.canon === 'ap'),
         language: {
-          connectOrCreate: {
-            where: {
-              code: data.language.language_tag.toLowerCase(),
-              webOrigin: 'https://www.bible.com',
-            },
-            create: {
-              code: data.language.language_tag.toLowerCase(),
-              name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
-              webOrigin: 'https://www.bible.com',
-            },
+          connect: {
+            id: langData.id,
           },
         },
       },

@@ -25,8 +25,10 @@ const getBook = async (
     logger.info(`getting book ${bookData.human} (${bookData.usfm})`);
     const book = await prisma.book.upsert({
       where: {
-        code: bookData.usfm.toLowerCase(),
-        versionId: targetVersion.versionId,
+        code_versionId: {
+          code: bookData.usfm.toLowerCase(),
+          versionId: targetVersion.versionId,
+        },
       },
       create: {
         code: bookData.usfm.toLowerCase(),
