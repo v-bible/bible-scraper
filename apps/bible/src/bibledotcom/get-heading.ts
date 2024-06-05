@@ -34,43 +34,61 @@ const getHeading = async (
     },
   );
 
+  // NOTE: Heading
   const paragraphs = await page
-    // NOTE: Paragraph
-    .locator('css=[class*="ChapterContent_p" i]')
-    // NOTE: Poetry
-    .or(page.locator('css=[class*="ChapterContent_q" i]'))
-    // NOTE: End paragraph
-    .or(page.locator('css=[class*="ChapterContent_m" i]'))
-    // NOTE: Heading
-    .or(page.locator('css=[class*="ChapterContent_s" i]'))
+    .locator('css=[class*="ChapterContent_s" i]')
     .all();
 
   // NOTE: Match the chap and verse num in the class string. Ex: "GEN.2.4".
   const reClassVerse = /(?<name>\w+)\.(?<chap>\d+)\.(?<verseNum>\d+)/;
 
-  await Promise.all(
-    paragraphs.map(async (par, idx, arr) => {
+  const headingData = await Promise.all(
+    paragraphs.map(async (par) => {
       const classAttr = await par.getAttribute('class');
 
       // NOTE: Skip if the class attribute does not contain heading class
       if (classAttr?.search(/_s.+__/) === -1) {
-        return;
+        return [];
       }
 
       const heading = await par.textContent();
 
-      if (!heading) return;
+      if (!heading) return [];
 
       // NOTE: A heading always placed before the verse
-      const nextVerse = arr[idx + 1]?.locator('css=[data-usfm]').first();
+      // NOTE: Because every headings have the same class name, so I have to use
+      // "has-text" for the heading text to find the next verse.
+      const nextVerse = page
+        .locator(
+          `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_p" i]`,
+        )
+        // NOTE: Most of the time is p, but I have to cover other cases that
+        // might be q or m. You can comment this line if you are sure that the
+        // next verse is always p.
+        .or(
+          page.locator(
+            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_q" i]`,
+          ),
+        )
+        .or(
+          page.locator(
+            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_m" i]`,
+          ),
+        )
+        .first();
 
-      const nextVerseData = await nextVerse?.getAttribute('data-usfm');
+      // NOTE: Only select verse has a label, because a heading usually placed
+      // before the verse
+      const nextVerseData = await nextVerse
+        ?.locator('css=[data-usfm]:has(span[class*="ChapterContent_label" i])')
+        .first()
+        .getAttribute('data-usfm');
 
-      if (!nextVerseData) return;
+      if (!nextVerseData) return [];
 
       const match = nextVerseData.match(reClassVerse);
 
-      if (!match?.groups) return;
+      if (!match?.groups) return [];
 
       const verseData = await prisma.bookVerse.findFirstOrThrow({
         where: {
@@ -80,25 +98,36 @@ const getHeading = async (
           chapterId: chap.id,
         },
       });
+
       logger.info(
         `getting heading: ${heading} for verse ${verseData.number} in ${chap.book.title} ${chap.number}}`,
       );
 
-      await prisma.bookHeading.upsert({
-        where: {
-          verseId: verseData.id,
-        },
-        create: {
+      return [
+        {
           content: heading,
+          // NOTE: Set 0 for post-processing
+          order: 0,
           verseId: verseData.id,
           chapterId: chap.id,
         },
-        update: {
-          content: heading,
-        },
-      });
+      ];
     }),
   );
+
+  const headingDataFlat = headingData.flat();
+
+  // NOTE: Increase the order if the verse has multiple headings
+  for (let i = 1; i < headingDataFlat.length; i += 1) {
+    if (headingDataFlat[i]?.verseId === headingDataFlat[i - 1]?.verseId) {
+      headingDataFlat[i]!.order = headingDataFlat[i - 1]!.order + 1;
+    }
+  }
+
+  await prisma.bookHeading.createMany({
+    data: headingDataFlat,
+    skipDuplicates: true,
+  });
 
   await context.close();
   await browser.close();
