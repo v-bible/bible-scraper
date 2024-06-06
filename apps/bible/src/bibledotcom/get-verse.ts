@@ -153,8 +153,8 @@ const getVerse = async (
         number: val.number,
         content: val.content,
         order: idx,
-        parNum: val.parNum,
-        parIdx: val.parIdx,
+        parNumber: val.parNum,
+        parIndex: val.parIdx,
         chapterId: chap.id,
         isPoetry: val.isPoetry,
       };

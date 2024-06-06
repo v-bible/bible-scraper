@@ -83,8 +83,8 @@ const getFootnote = async (
           const verseData = await prisma.bookVerse.findFirstOrThrow({
             where: {
               number: Number(match.groups?.verseNum),
-              parNum: idx,
-              parIdx: i,
+              parNumber: idx,
+              parIndex: i,
               chapterId: chap.id,
             },
           });

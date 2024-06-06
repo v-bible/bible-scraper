@@ -58,7 +58,7 @@ model Book {
   id        String        @id @default(uuid())
   code      String
   title     String
-  type      String
+  canon     String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   version   Version       @relation(fields: [versionId], references: [id])
@@ -91,8 +91,8 @@ model BookVerse {
   number     Int
   content    String
   order      Int
-  parNum     Int
-  parIdx     Int
+  parNumber  Int
+  parIndex   Int
   isPoetry   Boolean         @default(false)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt

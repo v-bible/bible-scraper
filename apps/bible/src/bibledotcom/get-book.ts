@@ -31,7 +31,7 @@ const getBook = async (
       },
       create: {
         code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        canon: bookData.canon,
         title: bookData.human,
         version: {
           connect: {
@@ -41,7 +41,7 @@ const getBook = async (
       },
       update: {
         code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        canon: bookData.canon,
         title: bookData.human,
       },
     });

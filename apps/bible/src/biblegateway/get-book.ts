@@ -68,12 +68,12 @@ const getBook = async (
       update: {
         code: bookCode,
         title: bookTitle,
-        type: bookType,
+        canon: bookType,
       },
       create: {
         code: bookCode,
         title: bookTitle,
-        type: bookType,
+        canon: bookType,
         version: {
           connect: {
             id: versionId,
