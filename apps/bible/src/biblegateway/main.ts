@@ -4,6 +4,7 @@
 import { getBook } from '@/biblegateway/get-book';
 import { getFootnote } from '@/biblegateway/get-footnote';
 import { getHeading } from '@/biblegateway/get-heading';
+import { getReference } from '@/biblegateway/get-reference';
 import { getVerse } from '@/biblegateway/get-verse';
 import { getVersion } from '@/biblegateway/get-version';
 import prisma from '@/prisma/prisma';
@@ -66,6 +67,7 @@ import prisma from '@/prisma/prisma';
       await getVerse(chap);
       await getFootnote(chap);
       await getHeading(chap);
+      await getReference(chap);
     }
   }
 })();
