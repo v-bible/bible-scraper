@@ -105,8 +105,27 @@ const getVerse = async (
         if (!content) continue;
 
         logger.info(
-          `verse ${match.groups.verseNum} (${chap.book.title} ${chap.number}): ${content}`,
+          'Get verse %s:%s for book %s',
+          chap.number,
+          match.groups.verseNum,
+          chap.book.title,
         );
+
+        logger.debug(
+          'Verse %s:%s content: %s',
+          chap.number,
+          match.groups.verseNum,
+          content,
+        );
+
+        if (isPoetry) {
+          logger.info(
+            'Verse %s:%s is poetry for book %s',
+            chap.number,
+            match.groups.verseNum,
+            chap.book.title,
+          );
+        }
 
         verses = [
           ...verses,

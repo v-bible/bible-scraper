@@ -92,7 +92,17 @@ const getFootnote = async (
           const fnPos = content!.indexOf(fnContent);
 
           logger.info(
-            `getting footnote ${fnContent} for verse ${verseData.number} in ${chap.book.title} ${chap.number}`,
+            'Get footnote %s:%s for book %s',
+            chap.number,
+            verseData.number,
+            chap.book.title,
+          );
+
+          logger.debug(
+            'Footnote %s:%s content: %s',
+            chap.number,
+            verseData.number,
+            fnContent,
           );
 
           await prisma.bookFootnote.upsert({

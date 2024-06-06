@@ -90,7 +90,7 @@ const getReference = async (
 
       if (!match?.groups) return [];
 
-      const verseData = await prisma.bookVerse.findFirstOrThrow({
+      const verse = await prisma.bookVerse.findFirstOrThrow({
         where: {
           number: Number(match?.groups!.verseNum),
           // NOTE: Heading always placed before the verse
@@ -100,13 +100,23 @@ const getReference = async (
       });
 
       logger.info(
-        `getting heading: ${refContent} for verse ${verseData.number} in ${chap.book.title} ${chap.number}}`,
+        'Get reference %s:%s for book %s',
+        chap.number,
+        verse.number,
+        chap.book.title,
+      );
+
+      logger.debug(
+        'Reference %s:%s content: %s',
+        chap.number,
+        verse.number,
+        refContent,
       );
 
       return [
         {
           content: refContent,
-          verseId: verseData.id,
+          verseId: verse.id,
           chapterId: chap.id,
         },
       ];

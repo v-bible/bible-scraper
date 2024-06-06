@@ -67,7 +67,17 @@ const getHeading = async (
       });
 
       logger.info(
-        `getting heading: ${content} for verse ${verseData.number} in ${chap.book.title} ${chap.number}}`,
+        'Get heading %s:%s for book %s',
+        chap.number,
+        verseData.number,
+        chap.book.title,
+      );
+
+      logger.debug(
+        'Heading %s:%s content: %s',
+        chap.number,
+        verseData.number,
+        content,
       );
 
       return [

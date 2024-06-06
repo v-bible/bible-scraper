@@ -84,7 +84,17 @@ const getVerse = async (
         content = content.replace(reFootnote, '').trim();
 
         logger.info(
-          `verse ${match.groups.verseNum} (${chap.book.title} ${chap.number}): ${content}`,
+          'Get verse %s:%s for book %s',
+          chap.number,
+          match.groups.verseNum,
+          chap.book.title,
+        );
+
+        logger.debug(
+          'Verse %s:%s content: %s',
+          chap.number,
+          match.groups.verseNum,
+          content,
         );
 
         verses = [
@@ -128,8 +138,6 @@ const getVerse = async (
 
   const poetryEl = await page.locator('css=[class="poetry"]').all();
 
-  logger.info(`getting poetry for ${chap.book.title} ${chap.number}`);
-
   await Promise.all(
     poetryEl.map(async (val) => {
       const classAttr = await val
@@ -151,6 +159,13 @@ const getVerse = async (
           isPoetry: true,
         },
       });
+
+      logger.info(
+        'Verse %s:%s is poetry for book %s',
+        chap.number,
+        match.groups.verseNum,
+        chap.book.title,
+      );
     }),
   );
 

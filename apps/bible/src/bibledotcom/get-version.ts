@@ -45,6 +45,8 @@ const getVersionByLang = async (langCode: string) => {
 
     const hasAudio = data.audio;
 
+    const langName = `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`;
+
     const langData = await prisma.versionLanguage.upsert({
       where: {
         code_webOrigin: {
@@ -54,15 +56,17 @@ const getVersionByLang = async (langCode: string) => {
       },
       update: {
         code: data.language.language_tag.toLowerCase(),
-        name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
+        name: langName,
         webOrigin: 'https://www.bible.com',
       },
       create: {
         code: data.language.language_tag.toLowerCase(),
-        name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
+        name: langName,
         webOrigin: 'https://www.bible.com',
       },
     });
+
+    const versionName = `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`;
 
     const version = await prisma.version.upsert({
       where: {
@@ -73,7 +77,7 @@ const getVersionByLang = async (langCode: string) => {
       },
       create: {
         code: data.abbreviation.toUpperCase(),
-        name: `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
+        name: versionName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onlyNT: data.books.every((book: any) => book.canon === 'nt'),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,7 +92,7 @@ const getVersionByLang = async (langCode: string) => {
       },
       update: {
         code: data.abbreviation.toUpperCase(),
-        name: `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
+        name: versionName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onlyNT: data.books.every((book: any) => book.canon === 'nt'),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,10 +101,6 @@ const getVersionByLang = async (langCode: string) => {
         withApocrypha: data.books.some((book: any) => book.canon === 'ap'),
       },
     });
-
-    logger.info(
-      `getting version ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-    );
 
     await prisma.versionFormat.upsert({
       where: {
@@ -124,9 +124,7 @@ const getVersionByLang = async (langCode: string) => {
       },
     });
 
-    logger.info(
-      `getting format: ebook for version: ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-    );
+    logger.info('Get format %s for version %s', 'ebook', versionName);
 
     if (hasAudio) {
       // NOTE: We take the resource name:
@@ -159,9 +157,7 @@ const getVersionByLang = async (langCode: string) => {
         },
       });
 
-      logger.info(
-        `getting format: audio for version: ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-      );
+      logger.info('Get format %s for version %s', 'audio', versionName);
     }
   }
 

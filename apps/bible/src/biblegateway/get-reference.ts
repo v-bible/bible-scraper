@@ -65,7 +65,17 @@ const getReference = async (
       });
 
       logger.info(
-        `getting reference for ${chap.book.title} ${chap.number} ${verse.number} ${refContent}`,
+        'Get reference %s:%s for book %s',
+        chap.number,
+        verse.number,
+        chap.book.title,
+      );
+
+      logger.debug(
+        'Reference %s:%s content: %s',
+        chap.number,
+        verse.number,
+        refContent,
       );
 
       return [

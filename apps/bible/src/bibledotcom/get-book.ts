@@ -22,7 +22,6 @@ const getBook = async (
   const data = await res.json();
 
   for (const bookData of data.books) {
-    logger.info(`getting book ${bookData.human} (${bookData.usfm})`);
     const book = await prisma.book.upsert({
       where: {
         code_versionId: {
@@ -46,9 +45,7 @@ const getBook = async (
         title: bookData.human,
       },
     });
-    logger.info(
-      `getting chapters for book: ${bookData.human} (${bookData.usfm})`,
-    );
+
     for (const chap of bookData.chapters) {
       // NOTE: Might have weird string like: "{toc: true, usfm: "LUK.INTRO1",
       // human: "Ɛkuma nub yi nwɛr a Luk", canonical: false}"
@@ -77,6 +74,8 @@ const getBook = async (
         },
       });
     }
+
+    logger.info('Get chapters for book %s', bookData.human);
   }
 };
 

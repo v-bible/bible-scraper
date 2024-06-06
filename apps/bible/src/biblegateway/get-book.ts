@@ -82,8 +82,6 @@ const getBook = async (
       },
     });
 
-    logger.info(`getting chapters for book: ${bookTitle} (${bookCode})`);
-
     const chapters = await row
       .getByRole('cell')
       .filter({
@@ -124,6 +122,8 @@ const getBook = async (
         },
       });
     }
+
+    logger.info('Get chapters for book %s', bookTitle);
   }
 
   await context.close();

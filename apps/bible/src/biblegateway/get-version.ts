@@ -190,7 +190,7 @@ const getVersion = async () => {
         },
       });
 
-      logger.info(`getting format: ${format.type} for version: ${versionName}`);
+      logger.info('Get format %s for version %s', format.type, versionName);
     }
   }
 
