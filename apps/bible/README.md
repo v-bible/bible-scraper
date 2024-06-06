@@ -36,6 +36,28 @@ Generate Prisma client:
 pnpm prisma:generate
 ```
 
+## Environment Variables
+
+To run this project, you will need to add the following environment variables to
+your `.env` file:
+
+- **App configs:**
+
+  `DB_URL`: Postgres database connection URL.
+
+  `LOG_LEVEL`: Log level.
+
+E.g:
+
+```
+# .env
+DB_URL="postgres://postgres:postgres@localhost:5432/bible"
+LOG_LEVEL=info
+```
+
+You can also check out the file `.env.example` to see all required environment
+variables.
+
 ## Scripts
 
 Scrap bible (from [biblegateway.com](https://www.biblegateway.com/)):

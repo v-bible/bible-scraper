@@ -22,15 +22,16 @@ const getBook = async (
   const data = await res.json();
 
   for (const bookData of data.books) {
-    logger.info(`getting book ${bookData.human} (${bookData.usfm})`);
     const book = await prisma.book.upsert({
       where: {
-        code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        code_versionId: {
+          code: bookData.usfm.toLowerCase(),
+          versionId: targetVersion.versionId,
+        },
       },
       create: {
         code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        canon: bookData.canon,
         title: bookData.human,
         version: {
           connect: {
@@ -40,13 +41,11 @@ const getBook = async (
       },
       update: {
         code: bookData.usfm.toLowerCase(),
-        type: bookData.canon,
+        canon: bookData.canon,
         title: bookData.human,
       },
     });
-    logger.info(
-      `getting chapters for book: ${bookData.human} (${bookData.usfm})`,
-    );
+
     for (const chap of bookData.chapters) {
       // NOTE: Might have weird string like: "{toc: true, usfm: "LUK.INTRO1",
       // human: "Ɛkuma nub yi nwɛr a Luk", canonical: false}"
@@ -62,7 +61,7 @@ const getBook = async (
           number: Number(chap.human),
           // NOTE: Full link is: "/bible/37/GEN.1.CEB", but "/bible/37/GEN.1" or
           // "/bible/37/gen.1.ceb" still can resolved
-          url: `/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
+          url: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
           book: {
             connect: {
               id: book.id,
@@ -71,10 +70,12 @@ const getBook = async (
         },
         update: {
           number: Number(chap.human),
-          url: `/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
+          url: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
         },
       });
     }
+
+    logger.info('Get chapters for book %s', bookData.human);
   }
 };
 

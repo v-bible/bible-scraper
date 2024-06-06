@@ -12,7 +12,7 @@ datasource db {
 
 model Version {
   id            String          @id @default(uuid())
-  code          String          @unique
+  code          String
   name          String
   onlyNT        Boolean         @default(false)
   onlyOT        Boolean         @default(false)
@@ -24,6 +24,7 @@ model Version {
   books         Book[]
   formats       VersionFormat[]
 
+  @@unique([code, languageId])
   @@map("version")
 }
 
@@ -42,63 +43,68 @@ model VersionFormat {
 
 model VersionLanguage {
   id        String    @id @default(uuid())
-  code      String    @unique
+  code      String
   name      String
+  webOrigin String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   versions  Version[]
 
+  @@unique([code, webOrigin])
   @@map("version_language")
 }
 
 model Book {
   id        String        @id @default(uuid())
-  code      String        @unique
+  code      String
   title     String
-  type      String
+  canon     String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   version   Version       @relation(fields: [versionId], references: [id])
   versionId String
   chapters  BookChapter[]
 
+  @@unique([code, versionId])
   @@map("book")
 }
 
 model BookChapter {
-  id        String         @id @default(uuid())
-  number    Int
-  url       String
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  book      Book           @relation(fields: [bookId], references: [id])
-  bookId    String
-  verses    BookVerse[]
-  footnotes BookFootnote[]
-  headings  BookHeading[]
+  id         String          @id @default(uuid())
+  number     Int
+  url        String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  book       Book            @relation(fields: [bookId], references: [id])
+  bookId     String
+  verses     BookVerse[]
+  footnotes  BookFootnote[]
+  headings   BookHeading[]
+  references BookReference[]
 
   @@unique([number, bookId])
   @@map("book_chapter")
 }
 
 model BookVerse {
-  id         String        @id @default(uuid())
+  id         String          @id @default(uuid())
   number     Int
   content    String
   order      Int
-  parNum     Int
-  parIdx     Int
-  isPoetry   Boolean       @default(false)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  chapter    BookChapter   @relation(fields: [chapterId], references: [id])
+  parNumber  Int
+  parIndex   Int
+  isPoetry   Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
   chapterId  String
   footnote   BookFootnote?
   footnoteId String?
   heading    BookHeading?
   headingId  String?
+  references BookReference[]
 
-  @@unique([number, chapterId, order])
+  @@unique([number, order, chapterId])
   @@map("book_verse")
 }
 
@@ -120,6 +126,7 @@ model BookFootnote {
 model BookHeading {
   id        String      @id @default(uuid())
   content   String
+  order     Int
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   verse     BookVerse   @relation(fields: [verseId], references: [id])
@@ -128,4 +135,17 @@ model BookHeading {
   chapterId String
 
   @@map("book_heading")
+}
+
+model BookReference {
+  id        String      @id @default(uuid())
+  content   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  verseId   String
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  chapterId String
+
+  @@map("book_reference")
 }

@@ -26,7 +26,7 @@ const getVerse = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.bible.com${chap.url}`, {
+      await page.goto(chap.url, {
         timeout: 36000, // In milliseconds is 36 seconds
       });
     },
@@ -105,8 +105,27 @@ const getVerse = async (
         if (!content) continue;
 
         logger.info(
-          `verse ${match.groups.verseNum} (${chap.book.title} ${chap.number}): ${content}`,
+          'Get verse %s:%s for book %s',
+          chap.number,
+          match.groups.verseNum,
+          chap.book.title,
         );
+
+        logger.debug(
+          'Verse %s:%s content: %s',
+          chap.number,
+          match.groups.verseNum,
+          content,
+        );
+
+        if (isPoetry) {
+          logger.info(
+            'Verse %s:%s is poetry for book %s',
+            chap.number,
+            match.groups.verseNum,
+            chap.book.title,
+          );
+        }
 
         verses = [
           ...verses,
@@ -134,8 +153,8 @@ const getVerse = async (
         number: val.number,
         content: val.content,
         order: idx,
-        parNum: val.parNum,
-        parIdx: val.parIdx,
+        parNumber: val.parNum,
+        parIndex: val.parIdx,
         chapterId: chap.id,
         isPoetry: val.isPoetry,
       };

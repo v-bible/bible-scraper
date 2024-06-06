@@ -25,7 +25,7 @@ const getFootnote = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.bible.com${chap.url}`, {
+      await page.goto(chap.url, {
         timeout: 36000, // In milliseconds is 36 seconds
       });
     },
@@ -83,8 +83,8 @@ const getFootnote = async (
           const verseData = await prisma.bookVerse.findFirstOrThrow({
             where: {
               number: Number(match.groups?.verseNum),
-              parNum: idx,
-              parIdx: i,
+              parNumber: idx,
+              parIndex: i,
               chapterId: chap.id,
             },
           });
@@ -92,7 +92,17 @@ const getFootnote = async (
           const fnPos = content!.indexOf(fnContent);
 
           logger.info(
-            `getting footnote ${fnContent} for verse ${verseData.number} in ${chap.book.title} ${chap.number}`,
+            'Get footnote %s:%s for book %s',
+            chap.number,
+            verseData.number,
+            chap.book.title,
+          );
+
+          logger.debug(
+            'Footnote %s:%s content: %s',
+            chap.number,
+            verseData.number,
+            fnContent,
           );
 
           await prisma.bookFootnote.upsert({

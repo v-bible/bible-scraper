@@ -45,13 +45,39 @@ const getVersionByLang = async (langCode: string) => {
 
     const hasAudio = data.audio;
 
+    const langName = `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`;
+
+    const langData = await prisma.versionLanguage.upsert({
+      where: {
+        code_webOrigin: {
+          code: data.language.language_tag.toLowerCase(),
+          webOrigin: 'https://www.bible.com',
+        },
+      },
+      update: {
+        code: data.language.language_tag.toLowerCase(),
+        name: langName,
+        webOrigin: 'https://www.bible.com',
+      },
+      create: {
+        code: data.language.language_tag.toLowerCase(),
+        name: langName,
+        webOrigin: 'https://www.bible.com',
+      },
+    });
+
+    const versionName = `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`;
+
     const version = await prisma.version.upsert({
       where: {
-        code: data.abbreviation.toUpperCase(),
+        code_languageId: {
+          code: data.abbreviation.toUpperCase(),
+          languageId: langData.id,
+        },
       },
       create: {
         code: data.abbreviation.toUpperCase(),
-        name: `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
+        name: versionName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onlyNT: data.books.every((book: any) => book.canon === 'nt'),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,20 +85,14 @@ const getVersionByLang = async (langCode: string) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         withApocrypha: data.books.some((book: any) => book.canon === 'ap'),
         language: {
-          connectOrCreate: {
-            where: {
-              code: data.language.language_tag.toLowerCase(),
-            },
-            create: {
-              code: data.language.language_tag.toLowerCase(),
-              name: `${data.language.name} (${data.language.language_tag.toUpperCase()}) - ${data.language.local_name}`,
-            },
+          connect: {
+            id: langData.id,
           },
         },
       },
       update: {
         code: data.abbreviation.toUpperCase(),
-        name: `${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
+        name: versionName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onlyNT: data.books.every((book: any) => book.canon === 'nt'),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,20 +102,16 @@ const getVersionByLang = async (langCode: string) => {
       },
     });
 
-    logger.info(
-      `getting version ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-    );
-
     await prisma.versionFormat.upsert({
       where: {
         type_url: {
           type: 'ebook',
-          url: liHref,
+          url: `https://www.bible.com${liHref}`,
         },
       },
       create: {
         type: 'ebook',
-        url: liHref,
+        url: `https://www.bible.com${liHref}`,
         version: {
           connect: {
             id: version.id,
@@ -104,13 +120,11 @@ const getVersionByLang = async (langCode: string) => {
       },
       update: {
         type: 'ebook',
-        url: liHref,
+        url: `https://www.bible.com${liHref}`,
       },
     });
 
-    logger.info(
-      `getting format: ebook for version: ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-    );
+    logger.info('Get format %s for version %s', 'ebook', versionName);
 
     if (hasAudio) {
       // NOTE: We take the resource name:
@@ -119,7 +133,7 @@ const getVersionByLang = async (langCode: string) => {
       // the base audio link
       const resourceName = liHref.split('/').at(-1);
 
-      const audioHref = `/audio-bible-app-versions/${resourceName}`;
+      const audioHref = `https://www.bible.com/audio-bible-app-versions/${resourceName}`;
 
       await prisma.versionFormat.upsert({
         where: {
@@ -143,9 +157,7 @@ const getVersionByLang = async (langCode: string) => {
         },
       });
 
-      logger.info(
-        `getting format: audio for version: ${data.title} - ${data.local_title} (${data.abbreviation.toUpperCase()})`,
-      );
+      logger.info('Get format %s for version %s', 'audio', versionName);
     }
   }
 

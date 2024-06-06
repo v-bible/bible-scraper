@@ -2,13 +2,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
-const getHeading = async (
+const getReference = async (
   chap: Prisma.BookChapterGetPayload<{
     include: {
       book: true;
@@ -34,45 +34,45 @@ const getHeading = async (
     },
   );
 
-  // NOTE: Heading
+  // NOTE: Reference
   const paragraphs = await page
-    .locator('css=[class*="ChapterContent_s" i]')
+    .locator('css=[class*="ChapterContent_r" i]')
     .all();
 
   // NOTE: Match the chap and verse num in the class string. Ex: "GEN.2.4".
   const reClassVerse = /(?<name>\w+)\.(?<chap>\d+)\.(?<verseNum>\d+)/;
 
-  const headingData = await Promise.all(
+  const refData = await Promise.all(
     paragraphs.map(async (par) => {
       const classAttr = await par.getAttribute('class');
 
       // NOTE: Skip if the class attribute does not contain heading class
-      if (classAttr?.search(/_s.+__/) === -1) {
+      if (classAttr?.search(/_r___/) === -1) {
         return [];
       }
 
-      const heading = await par.textContent();
+      const refContent = await par.textContent();
 
-      if (!heading) return [];
+      if (!refContent) return [];
 
-      // NOTE: A heading always placed before the verse
+      // NOTE: A ref always placed before the verse
       // NOTE: Because every headings have the same class name, so I have to use
-      // "has-text" for the heading text to find the next verse.
+      // "has-text" for the ref text to find the next verse.
       const nextVerse = page
         .locator(
-          `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_p" i]`,
+          `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_p" i]`,
         )
         // NOTE: Most of the time is p, but I have to cover other cases that
         // might be q or m. You can comment this line if you are sure that the
         // next verse is always p.
         .or(
           page.locator(
-            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_q" i]`,
+            `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_q" i]`,
           ),
         )
         .or(
           page.locator(
-            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_m" i]`,
+            `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_m" i]`,
           ),
         )
         .first();
@@ -90,7 +90,7 @@ const getHeading = async (
 
       if (!match?.groups) return [];
 
-      const verseData = await prisma.bookVerse.findFirstOrThrow({
+      const verse = await prisma.bookVerse.findFirstOrThrow({
         where: {
           number: Number(match?.groups!.verseNum),
           // NOTE: Heading always placed before the verse
@@ -100,42 +100,33 @@ const getHeading = async (
       });
 
       logger.info(
-        'Get heading %s:%s for book %s',
+        'Get reference %s:%s for book %s',
         chap.number,
-        verseData.number,
+        verse.number,
         chap.book.title,
       );
 
       logger.debug(
-        'Heading %s:%s content: %s',
+        'Reference %s:%s content: %s',
         chap.number,
-        verseData.number,
-        heading,
+        verse.number,
+        refContent,
       );
 
       return [
         {
-          content: heading,
-          // NOTE: Set 0 for post-processing
-          order: 0,
-          verseId: verseData.id,
+          content: refContent,
+          verseId: verse.id,
           chapterId: chap.id,
         },
       ];
     }),
   );
 
-  const headingDataFlat = headingData.flat();
+  const refDataFlat = refData.flat();
 
-  // NOTE: Increase the order if the verse has multiple headings
-  for (let i = 1; i < headingDataFlat.length; i += 1) {
-    if (headingDataFlat[i]?.verseId === headingDataFlat[i - 1]?.verseId) {
-      headingDataFlat[i]!.order = headingDataFlat[i - 1]!.order + 1;
-    }
-  }
-
-  await prisma.bookHeading.createMany({
-    data: headingDataFlat,
+  await prisma.bookReference.createMany({
+    data: refDataFlat,
     skipDuplicates: true,
   });
 
@@ -143,4 +134,4 @@ const getHeading = async (
   await browser.close();
 };
 
-export { getHeading };
+export { getReference };

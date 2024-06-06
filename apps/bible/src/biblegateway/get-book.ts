@@ -28,7 +28,7 @@ const getBook = async (
 
   await retry(
     async () => {
-      await page.goto(`https://www.biblegateway.com${targetVersion.url}`);
+      await page.goto(targetVersion.url);
     },
     {
       retries: 5,
@@ -60,17 +60,20 @@ const getBook = async (
 
     const book = await prisma.book.upsert({
       where: {
-        code: bookCode,
+        code_versionId: {
+          code: bookCode,
+          versionId,
+        },
       },
       update: {
         code: bookCode,
         title: bookTitle,
-        type: bookType,
+        canon: bookType,
       },
       create: {
         code: bookCode,
         title: bookTitle,
-        type: bookType,
+        canon: bookType,
         version: {
           connect: {
             id: versionId,
@@ -78,8 +81,6 @@ const getBook = async (
         },
       },
     });
-
-    logger.info(`getting chapters for book: ${bookTitle} (${bookCode})`);
 
     const chapters = await row
       .getByRole('cell')
@@ -105,19 +106,24 @@ const getBook = async (
         },
         update: {
           number: +chapterNumber,
-          url: chapterUrl,
+          url: `https://www.biblegateway.com${chapterUrl}`,
         },
         create: {
           number: +chapterNumber,
-          url: chapterUrl,
+          url: `https://www.biblegateway.com${chapterUrl}`,
           book: {
             connect: {
-              code: bookCode,
+              code_versionId: {
+                code: bookCode,
+                versionId,
+              },
             },
           },
         },
       });
     }
+
+    logger.info('Get chapters for book %s', bookTitle);
   }
 
   await context.close();

@@ -42,25 +42,28 @@ const getVersion = async () => {
       langName = await row.locator('css=[data-target]').innerText();
     }
 
-    if (!langCode) {
+    if (!langCode || !langName) {
       continue;
     }
 
-    if (langName) {
-      await prisma.versionLanguage.upsert({
-        where: {
+    const langData = await prisma.versionLanguage.upsert({
+      where: {
+        code_webOrigin: {
           code: langCode,
+          webOrigin: 'https://www.biblegateway.com',
         },
-        update: {
-          code: langCode,
-          name: langName,
-        },
-        create: {
-          code: langCode,
-          name: langName,
-        },
-      });
-    }
+      },
+      update: {
+        code: langCode,
+        name: langName,
+        webOrigin: 'https://www.biblegateway.com',
+      },
+      create: {
+        code: langCode,
+        name: langName,
+        webOrigin: 'https://www.biblegateway.com',
+      },
+    });
 
     const colVersion = row.locator('css=[data-translation]');
 
@@ -82,14 +85,17 @@ const getVersion = async () => {
 
     const version = await prisma.version.upsert({
       where: {
-        code: versionCode,
+        code_languageId: {
+          code: versionCode,
+          languageId: langData.id,
+        },
       },
       update: {
         code: versionCode,
         name: versionName,
         language: {
           connect: {
-            code: langCode,
+            id: langData.id,
           },
         },
         onlyNT,
@@ -101,7 +107,7 @@ const getVersion = async () => {
         name: versionName,
         language: {
           connect: {
-            code: langCode,
+            id: langData.id,
           },
         },
         onlyNT,
@@ -155,30 +161,36 @@ const getVersion = async () => {
           versionId: version.id,
           type_url: {
             type: format.type,
-            url: format.url,
+            url: `https://www.biblegateway.com${format.url}`,
           },
         },
         update: {
           type: format.type,
-          url: format.url,
+          url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
-              code: versionCode,
+              code_languageId: {
+                code: versionCode,
+                languageId: langData.id,
+              },
             },
           },
         },
         create: {
           type: format.type,
-          url: format.url,
+          url: `https://www.biblegateway.com${format.url}`,
           version: {
             connect: {
-              code: versionCode,
+              code_languageId: {
+                code: versionCode,
+                languageId: langData.id,
+              },
             },
           },
         },
       });
 
-      logger.info(`getting format: ${format.type} for version: ${versionName}`);
+      logger.info('Get format %s for version %s', format.type, versionName);
     }
   }
 
