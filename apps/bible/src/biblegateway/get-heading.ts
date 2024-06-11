@@ -41,6 +41,10 @@ const getHeading = async (
 
   // NOTE: Match the chap and verse num in the verse string. Ex: "Gen-2-4".
   const reVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
+  // NOTE: Match the verse number at the beginning of the string. Ex: "1".
+  const reVerseNum = /^\d+/;
+  // NOTE: Match the footnote character in the square brackets. Ex: "[a]".
+  const reFootnote = /\[\w+\]/;
 
   const headingData = await Promise.all(
     headings.map(async (el) => {
@@ -59,11 +63,26 @@ const getHeading = async (
 
       if (!match?.groups) return [];
 
+      // NOTE: Heading maybe stands before a split verse, so we can't assume
+      // that the verse always has the order "0". More works indeed.
+      const nextVerse = page
+        .locator(
+          `h3:has(span[class="${classAttr}" i]:has-text("${content}")) ~ p:has(span[class="${classAttr}" i]) > span`,
+        )
+        .first();
+
+      let nextVerseContent = await nextVerse.textContent();
+
+      // NOTE: Remove verse number in content
+      nextVerseContent = nextVerseContent!.replace(reVerseNum, '').trim();
+
+      // NOTE: Remove footnote
+      nextVerseContent = nextVerseContent.replace(reFootnote, '').trim();
+
       const verseData = await prisma.bookVerse.findFirstOrThrow({
         where: {
           number: Number(match?.groups!.verseNum),
-          // NOTE: Heading always placed before the verse
-          order: 0,
+          content: nextVerseContent,
           chapterId: chap.id,
         },
       });
