@@ -51,13 +51,15 @@ const getFootnote = async (
       const fnLink = fn.getByRole('link');
 
       // NOTE: In case it has a span inside
-      const fnContent = await fn.locator('css=span').first().textContent();
+      let fnContent = await fn.locator('css=span').first().textContent();
 
       const goToInfo = await fnLink.textContent();
 
       if (!goToInfo || !fnContent) {
         return;
       }
+
+      fnContent = fnContent.trim();
 
       const match = goToInfo.match(reFnVerse);
 

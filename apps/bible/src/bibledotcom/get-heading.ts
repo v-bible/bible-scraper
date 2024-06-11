@@ -51,9 +51,11 @@ const getHeading = async (
         return [];
       }
 
-      const heading = await par.textContent();
+      let heading = await par.textContent();
 
       if (!heading) return [];
+
+      heading = heading.trim();
 
       // NOTE: A heading always placed before the verse
       // NOTE: Because every headings have the same class name, so I have to use

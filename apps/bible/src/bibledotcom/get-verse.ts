@@ -99,7 +99,7 @@ const getVerse = async (
           content = content!.replace(fnContent, '');
         }
 
-        // // NOTE: Remove verse number in content
+        // NOTE: Remove verse number in content
         content = content!.replace(reVerseNum, '').trim();
 
         if (!content) continue;

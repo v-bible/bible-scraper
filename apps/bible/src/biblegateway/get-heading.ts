@@ -49,9 +49,11 @@ const getHeading = async (
 
       const classAttr = await spanEl.getAttribute('class');
 
-      const content = await spanEl.textContent();
+      let content = await spanEl.textContent();
 
       if (!classAttr || !content) return [];
+
+      content = content.trim();
 
       const match = classAttr.match(reVerse);
 
