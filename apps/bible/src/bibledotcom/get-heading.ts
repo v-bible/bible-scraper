@@ -41,6 +41,8 @@ const getHeading = async (
 
   // NOTE: Match the chap and verse num in the class string. Ex: "GEN.2.4".
   const reClassVerse = /(?<name>\w+)\.(?<chap>\d+)\.(?<verseNum>\d+)/;
+  // NOTE: Match the verse number at the beginning of the string. Ex: "1".
+  const reVerseNum = /^\d+/;
 
   const headingData = await Promise.all(
     paragraphs.map(async (par) => {
@@ -57,10 +59,9 @@ const getHeading = async (
 
       heading = heading.trim();
 
-      // NOTE: A heading always placed before the verse
       // NOTE: Because every headings have the same class name, so I have to use
       // "has-text" for the heading text to find the next verse.
-      const nextVerse = page
+      const nextPar = page
         .locator(
           `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_p" i]`,
         )
@@ -79,14 +80,54 @@ const getHeading = async (
         )
         .first();
 
-      // NOTE: Only select verse has a label, because a heading usually placed
-      // before the verse
-      const nextVerseData = await nextVerse
-        ?.locator('css=[data-usfm]:has(span[class*="ChapterContent_label" i])')
-        .first()
-        .getAttribute('data-usfm');
+      // NOTE: Heading maybe stands before a split verse, so we can't assume
+      // that the verse always has the order "0". More works indeed.
+      const allNextVerse = await nextPar?.locator('css=[data-usfm]').all();
 
-      if (!nextVerseData) return [];
+      // NOTE: We have to filter out the span that doesn't have the content :(.
+      // Too much work to do.
+      const nextVerseMap = await Promise.all(
+        allNextVerse.map(async (el) => {
+          let s = await el.textContent();
+
+          s = s!.replace(reVerseNum, '').trim();
+
+          const usfm = await el.getAttribute('data-usfm');
+
+          if (!s || !usfm) {
+            return null;
+          }
+
+          return {
+            content: s,
+            usfm,
+          };
+        }),
+      );
+
+      const nextVerse = nextVerseMap.filter((el) => el !== null)[0];
+
+      if (!nextVerse) return [];
+
+      const nextVerseData = nextVerse.usfm;
+
+      let nextVerseContent = nextVerse.content;
+
+      const fnElList = await nextPar
+        .locator('css=[class*="ChapterContent_note" i]')
+        .all();
+
+      for (const fnEl of fnElList) {
+        const fnContent = await fnEl.textContent();
+
+        if (!fnContent) continue;
+
+        // NOTE: Remove footnote from content
+        nextVerseContent = nextVerseContent!.replace(fnContent, '');
+      }
+
+      // NOTE: Remove verse number in content
+      nextVerseContent = nextVerseContent!.replace(reVerseNum, '').trim();
 
       const match = nextVerseData.match(reClassVerse);
 
@@ -95,8 +136,7 @@ const getHeading = async (
       const verseData = await prisma.bookVerse.findFirstOrThrow({
         where: {
           number: Number(match?.groups!.verseNum),
-          // NOTE: Heading always placed before the verse
-          order: 0,
+          content: nextVerseContent,
           chapterId: chap.id,
         },
       });
