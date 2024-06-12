@@ -52,9 +52,11 @@ const getReference = async (
 
       if (!match?.groups) return [];
 
-      const refContent = await el.textContent();
+      let refContent = await el.textContent();
 
       if (!refContent) return [];
+
+      refContent = refContent.trim();
 
       const verse = await prisma.bookVerse.findFirstOrThrow({
         where: {

@@ -51,9 +51,11 @@ const getReference = async (
         return [];
       }
 
-      const refContent = await par.textContent();
+      let refContent = await par.textContent();
 
       if (!refContent) return [];
+
+      refContent = refContent.trim();
 
       // NOTE: A ref always placed before the verse
       // NOTE: Because every headings have the same class name, so I have to use
