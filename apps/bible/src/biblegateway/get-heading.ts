@@ -69,6 +69,12 @@ const getHeading = async (
         .locator(
           `h3:has(span[class="${classAttr}" i]:has-text("${content}")) ~ p:has(span[class="${classAttr}" i]) > span`,
         )
+        .or(
+          page.locator(
+            // NOTE: Poetry case
+            `h3:has(span[class="${classAttr}" i]:has-text("${content}")) ~ div > p:has(span[class="${classAttr}" i]) > span`,
+          ),
+        )
         .first();
 
       let nextVerseContent = await nextVerse.textContent();
