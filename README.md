@@ -8,34 +8,34 @@
 
 <!-- Badges -->
 <p>
-  <a href="https://github.com/DuckyMomo20012/scraping/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/DuckyMomo20012/scraping" alt="contributors" />
+  <a href="https://github.com/v-bible/scraping/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/v-bible/scraping" alt="contributors" />
   </a>
   <a href="">
-    <img src="https://img.shields.io/github/last-commit/DuckyMomo20012/scraping" alt="last update" />
+    <img src="https://img.shields.io/github/last-commit/v-bible/scraping" alt="last update" />
   </a>
-  <a href="https://github.com/DuckyMomo20012/scraping/network/members">
-    <img src="https://img.shields.io/github/forks/DuckyMomo20012/scraping" alt="forks" />
+  <a href="https://github.com/v-bible/scraping/network/members">
+    <img src="https://img.shields.io/github/forks/v-bible/scraping" alt="forks" />
   </a>
-  <a href="https://github.com/DuckyMomo20012/scraping/stargazers">
-    <img src="https://img.shields.io/github/stars/DuckyMomo20012/scraping" alt="stars" />
+  <a href="https://github.com/v-bible/scraping/stargazers">
+    <img src="https://img.shields.io/github/stars/v-bible/scraping" alt="stars" />
   </a>
-  <a href="https://github.com/DuckyMomo20012/scraping/issues/">
-    <img src="https://img.shields.io/github/issues/DuckyMomo20012/scraping" alt="open issues" />
+  <a href="https://github.com/v-bible/scraping/issues/">
+    <img src="https://img.shields.io/github/issues/v-bible/scraping" alt="open issues" />
   </a>
-  <a href="https://github.com/DuckyMomo20012/scraping/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/DuckyMomo20012/scraping.svg" alt="license" />
+  <a href="https://github.com/v-bible/scraping/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/v-bible/scraping.svg" alt="license" />
   </a>
 </p>
 
 <h4>
-    <a href="https://github.com/DuckyMomo20012/scraping/">View Demo</a>
+    <a href="https://github.com/v-bible/scraping/">View Demo</a>
   <span> · </span>
-    <a href="https://github.com/DuckyMomo20012/scraping">Documentation</a>
+    <a href="https://github.com/v-bible/scraping">Documentation</a>
   <span> · </span>
-    <a href="https://github.com/DuckyMomo20012/scraping/issues/">Report Bug</a>
+    <a href="https://github.com/v-bible/scraping/issues/">Report Bug</a>
   <span> · </span>
-    <a href="https://github.com/DuckyMomo20012/scraping/issues/">Request Feature</a>
+    <a href="https://github.com/v-bible/scraping/issues/">Request Feature</a>
   </h4>
 </div>
 
@@ -45,15 +45,46 @@
 
 # :notebook_with_decorative_cover: Table of Contents
 
+- [About the Project](#star2-about-the-project)
+  - [Environment Variables](#key-environment-variables)
 - [Getting Started](#toolbox-getting-started)
   - [Prerequisites](#bangbang-prerequisites)
   - [Run Locally](#running-run-locally)
+- [Usage](#eyes-usage)
 - [Contributing](#wave-contributing)
   - [Code of Conduct](#scroll-code-of-conduct)
 - [FAQ](#grey_question-faq)
 - [License](#warning-license)
 - [Contact](#handshake-contact)
 - [Acknowledgements](#gem-acknowledgements)
+
+<!-- About the Project -->
+
+## :star2: About the Project
+
+<!-- Env Variables -->
+
+### :key: Environment Variables
+
+To run this project, you will need to add the following environment variables to
+your `.env` file:
+
+- **App configs:**
+
+  `DB_URL`: Postgres database connection URL.
+
+  `LOG_LEVEL`: Log level.
+
+E.g:
+
+```
+# .env
+DB_URL="postgres://postgres:postgres@localhost:5432/bible"
+LOG_LEVEL=info
+```
+
+You can also check out the file `.env.example` to see all required environment
+variables.
 
 <!-- Getting Started -->
 
@@ -67,12 +98,6 @@ This project uses [pnpm](https://pnpm.io/) as package manager:
 
 ```bash
 npm install --global pnpm
-```
-
-This project uses [turborepo](https://turbo.build/repo) as monorepo manager:
-
-```bash
-npm install turbo --global
 ```
 
 Playwright:
@@ -90,7 +115,7 @@ npx playwright install
 Clone the project:
 
 ```bash
-git clone https://github.com/DuckyMomo20012/scraping.git
+git clone https://github.com/v-bible/scraping.git
 ```
 
 Go to the project directory:
@@ -105,12 +130,55 @@ Install dependencies:
 pnpm install
 ```
 
+Setup Postgres database using Docker compose:
+
+```bash
+docker-compose up -d
+```
+
+Migrate the database:
+
+```bash
+pnpm prisma:migrate
+```
+
+Generate Prisma client:
+
+```bash
+pnpm prisma:generate
+```
+
+<!-- Usage -->
+
+## :eyes: Usage
+
+Scrap bible (from [biblegateway.com](https://www.biblegateway.com/)):
+
+```bash
+npx tsx ./src/biblegateway/main.ts
+```
+
+Scrap bible (from [bible.com](https://www.bible.com/)):
+
+```bash
+npx tsx ./src/bibledotcom/main.ts
+```
+
+> [!NOTE]
+> To prevent the error `net::ERR_NETWORK_CHANGED`, you can temporarily disable
+> the ipv6 on your network adapter:
+>
+> ```bash
+> sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+> sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+> ```
+
 <!-- Contributing -->
 
 ## :wave: Contributing
 
-<a href="https://github.com/DuckyMomo20012/scraping/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=DuckyMomo20012/scraping" />
+<a href="https://github.com/v-bible/scraping/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=v-bible/scraping" />
 </a>
 
 Contributions are always welcome!
@@ -119,7 +187,7 @@ Contributions are always welcome!
 
 ### :scroll: Code of Conduct
 
-Please read the [Code of Conduct](https://github.com/DuckyMomo20012/scraping/blob/main/CODE_OF_CONDUCT.md).
+Please read the [Code of Conduct](https://github.com/v-bible/scraping/blob/main/CODE_OF_CONDUCT.md).
 
 <!-- FAQ -->
 
@@ -138,7 +206,7 @@ Please read the [Code of Conduct](https://github.com/DuckyMomo20012/scraping/blo
 ## :warning: License
 
 Distributed under MIT license. See
-[LICENSE](https://github.com/DuckyMomo20012/scraping/blob/main/LICENSE)
+[LICENSE](https://github.com/v-bible/scraping/blob/main/LICENSE)
 for more information.
 
 <!-- Contact -->
@@ -148,7 +216,7 @@ for more information.
 Duong Vinh - [@duckymomo20012](https://twitter.com/duckymomo20012) -
 tienvinh.duong4@gmail.com
 
-Project Link: [https://github.com/DuckyMomo20012/scraping](https://github.com/DuckyMomo20012/scraping).
+Project Link: [https://github.com/v-bible/scraping](https://github.com/v-bible/scraping).
 
 <!-- Acknowledgments -->
 

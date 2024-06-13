@@ -66,6 +66,3 @@ testem.log
 /test-results/
 /playwright-report/
 /playwright/.cache/
-
-# Turbo
-.turbo

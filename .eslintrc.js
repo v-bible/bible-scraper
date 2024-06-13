@@ -20,8 +20,7 @@ module.exports = {
     sourceType: 'module',
     tsconfigRootDir: __dirname,
     project: [
-      './apps/*/tsconfig.json',
-      './packages/*/tsconfig.json',
+      './tsconfig.json',
       './tsconfig.node.json', // Include .eslintrc.js file
     ],
   },
