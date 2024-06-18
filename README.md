@@ -1,9 +1,9 @@
 <div align="center">
 
-  <h1>Scraping</h1>
+  <h1>Bible Scraper</h1>
 
   <p>
-    Scraping stuffs
+    Scrape Bible
   </p>
 
 <!-- Badges -->
@@ -46,6 +46,7 @@
 # :notebook_with_decorative_cover: Table of Contents
 
 - [About the Project](#star2-about-the-project)
+  - [Features](#dart-features)
   - [Environment Variables](#key-environment-variables)
 - [Getting Started](#toolbox-getting-started)
   - [Prerequisites](#bangbang-prerequisites)
@@ -61,6 +62,15 @@
 <!-- About the Project -->
 
 ## :star2: About the Project
+
+<!-- Features -->
+
+### :dart: Features
+
+- Scrape bible from [biblegateway.com](https://www.biblegateway.com/) and
+  [bible.com](https://www.bible.com/).
+- Progress logging.
+- Save to Postgres database.
 
 <!-- Env Variables -->
 
@@ -152,13 +162,13 @@ pnpm prisma:generate
 
 ## :eyes: Usage
 
-Scrap bible (from [biblegateway.com](https://www.biblegateway.com/)):
+Scrape bible (from [biblegateway.com](https://www.biblegateway.com/)):
 
 ```bash
 npx tsx ./src/biblegateway/main.ts
 ```
 
-Scrap bible (from [bible.com](https://www.bible.com/)):
+Scrape bible (from [bible.com](https://www.bible.com/)):
 
 ```bash
 npx tsx ./src/bibledotcom/main.ts
