@@ -33,7 +33,7 @@ import prisma from '@/prisma/prisma';
 
   await getBook({
     type: versionFormat.type,
-    url: versionFormat.url,
+    ref: versionFormat.ref,
   });
 
   const books = await prisma.book.findMany({

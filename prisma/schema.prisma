@@ -31,13 +31,13 @@ model Version {
 model VersionFormat {
   id        String   @id @default(uuid())
   type      String
-  url       String
+  ref       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   version   Version  @relation(fields: [versionId], references: [id])
   versionId String
 
-  @@unique([type, url])
+  @@unique([type, ref])
   @@map("version_format")
 }
 
@@ -72,7 +72,7 @@ model Book {
 model BookChapter {
   id         String          @id @default(uuid())
   number     Int
-  url        String
+  ref        String
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
   book       Book            @relation(fields: [bookId], references: [id])

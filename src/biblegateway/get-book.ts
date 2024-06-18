@@ -9,7 +9,7 @@ import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 const getBook = async (
-  targetVersion: Required<Prisma.VersionFormatTypeUrlCompoundUniqueInput>,
+  targetVersion: Required<Prisma.VersionFormatTypeRefCompoundUniqueInput>,
 ) => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
@@ -20,7 +20,7 @@ const getBook = async (
   await blocker.enableBlockingInPage(page);
 
   const { versionId } = await prisma.versionFormat.findUniqueOrThrow({
-    where: { type_url: targetVersion },
+    where: { type_ref: targetVersion },
     select: {
       versionId: true,
     },
@@ -28,7 +28,7 @@ const getBook = async (
 
   await retry(
     async () => {
-      await page.goto(targetVersion.url);
+      await page.goto(targetVersion.ref);
     },
     {
       retries: 5,
@@ -91,10 +91,10 @@ const getBook = async (
       .all();
 
     for (const chapter of chapters) {
-      const chapterUrl = await chapter.getAttribute('href');
+      const chapterRef = await chapter.getAttribute('href');
       const chapterNumber = await chapter.innerText();
 
-      if (!chapterUrl || !chapterNumber) continue;
+      if (!chapterRef || !chapterNumber) continue;
 
       await prisma.bookChapter.upsert({
         where: {
@@ -106,11 +106,11 @@ const getBook = async (
         },
         update: {
           number: +chapterNumber,
-          url: `https://www.biblegateway.com${chapterUrl}`,
+          ref: `https://www.biblegateway.com${chapterRef}`,
         },
         create: {
           number: +chapterNumber,
-          url: `https://www.biblegateway.com${chapterUrl}`,
+          ref: `https://www.biblegateway.com${chapterRef}`,
           book: {
             connect: {
               code_versionId: {

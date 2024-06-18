@@ -118,16 +118,16 @@ const getVersion = async () => {
 
     const formats: {
       type: string;
-      url: string;
+      ref: string;
     }[] = [];
 
     if ((await colVersion.getByRole('link').count()) > 0) {
-      const bookUrl = await colVersion.getByRole('link').getAttribute('href');
+      const bookRef = await colVersion.getByRole('link').getAttribute('href');
 
-      if (bookUrl) {
+      if (bookRef) {
         formats.push({
           type: 'ebook',
-          url: bookUrl,
+          ref: bookRef,
         });
       }
     }
@@ -136,7 +136,7 @@ const getVersion = async () => {
       versionName.toLowerCase() !== colFormatText &&
       (await colFormat.getByRole('link').count()) > 0
     ) {
-      const url = await colFormat.getByRole('link').getAttribute('href');
+      const ref = await colFormat.getByRole('link').getAttribute('href');
       let type = null;
 
       if (colFormatText?.includes('audio')) {
@@ -147,10 +147,10 @@ const getVersion = async () => {
         type = 'other';
       }
 
-      if (url) {
+      if (ref) {
         formats.push({
           type,
-          url,
+          ref,
         });
       }
     }
@@ -159,14 +159,14 @@ const getVersion = async () => {
       await prisma.versionFormat.upsert({
         where: {
           versionId: version.id,
-          type_url: {
+          type_ref: {
             type: format.type,
-            url: `https://www.biblegateway.com${format.url}`,
+            ref: `https://www.biblegateway.com${format.ref}`,
           },
         },
         update: {
           type: format.type,
-          url: `https://www.biblegateway.com${format.url}`,
+          ref: `https://www.biblegateway.com${format.ref}`,
           version: {
             connect: {
               code_languageId: {
@@ -178,7 +178,7 @@ const getVersion = async () => {
         },
         create: {
           type: format.type,
-          url: `https://www.biblegateway.com${format.url}`,
+          ref: `https://www.biblegateway.com${format.ref}`,
           version: {
             connect: {
               code_languageId: {
