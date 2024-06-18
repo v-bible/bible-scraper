@@ -26,7 +26,7 @@ const getVerse = async (
 
   await retry(
     async () => {
-      await page.goto(chap.url, {
+      await page.goto(chap.ref, {
         timeout: 36000, // In milliseconds is 36 seconds
       });
     },

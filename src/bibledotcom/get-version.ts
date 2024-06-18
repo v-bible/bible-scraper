@@ -104,14 +104,14 @@ const getVersionByLang = async (langCode: string) => {
 
     await prisma.versionFormat.upsert({
       where: {
-        type_url: {
+        type_ref: {
           type: 'ebook',
-          url: `https://www.bible.com${liHref}`,
+          ref: `https://www.bible.com${liHref}`,
         },
       },
       create: {
         type: 'ebook',
-        url: `https://www.bible.com${liHref}`,
+        ref: `https://www.bible.com${liHref}`,
         version: {
           connect: {
             id: version.id,
@@ -120,7 +120,7 @@ const getVersionByLang = async (langCode: string) => {
       },
       update: {
         type: 'ebook',
-        url: `https://www.bible.com${liHref}`,
+        ref: `https://www.bible.com${liHref}`,
       },
     });
 
@@ -137,14 +137,14 @@ const getVersionByLang = async (langCode: string) => {
 
       await prisma.versionFormat.upsert({
         where: {
-          type_url: {
+          type_ref: {
             type: 'audio',
-            url: audioHref,
+            ref: audioHref,
           },
         },
         create: {
           type: 'audio',
-          url: audioHref,
+          ref: audioHref,
           version: {
             connect: {
               id: version.id,
@@ -153,7 +153,7 @@ const getVersionByLang = async (langCode: string) => {
         },
         update: {
           type: 'audio',
-          url: audioHref,
+          ref: audioHref,
         },
       });
 

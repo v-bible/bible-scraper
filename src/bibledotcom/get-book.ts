@@ -14,7 +14,7 @@ const getBook = async (
 ) => {
   const reBookId = /\/(?<bookId>\d+)/;
 
-  const match = targetVersion.url.match(reBookId);
+  const match = targetVersion.ref.match(reBookId);
 
   const bookId = match?.groups!.bookId;
 
@@ -61,7 +61,7 @@ const getBook = async (
           number: Number(chap.human),
           // NOTE: Full link is: "/bible/37/GEN.1.CEB", but "/bible/37/GEN.1" or
           // "/bible/37/gen.1.ceb" still can resolved
-          url: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
+          ref: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
           book: {
             connect: {
               id: book.id,
@@ -70,7 +70,7 @@ const getBook = async (
         },
         update: {
           number: Number(chap.human),
-          url: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
+          ref: `https://www.bible.com/bible/${bookId}/${chap.usfm}.${targetVersion.version.code}`,
         },
       });
     }
