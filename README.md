@@ -8,34 +8,34 @@
 
 <!-- Badges -->
 <p>
-  <a href="https://github.com/v-bible/scraping/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/v-bible/scraping" alt="contributors" />
+  <a href="https://github.com/v-bible/bible-scraper/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/v-bible/bible-scraper" alt="contributors" />
   </a>
   <a href="">
-    <img src="https://img.shields.io/github/last-commit/v-bible/scraping" alt="last update" />
+    <img src="https://img.shields.io/github/last-commit/v-bible/bible-scraper" alt="last update" />
   </a>
-  <a href="https://github.com/v-bible/scraping/network/members">
-    <img src="https://img.shields.io/github/forks/v-bible/scraping" alt="forks" />
+  <a href="https://github.com/v-bible/bible-scraper/network/members">
+    <img src="https://img.shields.io/github/forks/v-bible/bible-scraper" alt="forks" />
   </a>
-  <a href="https://github.com/v-bible/scraping/stargazers">
-    <img src="https://img.shields.io/github/stars/v-bible/scraping" alt="stars" />
+  <a href="https://github.com/v-bible/bible-scraper/stargazers">
+    <img src="https://img.shields.io/github/stars/v-bible/bible-scraper" alt="stars" />
   </a>
-  <a href="https://github.com/v-bible/scraping/issues/">
-    <img src="https://img.shields.io/github/issues/v-bible/scraping" alt="open issues" />
+  <a href="https://github.com/v-bible/bible-scraper/issues/">
+    <img src="https://img.shields.io/github/issues/v-bible/bible-scraper" alt="open issues" />
   </a>
-  <a href="https://github.com/v-bible/scraping/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/v-bible/scraping.svg" alt="license" />
+  <a href="https://github.com/v-bible/bible-scraper/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/v-bible/bible-scraper.svg" alt="license" />
   </a>
 </p>
 
 <h4>
-    <a href="https://github.com/v-bible/scraping/">View Demo</a>
+    <a href="https://github.com/v-bible/bible-scraper/">View Demo</a>
   <span> · </span>
-    <a href="https://github.com/v-bible/scraping">Documentation</a>
+    <a href="https://github.com/v-bible/bible-scraper">Documentation</a>
   <span> · </span>
-    <a href="https://github.com/v-bible/scraping/issues/">Report Bug</a>
+    <a href="https://github.com/v-bible/bible-scraper/issues/">Report Bug</a>
   <span> · </span>
-    <a href="https://github.com/v-bible/scraping/issues/">Request Feature</a>
+    <a href="https://github.com/v-bible/bible-scraper/issues/">Request Feature</a>
   </h4>
 </div>
 
@@ -125,13 +125,13 @@ npx playwright install
 Clone the project:
 
 ```bash
-git clone https://github.com/v-bible/scraping.git
+git clone https://github.com/v-bible/bible-scraper.git
 ```
 
 Go to the project directory:
 
 ```bash
-cd scraping
+cd bible-scraper
 ```
 
 Install dependencies:
@@ -162,6 +162,15 @@ pnpm prisma:generate
 
 ## :eyes: Usage
 
+> [!NOTE]
+> To prevent the error `net::ERR_NETWORK_CHANGED`, you can temporarily disable
+> the ipv6 on your network adapter:
+>
+> ```bash
+> sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+> sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+> ```
+
 Scrape bible (from [biblegateway.com](https://www.biblegateway.com/)):
 
 ```bash
@@ -175,20 +184,17 @@ npx tsx ./src/bibledotcom/main.ts
 ```
 
 > [!NOTE]
-> To prevent the error `net::ERR_NETWORK_CHANGED`, you can temporarily disable
-> the ipv6 on your network adapter:
->
-> ```bash
-> sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-> sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-> ```
+> For the `bibledotcom` script, it doesn't scrape the **local** version code and
+> title, which may vary for different languages. For example, in Vietnamese
+> language, version `"VCB"` has title `"Vietnamese Contemporary Bible"`, but the
+> local code is `"KTHD"` and title is `"Kinh Thánh Hiện Đại"`.
 
 <!-- Contributing -->
 
 ## :wave: Contributing
 
-<a href="https://github.com/v-bible/scraping/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=v-bible/scraping" />
+<a href="https://github.com/v-bible/bible-scraper/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=v-bible/bible-scraper" />
 </a>
 
 Contributions are always welcome!
@@ -197,7 +203,7 @@ Contributions are always welcome!
 
 ### :scroll: Code of Conduct
 
-Please read the [Code of Conduct](https://github.com/v-bible/scraping/blob/main/CODE_OF_CONDUCT.md).
+Please read the [Code of Conduct](https://github.com/v-bible/bible-scraper/blob/main/CODE_OF_CONDUCT.md).
 
 <!-- FAQ -->
 
@@ -216,7 +222,7 @@ Please read the [Code of Conduct](https://github.com/v-bible/scraping/blob/main/
 ## :warning: License
 
 Distributed under MIT license. See
-[LICENSE](https://github.com/v-bible/scraping/blob/main/LICENSE)
+[LICENSE](https://github.com/v-bible/bible-scraper/blob/main/LICENSE)
 for more information.
 
 <!-- Contact -->
@@ -226,7 +232,7 @@ for more information.
 Duong Vinh - [@duckymomo20012](https://twitter.com/duckymomo20012) -
 tienvinh.duong4@gmail.com
 
-Project Link: [https://github.com/v-bible/scraping](https://github.com/v-bible/scraping).
+Project Link: [https://github.com/v-bible/bible-scraper](https://github.com/v-bible/bible-scraper).
 
 <!-- Acknowledgments -->
 
