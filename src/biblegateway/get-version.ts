@@ -34,9 +34,12 @@ const getVersion = async () => {
   // NOTE: The versionCode is the part inside the parentheses
   const reVersionCode = /\(([\w|-]+)\)/;
 
+  // NOTE: The first row will store the langName, for next rows which don't have
+  // info about the langName, we will use the langName from the first row.
+  let langName: string | null = null;
+
   for (const row of versions) {
     const langCode = await row.getAttribute('data-language');
-    let langName: string | null = null;
 
     if ((await row.locator('css=[data-target]').count()) > 0) {
       langName = await row.locator('css=[data-target]').innerText();
