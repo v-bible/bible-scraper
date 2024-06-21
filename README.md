@@ -184,10 +184,9 @@ npx tsx ./src/bibledotcom/main.ts
 ```
 
 > [!NOTE]
-> For the `bibledotcom` script, it doesn't scrape the **local** version code and
-> title, which may vary for different languages. For example, in Vietnamese
-> language, version `"VCB"` has title `"Vietnamese Contemporary Bible"`, but the
-> local code is `"KTHD"` and title is `"Kinh Thánh Hiện Đại"`.
+> For the `bible.com` script, it doesn't use the **local** version code, which
+> may vary for different languages. For example, in Vietnamese language, version
+> `"VCB"` has local code is `"KTHD"`.
 
 <!-- Contributing -->
 
