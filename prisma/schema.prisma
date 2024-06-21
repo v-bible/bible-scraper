@@ -149,3 +149,10 @@ model BookReference {
 
   @@map("book_reference")
 }
+
+model SchemaMigrations {
+  version BigInt  @id
+  dirty   Boolean
+
+  @@map("schema_migrations")
+}
