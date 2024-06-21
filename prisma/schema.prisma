@@ -17,11 +17,11 @@ model Version {
   onlyNT        Boolean         @default(false)
   onlyOT        Boolean         @default(false)
   withApocrypha Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  language      VersionLanguage @relation(fields: [languageId], references: [id])
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
   languageId    String
   books         Book[]
+  language      VersionLanguage @relation(fields: [languageId], references: [id])
   formats       VersionFormat[]
 
   @@unique([code, languageId])
@@ -32,10 +32,10 @@ model VersionFormat {
   id        String   @id @default(uuid())
   type      String
   ref       String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Version  @relation(fields: [versionId], references: [id])
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   versionId String
+  version   Version  @relation(fields: [versionId], references: [id])
 
   @@unique([type, ref])
   @@map("version_format")
@@ -46,8 +46,8 @@ model VersionLanguage {
   code      String
   name      String
   webOrigin String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
   versions  Version[]
 
   @@unique([code, webOrigin])
@@ -59,10 +59,10 @@ model Book {
   code      String
   title     String
   canon     String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  version   Version       @relation(fields: [versionId], references: [id])
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
   versionId String
+  version   Version       @relation(fields: [versionId], references: [id])
   chapters  BookChapter[]
 
   @@unique([code, versionId])
@@ -73,14 +73,14 @@ model BookChapter {
   id         String          @id @default(uuid())
   number     Int
   ref        String
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  book       Book            @relation(fields: [bookId], references: [id])
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @updatedAt @db.Timestamptz(3)
   bookId     String
-  verses     BookVerse[]
+  book       Book            @relation(fields: [bookId], references: [id])
   footnotes  BookFootnote[]
   headings   BookHeading[]
   references BookReference[]
+  verses     BookVerse[]
 
   @@unique([number, bookId])
   @@map("book_chapter")
@@ -94,15 +94,15 @@ model BookVerse {
   parNumber  Int
   parIndex   Int
   isPoetry   Boolean         @default(false)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @updatedAt @db.Timestamptz(3)
   chapterId  String
-  footnote   BookFootnote?
   footnoteId String?
-  heading    BookHeading?
   headingId  String?
+  footnote   BookFootnote?
+  heading    BookHeading?
   references BookReference[]
+  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
 
   @@unique([number, order, chapterId])
   @@map("book_verse")
@@ -113,12 +113,12 @@ model BookFootnote {
   content   String
   position  Int
   order     Int
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
   verseId   String      @unique
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
   chapterId String
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
 
   @@map("book_footnote")
 }
@@ -127,12 +127,12 @@ model BookHeading {
   id        String      @id @default(uuid())
   content   String
   order     Int
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
   verseId   String      @unique
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
   chapterId String
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
 
   @@map("book_heading")
 }
@@ -140,12 +140,12 @@ model BookHeading {
 model BookReference {
   id        String      @id @default(uuid())
   content   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
   verseId   String
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
   chapterId String
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  verse     BookVerse   @relation(fields: [verseId], references: [id])
 
   @@map("book_reference")
 }
