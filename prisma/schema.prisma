@@ -18,7 +18,7 @@ model Version {
   onlyOT        Boolean         @default(false)
   withApocrypha Boolean         @default(false)
   createdAt     DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
+  updatedAt     DateTime        @default(now()) @db.Timestamptz(3)
   languageId    String
   books         Book[]
   language      VersionLanguage @relation(fields: [languageId], references: [id])
@@ -33,7 +33,7 @@ model VersionFormat {
   type      String
   ref       String
   createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @db.Timestamptz(3)
   versionId String
   version   Version  @relation(fields: [versionId], references: [id])
 
@@ -47,7 +47,7 @@ model VersionLanguage {
   name      String
   webOrigin String
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime  @default(now()) @db.Timestamptz(3)
   versions  Version[]
 
   @@unique([code, webOrigin])
@@ -60,7 +60,7 @@ model Book {
   title     String
   canon     String
   createdAt DateTime      @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime      @default(now()) @db.Timestamptz(3)
   versionId String
   version   Version       @relation(fields: [versionId], references: [id])
   chapters  BookChapter[]
@@ -74,7 +74,7 @@ model BookChapter {
   number     Int
   ref        String
   createdAt  DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime        @updatedAt @db.Timestamptz(3)
+  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
   bookId     String
   book       Book            @relation(fields: [bookId], references: [id])
   footnotes  BookFootnote[]
@@ -95,7 +95,7 @@ model BookVerse {
   parIndex   Int
   isPoetry   Boolean         @default(false)
   createdAt  DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime        @updatedAt @db.Timestamptz(3)
+  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
   chapterId  String
   footnoteId String?
   headingId  String?
@@ -114,7 +114,7 @@ model BookFootnote {
   position  Int
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
   verseId   String      @unique
   chapterId String
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
@@ -128,7 +128,7 @@ model BookHeading {
   content   String
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
   verseId   String      @unique
   chapterId String
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
@@ -141,7 +141,7 @@ model BookReference {
   id        String      @id @default(uuid())
   content   String
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
+  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
   verseId   String
   chapterId String
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
