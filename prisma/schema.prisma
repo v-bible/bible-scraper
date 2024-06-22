@@ -97,10 +97,8 @@ model BookVerse {
   createdAt  DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
   chapterId  String
-  footnoteId String?
-  headingId  String?
-  footnote   BookFootnote?
-  heading    BookHeading?
+  footnotes  BookFootnote[]
+  headings   BookHeading[]
   references BookReference[]
   chapter    BookChapter     @relation(fields: [chapterId], references: [id])
 
@@ -115,11 +113,12 @@ model BookFootnote {
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  verseId   String      @unique
+  verseId   String
   chapterId String
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
   verse     BookVerse   @relation(fields: [verseId], references: [id])
 
+  @@unique([order, verseId])
   @@map("book_footnote")
 }
 
@@ -129,17 +128,19 @@ model BookHeading {
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  verseId   String      @unique
+  verseId   String
   chapterId String
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
   verse     BookVerse   @relation(fields: [verseId], references: [id])
 
+  @@unique([order, verseId])
   @@map("book_heading")
 }
 
 model BookReference {
   id        String      @id @default(uuid())
   content   String
+  order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt DateTime    @default(now()) @db.Timestamptz(3)
   verseId   String
@@ -147,6 +148,7 @@ model BookReference {
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
   verse     BookVerse   @relation(fields: [verseId], references: [id])
 
+  @@unique([order, verseId])
   @@map("book_reference")
 }
 
