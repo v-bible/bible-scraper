@@ -46,7 +46,7 @@ const getReference = async (
     paragraphs.map(async (par) => {
       const classAttr = await par.getAttribute('class');
 
-      // NOTE: Skip if the class attribute does not contain heading class
+      // NOTE: Skip if the class attribute does not contain ref class
       if (classAttr?.search(/_r___/) === -1) {
         return [];
       }
@@ -57,32 +57,18 @@ const getReference = async (
 
       refContent = refContent.trim();
 
-      // NOTE: A ref always placed before the verse
-      // NOTE: Because every headings have the same class name, so I have to use
-      // "has-text" for the ref text to find the next verse.
-      const nextVerse = page
-        .locator(
-          `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_p" i]`,
-        )
-        // NOTE: Most of the time is p, but I have to cover other cases that
-        // might be q or m. You can comment this line if you are sure that the
-        // next verse is always p.
+      const nextVerse = par
+        .locator(`xpath=/following-sibling::div[contains(@class, '_p')]`)
         .or(
-          page.locator(
-            `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_q" i]`,
-          ),
+          par.locator(`xpath=/following-sibling::div[contains(@class, '_q')]`),
         )
         .or(
-          page.locator(
-            `div[class*="${classAttr}" i]:has-text("${refContent}") ~ div[class*="ChapterContent_m" i]`,
-          ),
+          par.locator(`xpath=/following-sibling::div[contains(@class, '_m')]`),
         )
         .first();
 
-      // NOTE: Only select verse has a label, because a heading usually placed
-      // before the verse
       const nextVerseData = await nextVerse
-        ?.locator('css=[data-usfm]:has(span[class*="ChapterContent_label" i])')
+        .locator('xpath=span[not(normalize-space()="")]')
         .first()
         .getAttribute('data-usfm');
 
@@ -95,7 +81,7 @@ const getReference = async (
       const verse = await prisma.bookVerse.findFirstOrThrow({
         where: {
           number: Number(match?.groups!.verseNum),
-          // NOTE: Heading always placed before the verse
+          // NOTE: Ref always placed before the verse
           order: 0,
           chapterId: chap.id,
         },
