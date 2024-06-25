@@ -48,6 +48,14 @@ const getFootnote = async (
 
   await Promise.all(
     footnotes.map(async (fn, fnIdx) => {
+      const fnIdAttr = await fn.getAttribute('id');
+
+      if (!fnIdAttr) {
+        return;
+      }
+
+      const fnChar = fnIdAttr.at(-1);
+
       const fnLink = fn.getByRole('link');
 
       // NOTE: In case it has a span inside
@@ -78,6 +86,12 @@ const getFootnote = async (
 
           // NOTE: Remove verse number in content
           content = content!.replace(reVerseNum, '').trim();
+
+          // NOTE: Remove other footnotes, except the current footnote
+          content = content!.replaceAll(
+            new RegExp(String.raw`\[[^${fnChar}]{0,1}\]`, 'g'),
+            '',
+          );
 
           const verseData = await prisma.bookVerse.findFirstOrThrow({
             where: {

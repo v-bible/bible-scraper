@@ -59,59 +59,25 @@ const getHeading = async (
 
       heading = heading.trim();
 
-      // NOTE: Because every headings have the same class name, so I have to use
-      // "has-text" for the heading text to find the next verse.
-      const nextPar = page
-        .locator(
-          `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_p" i]`,
-        )
-        // NOTE: Most of the time is p, but I have to cover other cases that
-        // might be q or m. You can comment this line if you are sure that the
-        // next verse is always p.
+      const nextPar = par
+        .locator(`xpath=/following-sibling::div[contains(@class, '_p')]`)
         .or(
-          page.locator(
-            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_q" i]`,
-          ),
+          par.locator(`xpath=/following-sibling::div[contains(@class, '_q')]`),
         )
         .or(
-          page.locator(
-            `div[class*="${classAttr}" i]:has-text("${heading}") ~ div[class*="ChapterContent_m" i]`,
-          ),
+          par.locator(`xpath=/following-sibling::div[contains(@class, '_m')]`),
         )
         .first();
 
-      // NOTE: Heading maybe stands before a split verse, so we can't assume
-      // that the verse always has the order "0". More works indeed.
-      const allNextVerse = await nextPar?.locator('css=[data-usfm]').all();
+      const nextVerse = nextPar
+        .locator('xpath=span[not(normalize-space()="")]')
+        .first();
 
-      // NOTE: We have to filter out the span that doesn't have the content :(.
-      // Too much work to do.
-      const nextVerseMap = await Promise.all(
-        allNextVerse.map(async (el) => {
-          let s = await el.textContent();
+      const nextVerseData = await nextVerse.getAttribute('data-usfm');
 
-          s = s!.replace(reVerseNum, '').trim();
+      let nextVerseContent = await nextVerse.textContent();
 
-          const usfm = await el.getAttribute('data-usfm');
-
-          if (!s || !usfm) {
-            return null;
-          }
-
-          return {
-            content: s,
-            usfm,
-          };
-        }),
-      );
-
-      const nextVerse = nextVerseMap.filter((el) => el !== null)[0];
-
-      if (!nextVerse) return [];
-
-      const nextVerseData = nextVerse.usfm;
-
-      let nextVerseContent = nextVerse.content;
+      if (!nextVerseData || !nextVerseContent) return [];
 
       const fnElList = await nextPar
         .locator('css=[class*="ChapterContent_note" i]')
@@ -123,11 +89,11 @@ const getHeading = async (
         if (!fnContent) continue;
 
         // NOTE: Remove footnote from content
-        nextVerseContent = nextVerseContent!.replace(fnContent, '');
+        nextVerseContent = nextVerseContent.replace(fnContent, '');
       }
 
       // NOTE: Remove verse number in content
-      nextVerseContent = nextVerseContent!.replace(reVerseNum, '').trim();
+      nextVerseContent = nextVerseContent.replace(reVerseNum, '').trim();
 
       const match = nextVerseData.match(reClassVerse);
 

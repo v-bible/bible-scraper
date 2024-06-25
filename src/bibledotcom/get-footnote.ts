@@ -60,13 +60,11 @@ const getFootnote = async (
 
         const usfmData = await verseEl.getAttribute('data-usfm');
 
-        if (!usfmData) continue;
+        if (!usfmData) return;
 
         const match = usfmData.match(reClassVerse);
 
-        if (!match?.groups) continue;
-
-        const content = await verseEl.textContent();
+        if (!match?.groups) return;
 
         const fnElList = await verseEl
           .locator('css=[class*="ChapterContent_note" i]')
@@ -75,7 +73,11 @@ const getFootnote = async (
         for (const fnEl of fnElList) {
           let fnContent = await fnEl.textContent();
 
-          if (!fnContent) continue;
+          const prevText = await fnEl
+            .locator('xpath=/preceding-sibling::span[1]')
+            .textContent();
+
+          if (!fnContent || !prevText) return;
 
           // NOTE: Remove the '#' from the beginning of the string and trim it
           fnContent = fnContent.replace('#', '').trim();
@@ -89,7 +91,10 @@ const getFootnote = async (
             },
           });
 
-          const fnPos = content!.indexOf(fnContent);
+          // NOTE: prevText is substring of verse content (which is removed all
+          // the footnotes), so first found index of substring + length of
+          // substring is the position of footnote.
+          const fnPos = verseData.content.search(prevText) + prevText.length;
 
           logger.info(
             'Get footnote %s:%s for book %s',
@@ -107,7 +112,10 @@ const getFootnote = async (
 
           await prisma.bookFootnote.upsert({
             where: {
-              verseId: verseData.id,
+              order_verseId: {
+                order: fnCount,
+                verseId: verseData.id,
+              },
             },
             create: {
               content: fnContent,

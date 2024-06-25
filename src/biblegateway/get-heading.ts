@@ -65,14 +65,12 @@ const getHeading = async (
 
       // NOTE: Heading maybe stands before a split verse, so we can't assume
       // that the verse always has the order "0". More works indeed.
-      const nextVerse = page
-        .locator(
-          `h3:has(span[class="${classAttr}" i]:has-text("${content}")) ~ p:has(span[class="${classAttr}" i]) > span`,
-        )
+      const nextVerse = el
+        .locator(`xpath=/following-sibling::p/span`)
         .or(
-          page.locator(
+          el.locator(
             // NOTE: Poetry case
-            `h3:has(span[class="${classAttr}" i]:has-text("${content}")) ~ div > p:has(span[class="${classAttr}" i]) > span`,
+            `xpath=/following-sibling::div/p/span`,
           ),
         )
         .first();
