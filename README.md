@@ -68,7 +68,12 @@
 ### :dart: Features
 
 - Scrape bible from [biblegateway.com](https://www.biblegateway.com/) and
-  [bible.com](https://www.bible.com/).
+  [bible.com](https://www.bible.com/). Current supports:
+  - Verses (with poetry).
+  - Footnotes.
+  - Headings.
+  - References.
+  - Psalm metadata (like author, title, etc.).
 - Progress logging.
 - Save to Postgres database.
 
@@ -239,5 +244,5 @@ Project Link: [https://github.com/v-bible/bible-scraper](https://github.com/v-bi
 
 Here are useful resources and libraries that we have used in our projects:
 
-- [Awesome Readme Template](https://github.com/Louis3797/awesome-readme-template):
-  A detailed template to bootstrap your README file quickly.
+- [Bible.com](https://www.bible.com/): Bible.com website.
+- [BibleGateway.com](https://www.biblegateway.com/): BibleGateway.com website.

@@ -94,7 +94,7 @@ const getFootnote = async (
           // NOTE: prevText is substring of verse content (which is removed all
           // the footnotes), so first found index of substring + length of
           // substring is the position of footnote.
-          const fnPos = verseData.content.search(prevText) + prevText.length;
+          const fnPos = verseData.content.indexOf(prevText) + prevText.length;
 
           logger.info(
             'Get footnote %s:%s for book %s',
