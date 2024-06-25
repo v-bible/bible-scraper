@@ -34,32 +34,36 @@ const getPsalmMeta = async (
     },
   );
 
-  const par = page.locator('css=[class*="ChapterContent_d" i]');
+  const pars = await page.locator('css=[class*="ChapterContent_d" i]').all();
 
-  const title = await par.textContent();
+  await Promise.all(
+    pars.map(async (el) => {
+      const title = await el.textContent();
 
-  if (!title) return;
+      if (!title) return;
 
-  logger.info(
-    'Get Psalm metadata %s for book %s',
-    chap.number,
-    chap.book.title,
+      logger.info(
+        'Get Psalm metadata %s for book %s',
+        chap.number,
+        chap.book.title,
+      );
+
+      logger.debug('Psalm metadata %s content: %s', chap.number, title);
+
+      await prisma.psalmMetadata.upsert({
+        where: {
+          chapterId: chap.id,
+        },
+        create: {
+          title,
+          chapter: { connect: { id: chap.id } },
+        },
+        update: {
+          title,
+        },
+      });
+    }),
   );
-
-  logger.debug('Psalm metadata %s content: %s', chap.number, title);
-
-  await prisma.psalmMetadata.upsert({
-    where: {
-      chapterId: chap.id,
-    },
-    create: {
-      title,
-      chapter: { connect: { id: chap.id } },
-    },
-    update: {
-      title,
-    },
-  });
 
   await context.close();
   await browser.close();
