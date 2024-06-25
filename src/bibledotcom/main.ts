@@ -4,6 +4,7 @@
 import { getBook } from '@/bibledotcom/get-book';
 import { getFootnote } from '@/bibledotcom/get-footnote';
 import { getHeading } from '@/bibledotcom/get-heading';
+import { getPsalmMeta } from '@/bibledotcom/get-psalm-meta';
 import { getReference } from '@/bibledotcom/get-reference';
 import { getVerse } from '@/bibledotcom/get-verse';
 import { getVersionByLang } from '@/bibledotcom/get-version';
@@ -69,6 +70,9 @@ import prisma from '@/prisma/prisma';
       await getFootnote(chap);
       await getHeading(chap);
       await getReference(chap);
+      if (book.code === 'psa') {
+        await getPsalmMeta(chap);
+      }
     }
   }
 })();

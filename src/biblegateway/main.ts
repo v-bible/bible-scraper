@@ -4,6 +4,7 @@
 import { getBook } from '@/biblegateway/get-book';
 import { getFootnote } from '@/biblegateway/get-footnote';
 import { getHeading } from '@/biblegateway/get-heading';
+import { getPsalmMeta } from '@/biblegateway/get-psalm-meta';
 import { getReference } from '@/biblegateway/get-reference';
 import { getVerse } from '@/biblegateway/get-verse';
 import { getVersion } from '@/biblegateway/get-version';
@@ -68,6 +69,9 @@ import prisma from '@/prisma/prisma';
       await getFootnote(chap);
       await getHeading(chap);
       await getReference(chap);
+      if (book.code === 'ps') {
+        await getPsalmMeta(chap);
+      }
     }
   }
 })();
