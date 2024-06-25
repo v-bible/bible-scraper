@@ -70,17 +70,18 @@ model Book {
 }
 
 model BookChapter {
-  id         String          @id @default(uuid())
-  number     Int
-  ref        String
-  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
-  bookId     String
-  book       Book            @relation(fields: [bookId], references: [id])
-  footnotes  BookFootnote[]
-  headings   BookHeading[]
-  references BookReference[]
-  verses     BookVerse[]
+  id            String          @id @default(uuid())
+  number        Int
+  ref           String
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @default(now()) @db.Timestamptz(3)
+  bookId        String
+  book          Book            @relation(fields: [bookId], references: [id])
+  footnotes     BookFootnote[]
+  headings      BookHeading[]
+  references    BookReference[]
+  verses        BookVerse[]
+  PsalmMetadata PsalmMetadata?
 
   @@unique([number, bookId])
   @@map("book_chapter")
@@ -150,6 +151,18 @@ model BookReference {
 
   @@unique([order, verseId])
   @@map("book_reference")
+}
+
+model PsalmMetadata {
+  id        String      @id @default(uuid())
+  title     String
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
+  chapterId String
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+
+  @@unique(chapterId)
+  @@map("psalm_metadata")
 }
 
 model SchemaMigrations {
