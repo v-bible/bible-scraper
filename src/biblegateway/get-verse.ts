@@ -125,6 +125,7 @@ const getVerse = async (
         parNumber: val.parNum,
         parIndex: val.parIdx,
         chapterId: chap.id,
+        isPoetry: false,
       };
     });
 
@@ -138,12 +139,13 @@ const getVerse = async (
 
   const poetryEl = await page.locator('css=[class="poetry"]').all();
 
-  await Promise.all(
-    poetryEl.map(async (val) => {
-      const classAttr = await val
-        .locator(`css=[class*="${chap.book.code}-" i]`)
-        .first()
-        .getAttribute('class');
+  for (const val of poetryEl) {
+    const verseEl = await val
+      .locator(`css=[class*="${chap.book.code}-" i]`)
+      .all();
+
+    for (const el of verseEl) {
+      const classAttr = await el.getAttribute('class');
 
       if (!classAttr) return;
 
@@ -151,9 +153,19 @@ const getVerse = async (
 
       if (!match?.groups) return;
 
+      let content = await el.textContent();
+
+      // NOTE: Remove verse number in content
+      content = content!.replace(reVerseNum, '').trim();
+
+      // NOTE: Remove footnote
+      content = content.replace(reFootnote, '').trim();
+
       await prisma.bookVerse.updateMany({
         where: {
           number: Number(match.groups?.verseNum),
+          chapterId: chap.id,
+          content,
         },
         data: {
           isPoetry: true,
@@ -166,8 +178,8 @@ const getVerse = async (
         match.groups.verseNum,
         chap.book.title,
       );
-    }),
-  );
+    }
+  }
 
   await context.close();
   await browser.close();
