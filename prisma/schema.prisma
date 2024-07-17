@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Version {
-  id            String          @id @default(uuid())
+  id            String          @id @default(dbgenerated("gen_random_uuid()"))
   code          String
   name          String
   onlyNT        Boolean         @default(false)
@@ -29,7 +29,7 @@ model Version {
 }
 
 model VersionFormat {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   type      String
   ref       String
   createdAt DateTime @default(now()) @db.Timestamptz(3)
@@ -42,7 +42,7 @@ model VersionFormat {
 }
 
 model VersionLanguage {
-  id        String    @id @default(uuid())
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
   code      String
   name      String
   webOrigin String
@@ -55,7 +55,7 @@ model VersionLanguage {
 }
 
 model Book {
-  id        String        @id @default(uuid())
+  id        String        @id @default(dbgenerated("gen_random_uuid()"))
   code      String
   title     String
   canon     String
@@ -70,7 +70,7 @@ model Book {
 }
 
 model BookChapter {
-  id            String          @id @default(uuid())
+  id            String          @id @default(dbgenerated("gen_random_uuid()"))
   number        Int
   ref           String
   createdAt     DateTime        @default(now()) @db.Timestamptz(3)
@@ -88,7 +88,7 @@ model BookChapter {
 }
 
 model BookVerse {
-  id         String          @id @default(uuid())
+  id         String          @id @default(dbgenerated("gen_random_uuid()"))
   number     Int
   content    String
   order      Int
@@ -108,7 +108,7 @@ model BookVerse {
 }
 
 model BookFootnote {
-  id        String      @id @default(uuid())
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
   content   String
   position  Int
   order     Int
@@ -124,7 +124,7 @@ model BookFootnote {
 }
 
 model BookHeading {
-  id        String      @id @default(uuid())
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
   content   String
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
@@ -139,7 +139,7 @@ model BookHeading {
 }
 
 model BookReference {
-  id        String      @id @default(uuid())
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
   content   String
   order     Int
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
@@ -158,10 +158,9 @@ model PsalmMetadata {
   title     String
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  chapterId String
+  chapterId String      @unique
   chapter   BookChapter @relation(fields: [chapterId], references: [id])
 
-  @@unique(chapterId)
   @@map("psalm_metadata")
 }
 
