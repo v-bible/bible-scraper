@@ -137,7 +137,7 @@ const getVerse = async (
     });
   }
 
-  const poetryEl = await page.locator('css=[class="poetry"]').all();
+  const poetryEl = await page.locator('css=[class*="poetry" i]').all();
 
   for (const val of poetryEl) {
     const verseEl = await val
