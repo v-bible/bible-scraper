@@ -21,7 +21,7 @@ const getBook = async (
   const res = await fetch(`https://www.bible.com/api/bible/version/${bookId}`);
   const data = await res.json();
 
-  for (const bookData of data.books) {
+  for (const [index, bookData] of data.books.entries()) {
     const book = await prisma.book.upsert({
       where: {
         code_versionId: {
@@ -33,6 +33,7 @@ const getBook = async (
         code: bookData.usfm.toLowerCase(),
         canon: bookData.canon,
         title: bookData.human,
+        order: index,
         version: {
           connect: {
             id: targetVersion.version.id,
@@ -43,6 +44,7 @@ const getBook = async (
         code: bookData.usfm.toLowerCase(),
         canon: bookData.canon,
         title: bookData.human,
+        order: index,
       },
     });
 

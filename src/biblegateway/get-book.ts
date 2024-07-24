@@ -42,7 +42,7 @@ const getBook = async (
   // NOTE: Match book type in class. Ex: "ot-book", "nt-book" or "ap-book".
   const reBookType = /(?<type>\w+)-book/;
 
-  for (const row of books) {
+  for (const [index, row] of books.entries()) {
     const bookClassAttr = await row.getAttribute('class');
 
     if (!bookClassAttr) continue;
@@ -69,11 +69,13 @@ const getBook = async (
         code: bookCode,
         title: bookTitle,
         canon: bookType,
+        order: index,
       },
       create: {
         code: bookCode,
         title: bookTitle,
         canon: bookType,
+        order: index,
         version: {
           connect: {
             id: versionId,
