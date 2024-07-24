@@ -59,6 +59,7 @@ model Book {
   code      String
   title     String
   canon     String
+  order     Int
   createdAt DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt DateTime      @default(now()) @db.Timestamptz(3)
   versionId String
