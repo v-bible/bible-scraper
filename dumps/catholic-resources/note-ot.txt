@@ -1,0 +1,6 @@
+Not match 1 monday Mark 1:14-22 Mark 1:14-20
+Not match 3 wednesday Mark 4:1-22 Mark 4:1-20
+Not match 4 monday Mark 5:1-22 Mark 5:1-20
+Not match 12 wednesday Matt 7:15-22 Matt 7:15-20
+Not match 18 saturday Matt 17:14-22 Matt 17:14-20
+Not match 19 wednesday Matt 18:15-22 Matt 18:15-20
