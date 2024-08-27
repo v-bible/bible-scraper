@@ -1,7 +1,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+// import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
@@ -20,8 +20,8 @@ const getHeading = async (
   const page = await context.newPage();
 
   // NOTE: Ad-blocker
-  const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
-  await blocker.enableBlockingInPage(page);
+  // const blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+  // await blocker.enableBlockingInPage(page);
 
   await retry(
     async () => {
