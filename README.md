@@ -208,6 +208,12 @@ npx tsx ./src/catholic-resources/main.ts
 > Weekday OT between Year I & II. You can see it in
 > [`dumps/catholic-resources/note-ot.txt`](./dumps/catholic-resources/note-ot.txt).
 
+- Scrape bible(from [ktcgkpv.org](https://ktcgkpv.org/bible?version=1)):
+
+```bash
+npx tsx ./src/ktcgkpv/main.ts
+```
+
 <!-- Contributing -->
 
 ## :wave: Contributing
