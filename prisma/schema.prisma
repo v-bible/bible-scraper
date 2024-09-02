@@ -109,46 +109,53 @@ model BookVerse {
 }
 
 model BookFootnote {
-  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  id        String       @id @default(dbgenerated("gen_random_uuid()"))
   content   String
   position  Int
   order     Int
-  createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  verseId   String
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @default(now()) @db.Timestamptz(3)
+  verseId   String?
+  headingId String?
   chapterId String
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
+  verse     BookVerse?   @relation(fields: [verseId], references: [id])
+  heading   BookHeading? @relation(fields: [headingId], references: [id])
 
   @@unique([order, verseId])
   @@map("book_footnote")
 }
 
 model BookHeading {
-  id        String      @id @default(dbgenerated("gen_random_uuid()"))
-  content   String
-  order     Int
-  createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  verseId   String
-  chapterId String
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  id         String          @id @default(dbgenerated("gen_random_uuid()"))
+  content    String
+  order      Int
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
+  verseId    String
+  chapterId  String
+  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
+  verse      BookVerse       @relation(fields: [verseId], references: [id])
+  footnotes  BookFootnote[]
+  references BookReference[]
 
   @@unique([order, verseId])
   @@map("book_heading")
 }
 
 model BookReference {
-  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  id        String       @id @default(dbgenerated("gen_random_uuid()"))
   content   String
+  position  Int          @default(0)
   order     Int
-  createdAt DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
-  verseId   String
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @default(now()) @db.Timestamptz(3)
+  verseId   String?
+  headingId String?
   chapterId String
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
-  verse     BookVerse   @relation(fields: [verseId], references: [id])
+  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
+  verse     BookVerse?   @relation(fields: [verseId], references: [id])
+  heading   BookHeading? @relation(fields: [headingId], references: [id])
 
   @@unique([order, verseId])
   @@map("book_reference")
