@@ -38,7 +38,12 @@ const getPsalmMeta = async (
 
   const title = (await paragraphs.allTextContents()).join(' ');
 
-  if (!title) return;
+  if (!title) {
+    await context.close();
+    await browser.close();
+
+    return;
+  }
 
   logger.info(
     'Get Psalm metadata %s for book %s',

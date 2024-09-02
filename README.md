@@ -176,13 +176,13 @@ pnpm prisma:generate
 > sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 > ```
 
-Scrape bible (from [biblegateway.com](https://www.biblegateway.com/)):
+- Scrape bible (from [biblegateway.com](https://www.biblegateway.com/)):
 
 ```bash
 npx tsx ./src/biblegateway/main.ts
 ```
 
-Scrape bible (from [bible.com](https://www.bible.com/)):
+- Scrape bible (from [bible.com](https://www.bible.com/)):
 
 ```bash
 npx tsx ./src/bibledotcom/main.ts
@@ -192,6 +192,27 @@ npx tsx ./src/bibledotcom/main.ts
 > For the `bible.com` script, it doesn't use the **local** version code, which
 > may vary for different languages. For example, in Vietnamese language, version
 > `"VCB"` has local code is `"KTHD"`.
+
+- Scrape Liturgical resources for **Ordinary Times** (Weekdays & Sundays) from
+  [catholic-resources.org](https://catholic-resources.org/):
+
+> The Lectionary for Mass - Second USA Edition
+> (Sunday Volume, 1998; Weekday Volumes, 2002)
+
+```bash
+npx tsx ./src/catholic-resources/main.ts
+```
+
+> [!NOTE]
+> The script `get-ordinary-time.ts` will log out **mismatch** gospel reading for
+> Weekday OT between Year I & II. You can see it in
+> [`dumps/catholic-resources/note-ot.txt`](./dumps/catholic-resources/note-ot.txt).
+
+- Scrape bible(from [ktcgkpv.org](https://ktcgkpv.org/bible?version=1)):
+
+```bash
+npx tsx ./src/ktcgkpv/main.ts
+```
 
 <!-- Contributing -->
 
