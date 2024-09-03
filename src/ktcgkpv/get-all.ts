@@ -91,6 +91,12 @@ const getAll = async (
 
   let footnoteOrder = 0;
   let refOrder = 0;
+  // NOTE: We ensure that the order of split verses like '4a', '4b', '4c' is
+  // correct
+  const verseOrderTrack = {
+    number: 0,
+    order: 0,
+  };
 
   for (let parNumber = 0; parNumber < paragraphs.length; parNumber += 1) {
     for (
@@ -107,26 +113,33 @@ const getAll = async (
       }
 
       for (const vData of verseDataIdx.data) {
+        if (vData.verse.number !== verseOrderTrack.number) {
+          verseOrderTrack.number = vData.verse.number;
+          verseOrderTrack.order = 0;
+        } else {
+          verseOrderTrack.order += 1;
+        }
+
         const newVerse = await prisma.bookVerse.upsert({
           where: {
             number_order_chapterId: {
-              number: vData.verse.number,
-              order: vData.verse.order,
+              number: verseOrderTrack.number,
+              order: verseOrderTrack.order,
               chapterId: chap.id,
             },
           },
           update: {
-            number: vData.verse.number,
+            number: verseOrderTrack.number,
             content: vData.verse.content,
-            order: vData.verse.order,
+            order: verseOrderTrack.order,
             parNumber,
             parIndex,
             isPoetry: vData.verse.isPoetry,
           },
           create: {
-            number: vData.verse.number,
+            number: verseOrderTrack.number,
             content: vData.verse.content,
-            order: vData.verse.order,
+            order: verseOrderTrack.order,
             parNumber,
             parIndex,
             isPoetry: vData.verse.isPoetry,
