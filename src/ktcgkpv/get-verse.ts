@@ -1,16 +1,35 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-import type { BookFootnote, BookHeading, BookVerse } from '@prisma/client';
+import type {
+  BookFootnote,
+  BookHeading,
+  BookReference,
+  BookVerse,
+} from '@prisma/client';
 import { chromium, devices } from 'playwright';
+
+const reFnMatch = /<\$(?<fnNum>[^$]*)\$>/gu;
+const reRefMatch = /@(?<refLabel>ci\d+_[^_]+_[^&]+)&\$[^@]*\$@/gu;
+const reHeadMatch = /#[^#]*#/gu;
+const reVerseNumMatch = /\$[^$]+\$/g;
 
 const getVerse = async (
   html: string,
 ): Promise<
   | {
       verse: Pick<BookVerse, 'content' | 'number' | 'order' | 'isPoetry'>;
-      headings: Pick<BookHeading, 'content' | 'order'>[];
+      headings: Array<
+        Pick<BookHeading, 'content' | 'order'> & {
+          footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
+          references: Array<
+            Pick<BookReference, 'position'> & { label: string }
+          >;
+        }
+      >;
       footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
+      references: Array<Pick<BookReference, 'position'> & { label: string }>;
     }[]
   | null
 > => {
@@ -38,7 +57,11 @@ const getVerse = async (
     // NOTE: Then we wrap it with @ for every sup as reference. So the
     // reference character is @$a$@
     document.querySelectorAll('sup[class*="reference" i]').forEach((el) => {
-      el.textContent = `@${el.textContent}@`;
+      const className = el.getAttribute('class');
+
+      const refLabelMatch = className?.match(/ci\d+_[^_]+_.+/u);
+
+      el.textContent = `@${refLabelMatch?.[0]}&${el.textContent}@`;
     });
 
     // NOTE: Then we wrap it with < for every sup as note. So the note character is <$a$>
@@ -110,80 +133,150 @@ const getVerse = async (
     return null;
   }
 
-  const verses = bodyContent.split(/\n\$\d+\$|\n/).filter((val) => val !== '');
+  const verses = bodyContent.split(/(?<!#)\n/g).filter((val) => val !== '');
 
   const verseMap = verses.map((verse, verseOrder) => {
-    let content = verse
-      .replaceAll(/#.*#/g, '')
-      .replaceAll(/<\$\w*\$>/g, '')
-      .replaceAll(/@\$.*\$@/g, '')
-      .replace(/\$\d+\$/g, '');
-
-    const isPoetry = content.includes('~');
-
-    if (isPoetry) {
-      content = content.replace('~', '');
-    }
-
-    const headingMatch = verse
-      .replaceAll(/<\$\w*\$>/g, '')
-      .replaceAll(/@\$.*\$@/g, '')
-      // NOTE: Catastrophic backtracking might cause freeze
-      .match(/#[^#]*#/);
-
-    let headings: Pick<BookHeading, 'content' | 'order'>[] = [];
-
-    if (headingMatch !== null) {
-      headings = headingMatch.map((h, headingOrder) => {
-        return {
-          content: h.replaceAll('#', '').trim(),
-          order: headingOrder,
-        };
-      });
-    }
-
-    const footnoteMatch = verse
-      // REVIEW: Currently not support footnotes in headings
-      .replaceAll(/#.*#/g, '')
-      .replaceAll(/@\$.*\$@/g, '')
-      .replace(/\$\d+\$/g, '')
-      .replace('~', '')
-      .trim()
-      .matchAll(/<\$(?<fnNum>\w*)\$>/g);
-
-    const footnotes = [...footnoteMatch].map((fnMatch, idx, arr) => {
-      if (idx === 0) {
-        return {
-          position: fnMatch.index,
-          label: fnMatch['1']!,
-        } satisfies Pick<BookFootnote, 'position'> & { label: string };
-      }
-
-      let previousLength = 0;
-      const previousMatch = arr.slice(0, idx).map((match) => match['0']);
-      for (const match of previousMatch) {
-        previousLength += match.length;
-      }
-
-      return {
-        position: fnMatch.index - previousLength,
-        label: fnMatch['1']!,
-      } satisfies Pick<BookFootnote, 'position'> & { label: string };
-    });
-
     return {
       verse: {
-        content: content.trim(),
+        ...processVerse(verse),
         number: parseInt(verseNum!.replaceAll('$', ''), 10),
         order: verseOrder,
-        isPoetry,
       } satisfies Pick<BookVerse, 'content' | 'number' | 'order' | 'isPoetry'>,
-      headings,
-      footnotes,
+      headings: processHeading(verse),
+      footnotes: processVerseFn(verse),
+      references: processVerseRef(verse),
     };
   });
 
   return verseMap;
+};
+
+const processVerse = (str: string) => {
+  let content = str
+    .replaceAll(reHeadMatch, '')
+    .replaceAll(reFnMatch, '')
+    .replaceAll(reRefMatch, '')
+    .replaceAll(reVerseNumMatch, '');
+
+  const isPoetry = content.includes('~');
+
+  if (isPoetry) {
+    content = content.replace('~', '');
+  }
+
+  return {
+    content: content.trim(),
+    isPoetry,
+  } satisfies Pick<BookVerse, 'content' | 'isPoetry'>;
+};
+
+const processHeading = (str: string) => {
+  const headingMatch = str
+    // NOTE: Catastrophic backtracking might cause freeze
+    .match(reHeadMatch);
+
+  let headings: Array<
+    Pick<BookHeading, 'content' | 'order'> & {
+      footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
+      references: Array<Pick<BookReference, 'position'> & { label: string }>;
+    }
+  > = [];
+
+  if (headingMatch !== null) {
+    headings = headingMatch.map((h, headingOrder) => {
+      const fnHeadMatch = h
+        .replaceAll('#', '')
+        .replaceAll(reRefMatch, '')
+        .trim()
+        .matchAll(reFnMatch);
+
+      const fnHeads = calcPosition(
+        fnHeadMatch,
+        (match) => match.groups!.fnNum!,
+      );
+
+      const refHeadMatch = h
+        .replaceAll('#', '')
+        .replaceAll(reFnMatch, '')
+        .trim()
+        .matchAll(reRefMatch);
+
+      const refHeads = calcPosition(
+        refHeadMatch,
+        (match) => match.groups!.refLabel!,
+      );
+
+      return {
+        content: h
+          .replaceAll(reFnMatch, '')
+          .replaceAll(reRefMatch, '')
+          .replaceAll('#', '')
+          .trim(),
+        order: headingOrder,
+        footnotes: fnHeads,
+        references: refHeads,
+      };
+    });
+  }
+
+  return headings;
+};
+
+const processVerseFn = (str: string) => {
+  const footnoteMatch = str
+    .replaceAll(reHeadMatch, '')
+    .replaceAll(reRefMatch, '')
+    .replaceAll(reVerseNumMatch, '')
+    .replace('~', '')
+    .trim()
+    .matchAll(reFnMatch);
+
+  const footnotes = calcPosition(
+    footnoteMatch,
+    (match) => match.groups!.fnNum!,
+  );
+
+  return footnotes;
+};
+
+const processVerseRef = (str: string) => {
+  const referenceMatch = str
+    .replaceAll(reHeadMatch, '')
+    .replaceAll(reFnMatch, '')
+    .replaceAll(reVerseNumMatch, '')
+    .replace('~', '')
+    .trim()
+    .matchAll(reRefMatch);
+
+  const refs = calcPosition(referenceMatch, (match) => match.groups!.refLabel!);
+
+  return refs;
+};
+
+const calcPosition = (
+  matches: IterableIterator<RegExpExecArray>,
+  labelSelector: (match: RegExpExecArray) => string,
+) => {
+  return [...matches].map((matchVal, idx, arr) => {
+    if (idx === 0) {
+      return {
+        position: matchVal.index,
+        label: labelSelector(matchVal),
+      };
+    }
+
+    let previousLength = 0;
+    // NOTE: We want the whole string match so get the zero index
+    const previousMatch = arr.slice(0, idx).map((match) => match['0']);
+    for (const match of previousMatch) {
+      previousLength += match.length;
+    }
+
+    return {
+      position: matchVal.index - previousLength,
+      label: labelSelector(matchVal),
+    };
+  });
 };
 
 export { getVerse };

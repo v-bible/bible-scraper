@@ -90,6 +90,13 @@ const getAll = async (
   }, {});
 
   let footnoteOrder = 0;
+  let refOrder = 0;
+  // NOTE: We ensure that the order of split verses like '4a', '4b', '4c' is
+  // correct
+  const verseOrderTrack = {
+    number: 0,
+    order: 0,
+  };
 
   for (let parNumber = 0; parNumber < paragraphs.length; parNumber += 1) {
     for (
@@ -106,26 +113,33 @@ const getAll = async (
       }
 
       for (const vData of verseDataIdx.data) {
+        if (vData.verse.number !== verseOrderTrack.number) {
+          verseOrderTrack.number = vData.verse.number;
+          verseOrderTrack.order = 0;
+        } else {
+          verseOrderTrack.order += 1;
+        }
+
         const newVerse = await prisma.bookVerse.upsert({
           where: {
             number_order_chapterId: {
-              number: vData.verse.number,
-              order: vData.verse.order,
+              number: verseOrderTrack.number,
+              order: verseOrderTrack.order,
               chapterId: chap.id,
             },
           },
           update: {
-            number: vData.verse.number,
+            number: verseOrderTrack.number,
             content: vData.verse.content,
-            order: vData.verse.order,
+            order: verseOrderTrack.order,
             parNumber,
             parIndex,
             isPoetry: vData.verse.isPoetry,
           },
           create: {
-            number: vData.verse.number,
+            number: verseOrderTrack.number,
             content: vData.verse.content,
-            order: vData.verse.order,
+            order: verseOrderTrack.order,
             parNumber,
             parIndex,
             isPoetry: vData.verse.isPoetry,
@@ -189,6 +203,90 @@ const getAll = async (
             vData.verse.number,
             vHeading.content,
           );
+
+          for (const hFootnote of vHeading.footnotes) {
+            await prisma.bookFootnote.upsert({
+              where: {
+                order_verseId: {
+                  order: footnoteOrder,
+                  verseId: newVerse.id,
+                },
+              },
+              update: {
+                order: footnoteOrder,
+                content: footnoteContentMap[hFootnote.label] as string,
+                position: hFootnote.position,
+              },
+              create: {
+                order: footnoteOrder,
+                content: footnoteContentMap[hFootnote.label] as string,
+                position: hFootnote.position,
+                verseId: newVerse.id,
+                chapterId: chap.id,
+              },
+            });
+
+            logger.info(
+              'Get heading footnote %s:%s for book %s',
+              chap.number,
+              vData.verse.number,
+              chap.book.title,
+            );
+
+            logger.debug(
+              'Heading footnote %s:%s content: %s',
+              chap.number,
+              vData.verse.number,
+              footnoteContentMap[hFootnote.label],
+            );
+
+            footnoteOrder += 1;
+          }
+
+          for (const hRef of vHeading.references) {
+            const refContent = data.data.references[hRef.label]
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              .map((v) => v.display_text)
+              .join('; ');
+
+            await prisma.bookReference.upsert({
+              where: {
+                order_verseId: {
+                  order: refOrder,
+                  verseId: newVerse.id,
+                },
+              },
+              update: {
+                order: refOrder,
+                content: refContent,
+                position: hRef.position,
+              },
+              create: {
+                order: refOrder,
+                content: refContent,
+                position: hRef.position,
+                verseId: newVerse.id,
+                chapterId: chap.id,
+              },
+            });
+
+            logger.info(
+              'Get heading reference %s:%s for book %s',
+              chap.number,
+              vData.verse.number,
+              chap.book.title,
+            );
+
+            logger.debug(
+              'Heading reference %s:%s content: %s',
+              chap.number,
+              vData.verse.number,
+              refContent,
+            );
+
+            refOrder += 1;
+          }
         }
 
         for (const vFootnote of vData.footnotes) {
@@ -228,6 +326,51 @@ const getAll = async (
           );
 
           footnoteOrder += 1;
+        }
+
+        for (const vRef of vData.references) {
+          const refContent = data.data.references[vRef.label]
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            .map((v) => v.display_text)
+            .join('; ');
+
+          await prisma.bookReference.upsert({
+            where: {
+              order_verseId: {
+                order: refOrder,
+                verseId: newVerse.id,
+              },
+            },
+            update: {
+              order: refOrder,
+              content: refContent,
+              position: vRef.position,
+            },
+            create: {
+              order: refOrder,
+              content: refContent,
+              position: vRef.position,
+              verseId: newVerse.id,
+              chapterId: chap.id,
+            },
+          });
+
+          logger.info(
+            'Get reference %s:%s for book %s',
+            chap.number,
+            vData.verse.number,
+            chap.book.title,
+          );
+
+          logger.debug(
+            'Reference %s:%s content: %s',
+            chap.number,
+            vData.verse.number,
+            refContent,
+          );
+
+          refOrder += 1;
         }
       }
     }
