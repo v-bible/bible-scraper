@@ -171,7 +171,7 @@ const getAll = async (
         }
 
         for (const vHeading of vData.headings) {
-          await prisma.bookHeading.upsert({
+          const newHeading = await prisma.bookHeading.upsert({
             where: {
               order_verseId: {
                 order: vHeading.order,
@@ -205,23 +205,30 @@ const getAll = async (
           );
 
           for (const hFootnote of vHeading.footnotes) {
+            const hFootnoteContent = footnoteContentMap[hFootnote.label];
+
+            // NOTE: Sometimes footnote is not present
+            if (!hFootnoteContent) {
+              continue;
+            }
+
             await prisma.bookFootnote.upsert({
               where: {
-                order_verseId: {
+                order_headingId: {
                   order: footnoteOrder,
-                  verseId: newVerse.id,
+                  headingId: newHeading.id,
                 },
               },
               update: {
                 order: footnoteOrder,
-                content: footnoteContentMap[hFootnote.label] as string,
+                content: hFootnoteContent,
                 position: hFootnote.position,
               },
               create: {
                 order: footnoteOrder,
-                content: footnoteContentMap[hFootnote.label] as string,
+                content: hFootnoteContent,
                 position: hFootnote.position,
-                verseId: newVerse.id,
+                headingId: newHeading.id,
                 chapterId: chap.id,
               },
             });
@@ -250,11 +257,15 @@ const getAll = async (
               ?.map((v) => v.display_text)
               .join('; ');
 
+            if (!refContent) {
+              continue;
+            }
+
             await prisma.bookReference.upsert({
               where: {
-                order_verseId: {
+                order_headingId: {
                   order: refOrder,
-                  verseId: newVerse.id,
+                  headingId: newHeading.id,
                 },
               },
               update: {
@@ -266,7 +277,7 @@ const getAll = async (
                 order: refOrder,
                 content: refContent,
                 position: hRef.position,
-                verseId: newVerse.id,
+                headingId: newHeading.id,
                 chapterId: chap.id,
               },
             });
@@ -290,6 +301,13 @@ const getAll = async (
         }
 
         for (const vFootnote of vData.footnotes) {
+          const vFootnoteContent = footnoteContentMap[vFootnote.label];
+
+          // NOTE: Sometimes footnote is not present
+          if (!vFootnoteContent) {
+            continue;
+          }
+
           await prisma.bookFootnote.upsert({
             where: {
               order_verseId: {
@@ -299,12 +317,12 @@ const getAll = async (
             },
             update: {
               order: footnoteOrder,
-              content: footnoteContentMap[vFootnote.label] as string,
+              content: vFootnoteContent,
               position: vFootnote.position,
             },
             create: {
               order: footnoteOrder,
-              content: footnoteContentMap[vFootnote.label] as string,
+              content: vFootnoteContent,
               position: vFootnote.position,
               verseId: newVerse.id,
               chapterId: chap.id,
@@ -334,6 +352,10 @@ const getAll = async (
             // @ts-ignore
             ?.map((v) => v.display_text)
             .join('; ');
+
+          if (!refContent) {
+            continue;
+          }
 
           await prisma.bookReference.upsert({
             where: {
