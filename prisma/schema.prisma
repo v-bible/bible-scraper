@@ -123,6 +123,7 @@ model BookFootnote {
   heading   BookHeading? @relation(fields: [headingId], references: [id])
 
   @@unique([order, verseId])
+  @@unique([order, headingId])
   @@map("book_footnote")
 }
 
@@ -158,6 +159,7 @@ model BookReference {
   heading   BookHeading? @relation(fields: [headingId], references: [id])
 
   @@unique([order, verseId])
+  @@unique([order, headingId])
   @@map("book_reference")
 }
 
