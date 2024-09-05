@@ -81,7 +81,7 @@ const getAll = async (
   const paragraphs = await getParagraph(chap);
 
   const footnoteContentMap: Record<string, string> = Object.entries(
-    data.data.notes,
+    data.data?.notes || {},
   ).reduce((acc, [key, noteContent]) => {
     return {
       ...acc,
@@ -244,10 +244,10 @@ const getAll = async (
           }
 
           for (const hRef of vHeading.references) {
-            const refContent = data.data.references[hRef.label]
+            const refContent = data.data?.references[hRef.label]
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
-              .map((v) => v.display_text)
+              ?.map((v) => v.display_text)
               .join('; ');
 
             await prisma.bookReference.upsert({
@@ -329,10 +329,10 @@ const getAll = async (
         }
 
         for (const vRef of vData.references) {
-          const refContent = data.data.references[vRef.label]
+          const refContent = data.data?.references[vRef.label]
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            .map((v) => v.display_text)
+            ?.map((v) => v.display_text)
             .join('; ');
 
           await prisma.bookReference.upsert({
