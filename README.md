@@ -94,7 +94,7 @@ E.g:
 
 ```
 # .env
-DB_URL="postgres://postgres:postgres@localhost:5432/bible"
+DB_URL="postgres://postgres:postgres@localhost:65432/bible"
 LOG_LEVEL=info
 ```
 
