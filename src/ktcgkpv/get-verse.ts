@@ -10,10 +10,10 @@ import type {
 } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 
-const reFnMatch = /<\$(?<fnNum>[^$]*)\$>/gu;
+const reFnMatch = /\s<\$(?<fnNum>[^$]*)\$>/gu;
 const reRefMatch = /@(?<refLabel>ci\d+_[^_]+_[^&]+)&\$[^@]*\$@/gu;
 const reHeadMatch = /#[^#]*#/gu;
-const reVerseNumMatch = /\$[^$]+\$/g;
+const reVerseNumMatch = /\$\d+\p{L}*\$/gu;
 
 const getVerse = async (
   html: string,
@@ -206,12 +206,14 @@ const processHeading = (str: string) => {
         (match) => match.groups!.refLabel!,
       );
 
+      const headingContent = h
+        .replaceAll(reFnMatch, '')
+        .replaceAll(reRefMatch, '')
+        .replaceAll('#', '')
+        .trim();
+
       return {
-        content: h
-          .replaceAll(reFnMatch, '')
-          .replaceAll(reRefMatch, '')
-          .replaceAll('#', '')
-          .trim(),
+        content: headingContent,
         order: headingOrder,
         footnotes: fnHeads,
         references: refHeads,

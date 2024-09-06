@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: 'postgres'
       POSTGRES_DB: 'bible'
     ports:
-      - '5432:5432'
+      - '65432:5432'
     networks:
       - bible-net
     healthcheck:
