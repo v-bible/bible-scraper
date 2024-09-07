@@ -9,12 +9,7 @@ import type {
   BookVerse,
 } from '@prisma/client';
 import { chromium, devices } from 'playwright';
-import {
-  processHeading,
-  processVerse,
-  processVerseFn,
-  processVerseRef,
-} from '@/lib/verse-utils';
+import { VerseProcessor } from '@/lib/verse-utils';
 
 const getVerse = async (
   html: string,
@@ -137,15 +132,17 @@ const getVerse = async (
   const verses = bodyContent.split(/(?<!#)\n/g).filter((val) => val !== '');
 
   const verseMap = verses.map((verse, verseOrder) => {
+    const processor = new VerseProcessor({});
+
     return {
       verse: {
-        ...processVerse(verse),
+        ...processor.processVerse(verse),
         number: parseInt(verseNum!.replaceAll('$', ''), 10),
         order: verseOrder,
       } satisfies Pick<BookVerse, 'content' | 'number' | 'order' | 'isPoetry'>,
-      headings: processHeading(verse),
-      footnotes: processVerseFn(verse),
-      references: processVerseRef(verse),
+      headings: processor.processHeading(verse),
+      footnotes: processor.processVerseFn(verse),
+      references: processor.processVerseRef(verse),
     };
   });
 

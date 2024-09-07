@@ -12,109 +12,134 @@ const reRefMatch = /@(?<refLabel>ci\d+_[^_]+_[^&]+)&\$[^@]*\$@/gu;
 const reHeadMatch = /#[^#]*#/gu;
 const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gu;
 
-const processVerse = (str: string) => {
-  let content = str
-    .replaceAll(reHeadMatch, '')
-    .replaceAll(reFnMatch, '')
-    .replaceAll(reRefMatch, '')
-    .replaceAll(reVerseNumMatch, '');
+class VerseProcessor {
+  reFnMatch: RegExp;
 
-  const isPoetry = content.includes('~');
+  reRefMatch: RegExp;
 
-  if (isPoetry) {
-    content = content.replace('~', '');
+  reHeadMatch: RegExp;
+
+  reVerseNumMatch: RegExp;
+
+  constructor({
+    reFn = reFnMatch,
+    reRef = reRefMatch,
+    reHead = reHeadMatch,
+    reVerseNum = reVerseNumMatch,
+  }) {
+    this.reFnMatch = reFn;
+    this.reRefMatch = reRef;
+    this.reHeadMatch = reHead;
+    this.reVerseNumMatch = reVerseNum;
   }
 
-  return {
-    content: content.trim(),
-    isPoetry,
-  } satisfies Pick<BookVerse, 'content' | 'isPoetry'>;
-};
+  processVerse(str: string) {
+    let content = str
+      .replaceAll(this.reHeadMatch, '')
+      .replaceAll(this.reFnMatch, '')
+      .replaceAll(this.reRefMatch, '')
+      .replaceAll(this.reVerseNumMatch, '');
 
-const processHeading = (str: string) => {
-  const headingMatch = str
-    // NOTE: Catastrophic backtracking might cause freeze
-    .match(reHeadMatch);
+    const isPoetry = content.includes('~');
 
-  let headings: Array<
-    Pick<BookHeading, 'content' | 'order'> & {
-      footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-      references: Array<Pick<BookReference, 'position'> & { label: string }>;
+    if (isPoetry) {
+      content = content.replace('~', '');
     }
-  > = [];
 
-  if (headingMatch !== null) {
-    headings = headingMatch.map((h, headingOrder) => {
-      const fnHeadMatch = h
-        .replaceAll('#', '')
-        .replaceAll(reRefMatch, '')
-        .trim()
-        .matchAll(reFnMatch);
-
-      const fnHeads = calcPosition(
-        fnHeadMatch,
-        (match) => match.groups!.fnNum!,
-      );
-
-      const refHeadMatch = h
-        .replaceAll('#', '')
-        .replaceAll(reFnMatch, '')
-        .trim()
-        .matchAll(reRefMatch);
-
-      const refHeads = calcPosition(
-        refHeadMatch,
-        (match) => match.groups!.refLabel!,
-      );
-
-      const headingContent = h
-        .replaceAll(reFnMatch, '')
-        .replaceAll(reRefMatch, '')
-        .replaceAll('#', '')
-        .trim();
-
-      return {
-        content: headingContent,
-        order: headingOrder,
-        footnotes: fnHeads,
-        references: refHeads,
-      };
-    });
+    return {
+      content: content.trim(),
+      isPoetry,
+    } satisfies Pick<BookVerse, 'content' | 'isPoetry'>;
   }
 
-  return headings;
-};
+  processHeading(str: string) {
+    const headingMatch = str
+      // NOTE: Catastrophic backtracking might cause freeze
+      .match(this.reHeadMatch);
 
-const processVerseFn = (str: string, regex: RegExp = reFnMatch) => {
-  const footnoteMatch = str
-    .replaceAll(reHeadMatch, '')
-    .replaceAll(reRefMatch, '')
-    .replaceAll(reVerseNumMatch, '')
-    .replace('~', '')
-    .trim()
-    .matchAll(regex);
+    let headings: Array<
+      Pick<BookHeading, 'content' | 'order'> & {
+        footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
+        references: Array<Pick<BookReference, 'position'> & { label: string }>;
+      }
+    > = [];
 
-  const footnotes = calcPosition(
-    footnoteMatch,
-    (match) => match.groups!.fnNum!,
-  );
+    if (headingMatch !== null) {
+      headings = headingMatch.map((h, headingOrder) => {
+        const fnHeadMatch = h
+          .replaceAll('#', '')
+          .replaceAll(reRefMatch, '')
+          .trim()
+          .matchAll(reFnMatch);
 
-  return footnotes;
-};
+        const fnHeads = calcPosition(
+          fnHeadMatch,
+          (match) => match.groups!.fnNum!,
+        );
 
-const processVerseRef = (str: string, regex: RegExp = reRefMatch) => {
-  const referenceMatch = str
-    .replaceAll(reHeadMatch, '')
-    .replaceAll(reFnMatch, '')
-    .replaceAll(reVerseNumMatch, '')
-    .replace('~', '')
-    .trim()
-    .matchAll(regex);
+        const refHeadMatch = h
+          .replaceAll('#', '')
+          .replaceAll(reFnMatch, '')
+          .trim()
+          .matchAll(reRefMatch);
 
-  const refs = calcPosition(referenceMatch, (match) => match.groups!.refLabel!);
+        const refHeads = calcPosition(
+          refHeadMatch,
+          (match) => match.groups!.refLabel!,
+        );
 
-  return refs;
-};
+        const headingContent = h
+          .replaceAll(reFnMatch, '')
+          .replaceAll(reRefMatch, '')
+          .replaceAll('#', '')
+          .trim();
+
+        return {
+          content: headingContent,
+          order: headingOrder,
+          footnotes: fnHeads,
+          references: refHeads,
+        };
+      });
+    }
+
+    return headings;
+  }
+
+  processVerseFn(str: string) {
+    const footnoteMatch = str
+      .replaceAll(reHeadMatch, '')
+      .replaceAll(reRefMatch, '')
+      .replaceAll(reVerseNumMatch, '')
+      .replace('~', '')
+      .trim()
+      .matchAll(this.reFnMatch);
+
+    const footnotes = calcPosition(
+      footnoteMatch,
+      (match) => match.groups!.fnNum!,
+    );
+
+    return footnotes;
+  }
+
+  processVerseRef(str: string) {
+    const referenceMatch = str
+      .replaceAll(reHeadMatch, '')
+      .replaceAll(reFnMatch, '')
+      .replaceAll(reVerseNumMatch, '')
+      .replace('~', '')
+      .trim()
+      .matchAll(this.reRefMatch);
+
+    const refs = calcPosition(
+      referenceMatch,
+      (match) => match.groups!.refLabel!,
+    );
+
+    return refs;
+  }
+}
 
 const calcPosition = (
   matches: IterableIterator<RegExpExecArray>,
@@ -143,10 +168,7 @@ const calcPosition = (
 };
 
 export {
-  processVerse,
-  processHeading,
-  processVerseFn,
-  processVerseRef,
+  VerseProcessor,
   calcPosition,
   reFnMatch,
   reRefMatch,
