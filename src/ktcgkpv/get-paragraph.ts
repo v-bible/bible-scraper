@@ -3,6 +3,7 @@
 /* eslint-disable no-await-in-loop */
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
+import { fetch } from 'undici';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
 import { logger } from '@/logger/logger';
 
