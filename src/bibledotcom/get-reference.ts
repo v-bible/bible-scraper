@@ -104,6 +104,7 @@ const getReference = async (
       return [
         {
           content: refContent,
+          position: 0,
           order: 0,
           verseId: verse.id,
           chapterId: chap.id,

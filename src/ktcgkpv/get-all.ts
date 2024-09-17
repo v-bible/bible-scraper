@@ -1,13 +1,25 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
+import { fetch } from 'undici';
 import { getParagraph } from '@/ktcgkpv/get-paragraph';
 import { getVerse } from '@/ktcgkpv/get-verse';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
+
+export type ContentView = {
+  data: {
+    content: string;
+    notes: Record<string, string>;
+    references: Record<string, string>;
+  };
+  msg: null;
+  success: boolean;
+};
 
 const getAll = async (
   chap: Prisma.BookChapterGetPayload<{
@@ -27,6 +39,7 @@ const getAll = async (
 
   const req = await fetch('https://ktcgkpv.org/bible/content-view', {
     method: 'POST',
+    // @ts-ignore
     body: formdata,
     redirect: 'follow',
   });
@@ -35,7 +48,7 @@ const getAll = async (
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
 
-  const data = await req.json();
+  const data = (await req.json()) as ContentView;
 
   await page.setContent(data.data.content, {
     waitUntil: 'load',
@@ -65,11 +78,12 @@ const getAll = async (
 
       const verReq = await fetch('https://ktcgkpv.org/bible/content-view', {
         method: 'POST',
+        // @ts-ignore
         body: verseFormData,
         redirect: 'follow',
       });
 
-      const verseContent = await verReq.json();
+      const verseContent = (await verReq.json()) as ContentView;
 
       return {
         number: verseNum,
@@ -79,15 +93,6 @@ const getAll = async (
   );
 
   const paragraphs = await getParagraph(chap);
-
-  const footnoteContentMap: Record<string, string> = Object.entries(
-    data.data?.notes || {},
-  ).reduce((acc, [key, noteContent]) => {
-    return {
-      ...acc,
-      [key.split('_').at(-1) as string]: noteContent,
-    };
-  }, {});
 
   let footnoteOrder = 0;
   let refOrder = 0;
@@ -205,7 +210,17 @@ const getAll = async (
           );
 
           for (const hFootnote of vHeading.footnotes) {
-            const hFootnoteContent = footnoteContentMap[hFootnote.label];
+            const hFootnoteKey = Object.keys(data.data?.notes).find(
+              (key) =>
+                key ===
+                `ci${chap.number}_${newVerse.number}_${hFootnote.label}`,
+            );
+
+            if (!hFootnoteKey) {
+              continue;
+            }
+
+            const hFootnoteContent = data.data?.notes[hFootnoteKey];
 
             // NOTE: Sometimes footnote is not present
             if (!hFootnoteContent) {
@@ -244,7 +259,7 @@ const getAll = async (
               'Heading footnote %s:%s content: %s',
               chap.number,
               vData.verse.number,
-              footnoteContentMap[hFootnote.label],
+              data.data?.notes[hFootnoteKey],
             );
 
             footnoteOrder += 1;
@@ -301,7 +316,16 @@ const getAll = async (
         }
 
         for (const vFootnote of vData.footnotes) {
-          const vFootnoteContent = footnoteContentMap[vFootnote.label];
+          const vFootnoteKey = Object.keys(data.data?.notes).find(
+            (key) =>
+              key === `ci${chap.number}_${newVerse.number}_${vFootnote.label}`,
+          );
+
+          if (!vFootnoteKey) {
+            continue;
+          }
+
+          const vFootnoteContent = data.data?.notes[vFootnoteKey];
 
           // NOTE: Sometimes footnote is not present
           if (!vFootnoteContent) {
@@ -340,7 +364,7 @@ const getAll = async (
             'Footnote %s:%s content: %s',
             chap.number,
             vData.verse.number,
-            footnoteContentMap[vFootnote.label],
+            data.data?.notes[vFootnoteKey],
           );
 
           footnoteOrder += 1;

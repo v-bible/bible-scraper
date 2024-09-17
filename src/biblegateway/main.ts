@@ -1,12 +1,9 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
+import { getAll } from '@/biblegateway/get-all';
 import { getBook } from '@/biblegateway/get-book';
-import { getFootnote } from '@/biblegateway/get-footnote';
-import { getHeading } from '@/biblegateway/get-heading';
 import { getPsalmMeta } from '@/biblegateway/get-psalm-meta';
-import { getReference } from '@/biblegateway/get-reference';
-import { getVerse } from '@/biblegateway/get-verse';
 import { getVersion } from '@/biblegateway/get-version';
 import prisma from '@/prisma/prisma';
 
@@ -54,21 +51,7 @@ import prisma from '@/prisma/prisma';
     });
 
     for (const chap of chapters) {
-      // const verseChap = await prisma.bookVerse.findFirst({
-      //   where: {
-      //     chapterId: chap.id,
-      //   },
-      // });
-
-      // if (!verseChap) {
-      //   logger.info(`skipping ${chap.book.title} ${chap.number}`);
-      //   continue;
-      // }
-
-      await getVerse(chap);
-      await getFootnote(chap);
-      await getHeading(chap);
-      await getReference(chap);
+      await getAll(chap);
       if (book.code === 'ps') {
         await getPsalmMeta(chap);
       }

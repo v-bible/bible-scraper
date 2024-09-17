@@ -1,9 +1,12 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
+import { Agent, setGlobalDispatcher } from 'undici';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
 import prisma from '@/prisma/prisma';
+
+setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
 
 (async () => {
   await getBook();
