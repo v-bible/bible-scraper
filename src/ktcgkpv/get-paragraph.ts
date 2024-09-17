@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
+import type { ContentView } from '@/ktcgkpv/get-all';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
 import { logger } from '@/logger/logger';
 
@@ -25,11 +27,12 @@ const getParagraph = async (
 
   const req = await fetch('https://ktcgkpv.org/bible/content-view', {
     method: 'POST',
+    // @ts-ignore
     body: formdata,
     redirect: 'follow',
   });
 
-  const data = await req.json();
+  const data = (await req.json()) as ContentView;
 
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
