@@ -9,6 +9,7 @@ import type {
   BookVerse,
 } from '@prisma/client';
 import { chromium, devices } from 'playwright';
+import { parseMd } from '@/lib/remark';
 import { VerseProcessor } from '@/lib/verse-utils';
 
 const getVerse = async (
@@ -47,7 +48,7 @@ const getVerse = async (
     // NOTE: First we wrap it with $ for every sup as verse number because
     // some sup for verse num is omitted
     document.querySelectorAll('sup').forEach((el) => {
-      el.textContent = `$${el.textContent}$`;
+      el.innerHTML = `$${el.innerHTML}$`;
     });
 
     // NOTE: Then we wrap it with @ for every sup as reference. So the
@@ -57,18 +58,18 @@ const getVerse = async (
 
       const refLabelMatch = className?.match(/ci\d+_[^_]+_.+/u);
 
-      el.textContent = `@${refLabelMatch?.[0]}&${el.textContent}@`;
+      el.innerHTML = `@${refLabelMatch?.[0]}&${el.innerHTML}@`;
     });
 
     // NOTE: Then we wrap it with < for every sup as note. So the note character is <$a$>
     document.querySelectorAll('sup[class*="note" i]').forEach((el) => {
-      el.textContent = `<${el.textContent}>`;
+      el.innerHTML = `<${el.innerHTML}>`;
     });
 
-    // NOTE: Have to put after the sup because some sup is inside h1-h6
-    document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
-      el.textContent = `#${el.textContent}#`;
-    });
+    // // NOTE: Have to put after the sup because some sup is inside h1-h6
+    // document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
+    //   el.innerHTML = `#${el.innerHTML}#`;
+    // });
   });
 
   const verseNum = await newPage
@@ -91,7 +92,7 @@ const getVerse = async (
       // NOTE: num is the passed verseNum arg
       await par.evaluate(
         (node, { verseNum: num, isPoetry: poetry }) => {
-          let text = node.textContent;
+          let text = node.innerHTML;
 
           if (text === null) {
             return;
@@ -111,7 +112,7 @@ const getVerse = async (
 
           // NOTE: This is the important part, so we still can differentiate even if
           // the content is not within the p element (missing verse)
-          node.textContent = `\n${text}`;
+          node.innerHTML = `\n${text}`;
         },
         { verseNum, isPoetry },
       );
@@ -120,7 +121,8 @@ const getVerse = async (
 
   // NOTE: Some cases like <p><p><sup></sup>..., the content is not within the p
   // element but when we call textContent it still maintain correct places
-  const bodyContent = await newPage.textContent('body');
+  let bodyContent = await newPage.innerHTML('body');
+  bodyContent = await parseMd(bodyContent);
 
   await context.close();
   await browser.close();
@@ -129,7 +131,9 @@ const getVerse = async (
     return null;
   }
 
-  const verses = bodyContent.split(/(?<!#)\n/g).filter((val) => val !== '');
+  const verses = bodyContent
+    .split(/(?<!#.*\s*)\n/g)
+    .filter((val) => val !== '');
 
   const verseMap = verses.map((verse, verseOrder) => {
     const processor = new VerseProcessor({});

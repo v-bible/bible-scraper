@@ -7,10 +7,11 @@ import type {
   BookVerse,
 } from '@prisma/client';
 
-const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gu;
-const reRefMatch = /@(?<refLabel>ci\d+_[^_]+_[^&]+)&\$[^@]*\$@/gu;
-const reHeadMatch = /#[^#]*#/gu;
-const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gu;
+const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gmu;
+const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^@]*\$@/gmu;
+const reHeadMatch = /#.*\n/gmu;
+const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gmu;
+const rePoetryMatch = /\\?~/gmu;
 
 class VerseProcessor {
   reFnMatch: RegExp;
@@ -21,16 +22,20 @@ class VerseProcessor {
 
   reVerseNumMatch: RegExp;
 
+  rePoetryMatch: RegExp;
+
   constructor({
     reFn = reFnMatch,
     reRef = reRefMatch,
     reHead = reHeadMatch,
     reVerseNum = reVerseNumMatch,
+    rePoetry = rePoetryMatch,
   }) {
     this.reFnMatch = reFn;
     this.reRefMatch = reRef;
     this.reHeadMatch = reHead;
     this.reVerseNumMatch = reVerseNum;
+    this.rePoetryMatch = rePoetry;
   }
 
   processVerse(str: string) {
@@ -40,10 +45,10 @@ class VerseProcessor {
       .replaceAll(this.reRefMatch, '')
       .replaceAll(this.reVerseNumMatch, '');
 
-    const isPoetry = content.includes('~');
+    const isPoetry = content.search(this.rePoetryMatch) !== -1;
 
     if (isPoetry) {
-      content = content.replace('~', '');
+      content = content.replace(this.rePoetryMatch, '');
     }
 
     return {
@@ -68,9 +73,9 @@ class VerseProcessor {
       headings = headingMatch.map((h, headingOrder) => {
         const fnHeadMatch = h
           .replaceAll('#', '')
-          .replaceAll(reRefMatch, '')
+          .replaceAll(this.reRefMatch, '')
           .trim()
-          .matchAll(reFnMatch);
+          .matchAll(this.reFnMatch);
 
         const fnHeads = calcPosition(
           fnHeadMatch,
@@ -79,18 +84,17 @@ class VerseProcessor {
 
         const refHeadMatch = h
           .replaceAll('#', '')
-          .replaceAll(reFnMatch, '')
+          .replaceAll(this.reFnMatch, '')
           .trim()
-          .matchAll(reRefMatch);
+          .matchAll(this.reRefMatch);
 
-        const refHeads = calcPosition(
-          refHeadMatch,
-          (match) => match.groups!.refLabel!,
+        const refHeads = calcPosition(refHeadMatch, (match) =>
+          match.groups!.refLabel!.replaceAll('\\_', '_'),
         );
 
         const headingContent = h
-          .replaceAll(reFnMatch, '')
-          .replaceAll(reRefMatch, '')
+          .replaceAll(this.reFnMatch, '')
+          .replaceAll(this.reRefMatch, '')
           .replaceAll('#', '')
           .trim();
 
@@ -108,10 +112,10 @@ class VerseProcessor {
 
   processVerseFn(str: string) {
     const footnoteMatch = str
-      .replaceAll(reHeadMatch, '')
-      .replaceAll(reRefMatch, '')
-      .replaceAll(reVerseNumMatch, '')
-      .replace('~', '')
+      .replaceAll(this.reHeadMatch, '')
+      .replaceAll(this.reRefMatch, '')
+      .replaceAll(this.reVerseNumMatch, '')
+      .replace(this.rePoetryMatch, '')
       .trim()
       .matchAll(this.reFnMatch);
 
@@ -125,16 +129,15 @@ class VerseProcessor {
 
   processVerseRef(str: string) {
     const referenceMatch = str
-      .replaceAll(reHeadMatch, '')
-      .replaceAll(reFnMatch, '')
-      .replaceAll(reVerseNumMatch, '')
-      .replace('~', '')
+      .replaceAll(this.reHeadMatch, '')
+      .replaceAll(this.reFnMatch, '')
+      .replaceAll(this.reVerseNumMatch, '')
+      .replace(this.rePoetryMatch, '')
       .trim()
       .matchAll(this.reRefMatch);
 
-    const refs = calcPosition(
-      referenceMatch,
-      (match) => match.groups!.refLabel!,
+    const refs = calcPosition(referenceMatch, (match) =>
+      match.groups!.refLabel!.replaceAll('\\_', '_'),
     );
 
     return refs;

@@ -18,7 +18,12 @@
     "dotenv": "16.4.5",
     "lodash": "4.17.21",
     "playwright": "1.44.0",
+    "rehype-parse": "9.0.0",
+    "rehype-remark": "10.0.0",
+    "rehype-remove-comments": "6.1.0",
+    "remark-stringify": "11.0.0",
     "undici": "6.19.8",
+    "unified": "11.0.5",
     "winston": "3.13.0"
   },
   "devDependencies": {

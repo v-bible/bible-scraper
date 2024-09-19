@@ -147,6 +147,7 @@ const getAll = async (
 
   const processor = new VerseProcessor({
     reRef: /@\$(?<refLabel>[^@]*)\$@/gu,
+    reHead: /#[^#]*#/gu,
   });
 
   for await (const [parNum, par] of Object.entries(paragraphs)) {
