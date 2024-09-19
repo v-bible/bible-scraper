@@ -16,7 +16,10 @@ const getVerse = async (
   html: string,
 ): Promise<
   | {
-      verse: Pick<BookVerse, 'content' | 'number' | 'order' | 'isPoetry'>;
+      verse: Pick<
+        BookVerse,
+        'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
+      >;
       headings: Array<
         Pick<BookHeading, 'content' | 'order'> & {
           footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
@@ -135,20 +138,34 @@ const getVerse = async (
     .split(/(?<!#.*\s*)\n/g)
     .filter((val) => val !== '');
 
-  const verseMap = verses.map((verse, verseOrder) => {
-    const processor = new VerseProcessor({});
+  const verseMap = verses
+    .map((verse) => {
+      const processor = new VerseProcessor({});
 
-    return {
-      verse: {
-        ...processor.processVerse(verse),
-        number: parseInt(verseNum!.replaceAll('$', ''), 10),
-        order: verseOrder,
-      } satisfies Pick<BookVerse, 'content' | 'number' | 'order' | 'isPoetry'>,
-      headings: processor.processHeading(verse),
-      footnotes: processor.processVerseFn(verse),
-      references: processor.processVerseRef(verse),
-    };
-  });
+      return {
+        verse: {
+          ...processor.processVerse(verse),
+          number: parseInt(verseNum!.replaceAll('$', ''), 10),
+          order: 0,
+          parNumber: 0,
+          parIndex: 0,
+        },
+        headings: processor.processHeading(verse),
+        footnotes: processor.processVerseFn(verse),
+        references: processor.processVerseRef(verse),
+      };
+    })
+    // NOTE: We have to filter out empty content before counting order
+    .filter((v) => v.verse.content !== '')
+    .map((verseData, verseOrder) => {
+      return {
+        ...verseData,
+        verse: {
+          ...verseData.verse,
+          order: verseOrder,
+        },
+      };
+    });
 
   return verseMap;
 };
