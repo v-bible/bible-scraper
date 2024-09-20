@@ -5,9 +5,9 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { BookVerse, Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
+import { insertData } from './insert-data';
+import { parseMd } from '@/lib/remark';
 import { VerseProcessor, reVerseNumMatch } from '@/lib/verse-utils';
-import { logger } from '@/logger/logger';
-import prisma from '@/prisma/prisma';
 
 // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
 const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
@@ -51,6 +51,21 @@ const getAll = async (
     },
   );
 
+  await context.addCookies([
+    {
+      name: 'BGP_pslookup_showwoj',
+      value: 'yes',
+      domain: '.biblegateway.com',
+      path: '/',
+    },
+    {
+      name: 'BGP_pslookup_showxrefs',
+      value: 'yes',
+      domain: '.biblegateway.com',
+      path: '/',
+    },
+  ]);
+
   const fnEl = await page
     .locator("div[class='footnotes']")
     .locator('ol')
@@ -60,9 +75,11 @@ const getAll = async (
     fnEl.map(async (el, idx) => {
       const fnId = await el.getAttribute('id');
 
-      const fnContent = await el
+      let fnContent = await el
         .locator('span[class*="footnote-text" i]')
-        .textContent();
+        .innerHTML();
+
+      fnContent = await parseMd(fnContent);
 
       if (!fnId || !fnContent) {
         return null;
@@ -83,54 +100,92 @@ const getAll = async (
       .forEach((el) => el.remove());
 
     document.querySelectorAll("[class*='chapternum' i]").forEach((el) => {
-      el.textContent = `$1$`;
+      el.innerHTML = `$1$`;
     });
 
     // NOTE: First we wrap it with $ for every sup as verse number because
     // some sup for verse num is omitted
     document.querySelectorAll('sup').forEach((el) => {
-      el.textContent = `$${el.textContent?.trim()}$`;
+      el.innerHTML = `$${el.textContent?.trim()}$`;
     });
 
     // NOTE: Then we wrap references with @$, so the character is @$a$@
     document.querySelectorAll('crossref').forEach((el) => {
-      el.textContent = `@$${el.textContent}$@`;
+      el.innerHTML = `@$${el.innerHTML}$@`;
     });
 
     document.querySelectorAll("[class*='reference' i]").forEach((el) => {
-      el.textContent = `@$${el.textContent}$@`;
+      el.innerHTML = `@$${el.innerHTML}$@`;
+      // NOTE: In case ref is heading, so we change to span for simpler than p
+      el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)h\d+(?=.*>)/gm, 'span');
     });
 
     // NOTE: Then we wrap references with <$, so the character is <$a$>
     document.querySelectorAll('sup[class*="note" i]').forEach((el) => {
-      el.textContent = `<${el.textContent}>`;
-    });
-
-    // NOTE: Have to put after the sup because some sup is inside h1-h6
-    document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
-      const className = el.getAttribute('class');
-
-      // NOTE: Filter out the reference and psalm metadata
-      if (
-        className &&
-        (className.includes('reference') ||
-          className.includes('psalm-acrostic'))
-      ) {
-        return;
-      }
-
-      el.textContent = `\n#${el.textContent}#`;
+      el.innerHTML = `<${el.innerHTML}>`;
     });
 
     document.querySelectorAll("[class*='psalm-acrostic' i]").forEach((el) => {
       el.remove();
     });
+
+    // NOTE: Replace span wrap word of Jesus with b element
+    document.querySelectorAll("[class*='woj' i]").forEach((el) => {
+      el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)span(?=.*>)/gm, 'b');
+    });
   });
 
   const paragraphs = await page
     .locator('[data-translation]')
-    .getByRole('paragraph')
+    .locator('p')
     .all();
+
+  await Promise.all(
+    paragraphs.map(async (par) => {
+      // NOTE: The book code is not case sensitive
+      // Ref: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors#attr_operator_value_i
+      const verseLocator = par.locator(`span[class*="${chap.book.code}-" i]`);
+
+      const parentPoetry = await par
+        .locator("xpath=//parent::div[starts-with(@class, 'poetry')]")
+        .all();
+
+      const isPoetry = parentPoetry.length > 0;
+
+      await verseLocator.evaluateAll(
+        // eslint-disable-next-line no-shadow
+        (nodes, { isPoetry: poetry }) => {
+          nodes.forEach((node) => {
+            if (node.textContent?.search(/\$\d+\$/) === -1) {
+              const className = node.getAttribute('class');
+
+              const match = className?.match(
+                /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/,
+              );
+
+              if (!match?.groups) {
+                return;
+              }
+
+              const verseNum = parseInt(match.groups.verseNum!, 10);
+
+              node.innerHTML = `$${verseNum}$${node.innerHTML}`;
+            }
+
+            if (poetry) {
+              node.innerHTML = `~${node.innerHTML}`;
+            }
+
+            // NOTE: This is the important part, so we still can differentiate even if
+            // the content is not within the p element (missing verse)
+            // NOTE: With parseMd, p will add break rather than the "\n".
+            node.innerHTML = `<p>${node.innerHTML}</p>`;
+          });
+        },
+        { isPoetry },
+      );
+    }),
+  );
 
   let verseIdxList: {
     content: string;
@@ -138,74 +193,30 @@ const getAll = async (
     parIdx: number;
   }[] = [];
 
-  // NOTE: We ensure that the order of split verses like '4a', '4b', '4c' is
-  // correct
-  const verseOrderTrack = {
-    number: 0,
-    order: 0,
-  };
-
   const processor = new VerseProcessor({
     reRef: /@\$(?<refLabel>[^@]*)\$@/gu,
-    reHead: /#[^#]*#/gu,
   });
 
-  for await (const [parNum, par] of Object.entries(paragraphs)) {
-    // NOTE: The book code is not case sensitive
-    // Ref: https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors#attr_operator_value_i
-    const verseLocator = par.locator(`css=[class*="${chap.book.code}-" i]`);
+  // NOTE: This step is to determine parNum and parIndex, and because we wrap
+  // every verses with p element so we have to update our locators.
+  for await (const [parNum, par] of Object.entries(
+    await page
+      .locator('[data-translation]')
+      .locator('div > p')
+      .or(page.locator('div[class="poetry" i] > p'))
+      .all(),
+  )) {
+    let parContent = await par.innerHTML();
 
-    const parentPoetry = await par
-      .locator("xpath=//parent::div[starts-with(@class, 'poetry')]")
-      .all();
-
-    const isPoetry = parentPoetry.length > 0;
-
-    await verseLocator.evaluateAll(
-      // eslint-disable-next-line no-shadow
-      (nodes, { isPoetry: poetry }) => {
-        nodes.forEach((node) => {
-          let text = node.textContent;
-
-          if (text === null) {
-            return;
-          }
-
-          if (text.search(/\$\d+\$/) === -1) {
-            const className = node.getAttribute('class');
-
-            const match = className?.match(
-              /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/,
-            );
-
-            if (!match?.groups) {
-              return;
-            }
-
-            const verseNum = parseInt(match.groups.verseNum!, 10);
-
-            text = `$${verseNum}$${text}`;
-          }
-
-          if (poetry) {
-            text = `~${text.trim()}`;
-          }
-
-          // NOTE: This is the important part, so we still can differentiate even if
-          // the content is not within the p element (missing verse)
-          node.textContent = `\n${text}`;
-        });
-      },
-      { isPoetry },
-    );
-
-    const parContent = await par.textContent();
+    parContent = await parseMd(parContent);
 
     if (!parContent) {
       continue;
     }
 
-    const verses = parContent.split(/(?<!#)\n/g).filter((val) => val !== '');
+    const verses = parContent
+      .split(/(?<!^(#|@).*\s*)\\?\n/gm)
+      .filter((val) => !!val && val.trim() !== '');
 
     const verseIdx = verses.map((v, parIdx) => {
       return {
@@ -218,10 +229,12 @@ const getAll = async (
     verseIdxList = [...verseIdxList, ...verseIdx];
   }
 
-  const bodyContent = await page
+  let bodyContent = await page
     .locator('[data-translation]')
     .locator('[class*="passage-content"]')
-    .textContent();
+    .innerHTML();
+
+  bodyContent = await parseMd(bodyContent);
 
   await context.close();
   await browser.close();
@@ -232,234 +245,56 @@ const getAll = async (
 
   // NOTE: We add "|@" because some cases ref is among headings
   const verses = bodyContent
-    .split(/(?<!#|@)\n/g)
-    .filter((val) => val.trim() !== '');
+    .split(/(?<!^(#|@).*\s*)\\?\n/gm)
+    .filter((val) => !!val && val.trim() !== '');
 
-  const verseMap = verses.map((verse) => {
-    const verseNum = extractVerseNum(verse, reVerseNumMatch);
+  // NOTE: We ensure that the order of split verses like '4a', '4b', '4c' is
+  // correct
+  const verseOrderTrack = {
+    number: 0,
+    order: 0,
+  };
 
-    const processedVerse = processor.processVerse(verse);
+  const verseMap = verses
+    .map((verse) => {
+      const verseNum = extractVerseNum(verse, reVerseNumMatch);
 
-    const verseIdx = verseIdxList.find(
-      (vIdx) => vIdx.content === processedVerse.content,
-    );
+      const processedVerse = processor.processVerse(verse);
 
-    if (verseNum === null || !verseIdx) {
-      return null;
-    }
+      const verseIdx = verseIdxList.find(
+        (vIdx) => vIdx.content === processedVerse.content,
+      );
 
-    if (verseNum !== verseOrderTrack.number) {
-      verseOrderTrack.number = verseNum;
-      verseOrderTrack.order = 0;
-    } else {
-      verseOrderTrack.order += 1;
-    }
+      if (verseNum === null || !verseIdx) {
+        return null;
+      }
 
-    return {
-      verse: {
-        ...processedVerse,
-        number: verseNum,
-        order: verseOrderTrack.order,
-        parNumber: verseIdx.parNum,
-        parIndex: verseIdx.parIdx,
-      } satisfies Pick<
-        BookVerse,
-        'content' | 'number' | 'order' | 'isPoetry' | 'parNumber' | 'parIndex'
-      >,
-      headings: processor.processHeading(verse),
-      footnotes: processor.processVerseFn(verse),
-      references: processor.processVerseRef(verse),
-    };
-  });
+      if (verseNum !== verseOrderTrack.number) {
+        verseOrderTrack.number = verseNum;
+        verseOrderTrack.order = 0;
+      } else {
+        verseOrderTrack.order += 1;
+      }
 
-  let refOrder = 0;
-
-  for (const vData of verseMap) {
-    if (!vData) {
-      continue;
-    }
-
-    if (vData.verse.number !== verseOrderTrack.number) {
-      verseOrderTrack.number = vData.verse.number;
-      verseOrderTrack.order = 0;
-    } else {
-      verseOrderTrack.order += 1;
-    }
-
-    const newVerse = await prisma.bookVerse.upsert({
-      where: {
-        number_order_chapterId: {
-          number: verseOrderTrack.number,
+      return {
+        verse: {
+          ...processedVerse,
+          number: verseNum,
           order: verseOrderTrack.order,
-          chapterId: chap.id,
-        },
-      },
-      update: {
-        number: verseOrderTrack.number,
-        content: vData.verse.content,
-        order: verseOrderTrack.order,
-        parNumber: vData.verse.parNumber,
-        parIndex: vData.verse.parIndex,
-        isPoetry: vData.verse.isPoetry,
-      },
-      create: {
-        number: verseOrderTrack.number,
-        content: vData.verse.content,
-        order: verseOrderTrack.order,
-        parNumber: vData.verse.parNumber,
-        parIndex: vData.verse.parIndex,
-        isPoetry: vData.verse.isPoetry,
-        chapterId: chap.id,
-      },
-    });
+          parNumber: verseIdx.parNum,
+          parIndex: verseIdx.parIdx,
+        } satisfies Pick<
+          BookVerse,
+          'content' | 'number' | 'order' | 'isPoetry' | 'parNumber' | 'parIndex'
+        >,
+        headings: processor.processHeading(verse),
+        footnotes: processor.processVerseFn(verse),
+        references: processor.processVerseRef(verse),
+      };
+    })
+    .filter((v) => !!v);
 
-    logger.info(
-      'Get verse %s:%s for book %s',
-      chap.number,
-      vData.verse.number,
-      chap.book.title,
-    );
-
-    logger.debug(
-      'Verse %s:%s content: %s',
-      chap.number,
-      vData.verse.number,
-      vData.verse.content,
-    );
-
-    if (vData.verse.isPoetry) {
-      logger.info(
-        'Verse %s:%s is poetry for book %s',
-        chap.number,
-        vData.verse.number,
-        chap.book.title,
-      );
-    }
-
-    for (const vHeading of vData.headings) {
-      await prisma.bookHeading.upsert({
-        where: {
-          order_verseId: {
-            order: vHeading.order,
-            verseId: newVerse.id,
-          },
-        },
-        update: {
-          order: vHeading.order,
-          content: vHeading.content,
-        },
-        create: {
-          order: vHeading.order,
-          content: vHeading.content,
-          verseId: newVerse.id,
-          chapterId: chap.id,
-        },
-      });
-
-      logger.info(
-        'Get heading %s:%s for book %s',
-        chap.number,
-        vData.verse.number,
-        chap.book.title,
-      );
-
-      logger.debug(
-        'Heading %s:%s content: %s',
-        chap.number,
-        vData.verse.number,
-        vHeading.content,
-      );
-    }
-
-    for (const vFootnote of vData.footnotes) {
-      const vFootnoteContent = fnMap
-        .filter((fn) => fn?.label === vFootnote.label)
-        .at(0)!;
-
-      if (!vFootnoteContent) {
-        continue;
-      }
-
-      // NOTE: Sometimes footnote is not present
-      if (!vFootnoteContent) {
-        continue;
-      }
-
-      await prisma.bookFootnote.upsert({
-        where: {
-          order_verseId: {
-            order: vFootnoteContent.order,
-            verseId: newVerse.id,
-          },
-        },
-        update: {
-          order: vFootnoteContent.order,
-          content: vFootnoteContent.content,
-          position: vFootnote.position,
-        },
-        create: {
-          order: vFootnoteContent.order,
-          content: vFootnoteContent.content,
-          position: vFootnote.position,
-          verseId: newVerse.id,
-          chapterId: chap.id,
-        },
-      });
-
-      logger.info(
-        'Get footnote %s:%s for book %s',
-        chap.number,
-        vData.verse.number,
-        chap.book.title,
-      );
-
-      logger.debug(
-        'Footnote %s:%s content: %s',
-        chap.number,
-        vData.verse.number,
-        vFootnoteContent.content,
-      );
-    }
-
-    for (const vRef of vData.references) {
-      await prisma.bookReference.upsert({
-        where: {
-          order_verseId: {
-            order: refOrder,
-            verseId: newVerse.id,
-          },
-        },
-        update: {
-          order: refOrder,
-          content: vRef.label,
-          position: vRef.position,
-        },
-        create: {
-          order: refOrder,
-          content: vRef.label,
-          position: vRef.position,
-          verseId: newVerse.id,
-          chapterId: chap.id,
-        },
-      });
-
-      logger.info(
-        'Get reference %s:%s for book %s',
-        chap.number,
-        vData.verse.number,
-        chap.book.title,
-      );
-
-      logger.debug(
-        'Reference %s:%s content: %s',
-        chap.number,
-        vData.verse.number,
-        vRef.label,
-      );
-
-      refOrder += 1;
-    }
-  }
+  await insertData(verseMap, chap, fnMap);
 };
 
 export { getAll };
