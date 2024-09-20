@@ -1,0 +1,11 @@
+- biblegateway:
+  - 1Cor-1
+  - 2Sam-23
+  - Gen-2
+  - Ps-36
+- ktcgkpv:
+  - 1Cor-1
+  - 2Sam-23
+  - Gen-2
+  - Đnl-19
+  - Nkm-7
