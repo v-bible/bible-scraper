@@ -8,14 +8,15 @@ import { fetch } from 'undici';
 import { getParagraph } from '@/ktcgkpv/get-paragraph';
 import { getVerse } from '@/ktcgkpv/get-verse';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
+import { parseMd } from '@/lib/remark';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 export type ContentView = {
   data: {
     content: string;
-    notes: Record<string, string>;
-    references: Record<string, string>;
+    notes?: Record<string, string>;
+    references?: Record<string, string>;
   };
   msg: null;
   success: boolean;
@@ -93,6 +94,16 @@ const getAll = async (
   );
 
   const paragraphs = await getParagraph(chap);
+
+  const footnoteContentMap = Object.fromEntries(
+    await Promise.all(
+      Object.entries(data.data?.notes || {}).map(async ([key, noteContent]) => {
+        const parsedContent = await parseMd(noteContent);
+
+        return [key, parsedContent];
+      }),
+    ),
+  );
 
   let footnoteOrder = 0;
   let refOrder = 0;
@@ -210,7 +221,7 @@ const getAll = async (
           );
 
           for (const hFootnote of vHeading.footnotes) {
-            const hFootnoteKey = Object.keys(data.data?.notes).find(
+            const hFootnoteKey = Object.keys(footnoteContentMap).find(
               (key) =>
                 key ===
                 `ci${chap.number}_${newVerse.number}_${hFootnote.label}`,
@@ -220,7 +231,7 @@ const getAll = async (
               continue;
             }
 
-            const hFootnoteContent = data.data?.notes[hFootnoteKey];
+            const hFootnoteContent = footnoteContentMap[hFootnoteKey];
 
             // NOTE: Sometimes footnote is not present
             if (!hFootnoteContent) {
@@ -259,14 +270,14 @@ const getAll = async (
               'Heading footnote %s:%s content: %s',
               chap.number,
               vData.verse.number,
-              data.data?.notes[hFootnoteKey],
+              footnoteContentMap[hFootnoteKey],
             );
 
             footnoteOrder += 1;
           }
 
           for (const hRef of vHeading.references) {
-            const refContent = data.data?.references[hRef.label]
+            const refContent = data.data?.references?.[hRef.label]
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               ?.map((v) => v.display_text)
@@ -316,7 +327,7 @@ const getAll = async (
         }
 
         for (const vFootnote of vData.footnotes) {
-          const vFootnoteKey = Object.keys(data.data?.notes).find(
+          const vFootnoteKey = Object.keys(footnoteContentMap).find(
             (key) =>
               key === `ci${chap.number}_${newVerse.number}_${vFootnote.label}`,
           );
@@ -325,7 +336,7 @@ const getAll = async (
             continue;
           }
 
-          const vFootnoteContent = data.data?.notes[vFootnoteKey];
+          const vFootnoteContent = footnoteContentMap[vFootnoteKey];
 
           // NOTE: Sometimes footnote is not present
           if (!vFootnoteContent) {
@@ -364,14 +375,14 @@ const getAll = async (
             'Footnote %s:%s content: %s',
             chap.number,
             vData.verse.number,
-            data.data?.notes[vFootnoteKey],
+            footnoteContentMap[vFootnoteKey],
           );
 
           footnoteOrder += 1;
         }
 
         for (const vRef of vData.references) {
-          const refContent = data.data?.references[vRef.label]
+          const refContent = data.data?.references?.[vRef.label]
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             ?.map((v) => v.display_text)
