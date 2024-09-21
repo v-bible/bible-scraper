@@ -134,12 +134,12 @@ export const insertData = async (
         },
         update: {
           order: vFootnoteContent.order,
-          content: vFootnoteContent.content,
+          content: vFootnoteContent.content.trim(),
           position: vFootnote.position,
         },
         create: {
           order: vFootnoteContent.order,
-          content: vFootnoteContent.content,
+          content: vFootnoteContent.content.trim(),
           position: vFootnote.position,
           verseId: newVerse.id,
           chapterId: chap.id,
@@ -157,7 +157,7 @@ export const insertData = async (
         'Footnote %s:%s content: %s',
         chap.number,
         vData.verse.number,
-        vFootnoteContent.content,
+        vFootnoteContent.content.trim(),
       );
     }
 
@@ -171,17 +171,19 @@ export const insertData = async (
         },
         update: {
           order: refOrder,
-          content: vRef.label,
+          content: vRef.label.trim(),
           position: vRef.position,
         },
         create: {
           order: refOrder,
-          content: vRef.label,
+          content: vRef.label.trim(),
           position: vRef.position,
           verseId: newVerse.id,
           chapterId: chap.id,
         },
       });
+
+      refOrder += 1;
 
       logger.info(
         'Get reference %s:%s for book %s',
@@ -194,10 +196,8 @@ export const insertData = async (
         'Reference %s:%s content: %s',
         chap.number,
         vData.verse.number,
-        vRef.label,
+        vRef.label.trim(),
       );
-
-      refOrder += 1;
     }
   }
 };
