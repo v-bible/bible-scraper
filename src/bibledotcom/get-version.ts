@@ -4,6 +4,7 @@
 // import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
+import { fetch } from 'undici';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 

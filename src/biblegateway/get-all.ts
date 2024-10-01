@@ -5,14 +5,15 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { BookVerse, Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { insertData } from './insert-data';
+import { getParagraph } from '@/biblegateway/get-paragraph';
+import { insertData } from '@/biblegateway/insert-data';
 import { parseMd } from '@/lib/remark';
 import { VerseProcessor, reVerseNumMatch } from '@/lib/verse-utils';
 
 // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
 const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
 
-const extractVerseNum = (str: string, regex = reClassVerse) => {
+export const extractVerseNum = (str: string, regex = reClassVerse) => {
   const match = regex.exec(str);
 
   if (!match?.groups) {
@@ -71,6 +72,7 @@ const getAll = async (
     .locator('ol')
     .locator('li')
     .all();
+
   const fnMap = await Promise.all(
     fnEl.map(async (el, idx) => {
       const fnId = await el.getAttribute('id');
@@ -187,47 +189,9 @@ const getAll = async (
     }),
   );
 
-  let verseIdxList: {
-    content: string;
-    parNum: number;
-    parIdx: number;
-  }[] = [];
-
   const processor = new VerseProcessor({
     reRef: /@\$(?<refLabel>[^@]*)\$@/gu,
   });
-
-  // NOTE: This step is to determine parNum and parIndex, and because we wrap
-  // every verses with p element so we have to update our locators.
-  for await (const [parNum, par] of Object.entries(
-    await page
-      .locator('[data-translation]')
-      .locator('div > p')
-      .or(page.locator('div[class="poetry" i] > p'))
-      .all(),
-  )) {
-    let parContent = await par.innerHTML();
-
-    parContent = await parseMd(parContent);
-
-    if (!parContent) {
-      continue;
-    }
-
-    const verses = parContent
-      .split(/(?<!^(#|@).*\s*)\\?\n/gm)
-      .filter((val) => !!val && val.trim() !== '');
-
-    const verseIdx = verses.map((v, parIdx) => {
-      return {
-        content: processor.processVerse(v).content,
-        parNum: +parNum,
-        parIdx,
-      };
-    });
-
-    verseIdxList = [...verseIdxList, ...verseIdx];
-  }
 
   let bodyContent = await page
     .locator('[data-translation]')
@@ -255,17 +219,19 @@ const getAll = async (
     order: 0,
   };
 
+  const paragraphData = await getParagraph(chap);
+
   const verseMap = verses
     .map((verse) => {
       const verseNum = extractVerseNum(verse, reVerseNumMatch);
 
       const processedVerse = processor.processVerse(verse);
 
-      const verseIdx = verseIdxList.find(
-        (vIdx) => vIdx.content === processedVerse.content,
+      const parData = paragraphData.find(
+        (p) => p.content === processedVerse.content,
       );
 
-      if (verseNum === null || !verseIdx) {
+      if (verseNum === null || !parData) {
         return null;
       }
 
@@ -281,8 +247,8 @@ const getAll = async (
           ...processedVerse,
           number: verseNum,
           order: verseOrderTrack.order,
-          parNumber: verseIdx.parNum,
-          parIndex: verseIdx.parIdx,
+          parNumber: parData.parNum,
+          parIndex: parData.parIndex,
         } satisfies Pick<
           BookVerse,
           'content' | 'number' | 'order' | 'isPoetry' | 'parNumber' | 'parIndex'

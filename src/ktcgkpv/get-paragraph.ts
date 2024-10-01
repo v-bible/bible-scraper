@@ -7,7 +7,7 @@ import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
 import type { ContentView } from '@/ktcgkpv/get-all';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
-import { logger } from '@/logger/logger';
+import { parseMd } from '@/lib/remark';
 
 const getParagraph = async (
   chap: Prisma.BookChapterGetPayload<{
@@ -42,72 +42,54 @@ const getParagraph = async (
     waitUntil: 'load',
   });
 
-  // NOTE: To check for missing verses
-  let verseNumCount: string[][] = [];
+  await page.evaluate(() => {
+    document.querySelectorAll("p[class*='chapter-num' i]").forEach((el) => {
+      el.remove();
+    });
 
-  const paragraphs = await page
-    .locator(
-      // NOTE: We not filter empty p here because we want to report missing
-      // verses
-      "xpath=//p[not(starts-with(@class, 'chapter-num'))]",
-    )
-    .or(page.locator("p[class*='poem' i]"))
-    .all();
+    // NOTE: Add a break to differentiate between verses
+    document.querySelectorAll("sup[class*='verse-num' i]").forEach((el) => {
+      el.outerHTML = `${el.outerHTML}<br>`;
+    });
 
-  await Promise.all(
-    paragraphs.map(async (par) => {
-      let verseNumLocator = par.locator(
-        "xpath=//sup[starts-with(@class, 'verse-num') or not(@class)]",
-      );
+    // NOTE: Because it has a space before every footnotes. About ref it is put
+    // before words so we don't have to remove it
+    document.querySelectorAll('sup[class*="note" i]').forEach((el) => {
+      el.outerHTML = `$${el.outerHTML}`;
+    });
 
-      if ((await verseNumLocator.all()).length === 0) {
-        logger.warn(
-          `Missing verse number: chapter %s for book %s`,
-          chap.number,
-          chap.book.title,
-        );
+    document.querySelectorAll('sup').forEach((el) => {
+      el.remove();
+    });
 
-        verseNumLocator = par.locator(
-          "xpath=//following-sibling::sup[starts-with(@class, 'verse-num')]",
-        );
-      }
+    document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
+      el.remove();
+    });
+  });
 
-      const verseNumText = await verseNumLocator.allTextContents();
-
-      if (/[a-z]/.test(verseNumText.join('').toLowerCase())) {
-        logger.warn(
-          `Verse contains character: %s for book %s`,
-          chap.number,
-          chap.book.title,
-        );
-      }
-
-      const newVerseNumText = verseNumText
-        .map((num) => {
-          if (verseNumCount.flat().includes(num) || num.trim() === '') {
-            return null;
-          }
-          return num;
-        })
-        .filter((num) => num !== null)
-        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-
-      if (newVerseNumText.length === 0) {
-        return;
-      }
-
-      verseNumCount = [...verseNumCount, newVerseNumText];
-    }),
-  );
+  const parsedContent = await parseMd(await page.innerHTML('body'));
 
   await context.close();
   await browser.close();
 
-  verseNumCount = verseNumCount.sort(
-    (a, b) => parseInt(a[0]!, 10) - parseInt(b[0]!, 10),
-  );
+  const paragraphs = parsedContent
+    .split(/(?<!\\)\n/gm)
+    .filter((p) => p.trim() !== '')
+    .map((p, parNum) => {
+      const verses = p.split(/\\\n/gm).filter((v) => v.trim() !== '');
 
-  return verseNumCount;
+      return verses.map((v, parIndex) => {
+        return {
+          // NOTE: Remove redundant footnote space
+          content: v.replaceAll(/\s\$/gm, '').trim(),
+          parNum,
+          parIndex,
+        };
+      });
+    })
+    .flat();
+
+  return paragraphs;
 };
 
 export { getParagraph };

@@ -12,27 +12,22 @@ import { chromium, devices } from 'playwright';
 import { parseMd } from '@/lib/remark';
 import { VerseProcessor } from '@/lib/verse-utils';
 
-const getVerse = async (
-  html: string,
-): Promise<
-  | {
-      verse: Pick<
-        BookVerse,
-        'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
-      >;
-      headings: Array<
-        Pick<BookHeading, 'content' | 'order'> & {
-          footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-          references: Array<
-            Pick<BookReference, 'position'> & { label: string }
-          >;
-        }
-      >;
+export type VData = {
+  verse: Pick<
+    BookVerse,
+    'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
+  >;
+  headings: Array<
+    Pick<BookHeading, 'content' | 'order'> & {
       footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
       references: Array<Pick<BookReference, 'position'> & { label: string }>;
-    }[]
-  | null
-> => {
+    }
+  >;
+  footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
+  references: Array<Pick<BookReference, 'position'> & { label: string }>;
+};
+
+const getVerse = async (html: string): Promise<VData[] | null> => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
 
@@ -68,11 +63,6 @@ const getVerse = async (
     document.querySelectorAll('sup[class*="note" i]').forEach((el) => {
       el.innerHTML = `<${el.innerHTML}>`;
     });
-
-    // // NOTE: Have to put after the sup because some sup is inside h1-h6
-    // document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
-    //   el.innerHTML = `#${el.innerHTML}#`;
-    // });
   });
 
   const verseNum = await newPage
@@ -95,27 +85,21 @@ const getVerse = async (
       // NOTE: num is the passed verseNum arg
       await par.evaluate(
         (node, { verseNum: num, isPoetry: poetry }) => {
-          let text = node.innerHTML;
-
-          if (text === null) {
-            return;
-          }
-
           // NOTE: Has a sup element but no text inside
-          if (text.search(/\$\s\$/) !== -1) {
-            text = text.replace('$ $', `$${num}$`);
+          if (node.textContent?.search(/\$\s\$/) !== -1) {
+            node.innerHTML = node.innerHTML.replace('$ $', `$${num}$`);
             // NOTE: No sup element at all
-          } else if (text.search(/\$\d+\$/) === -1) {
-            text = `${num}${text}`;
+          } else if (node.textContent?.search(/\$\d+\$/) === -1) {
+            node.innerHTML = `${num}${node.innerHTML}`;
           }
 
           if (poetry) {
-            text = `~${text.trim()}`;
+            node.innerHTML = `~${node.innerHTML}`;
           }
 
           // NOTE: This is the important part, so we still can differentiate even if
           // the content is not within the p element (missing verse)
-          node.innerHTML = `\n${text}`;
+          node.innerHTML = `<p>${node.innerHTML}</p>`;
         },
         { verseNum, isPoetry },
       );
@@ -135,7 +119,7 @@ const getVerse = async (
   }
 
   const verses = bodyContent
-    .split(/(?<!#.*\s*)\n/g)
+    .split(/(?<!^#.*\s*)\\?\n/gm)
     .filter((val) => val !== '');
 
   const verseMap = verses

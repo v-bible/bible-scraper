@@ -1,14 +1,14 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
+import { Agent, setGlobalDispatcher } from 'undici';
+import { getAll } from './get-all';
 import { getBook } from '@/bibledotcom/get-book';
-import { getFootnote } from '@/bibledotcom/get-footnote';
-import { getHeading } from '@/bibledotcom/get-heading';
 import { getPsalmMeta } from '@/bibledotcom/get-psalm-meta';
-import { getReference } from '@/bibledotcom/get-reference';
-import { getVerse } from '@/bibledotcom/get-verse';
 import { getVersionByLang } from '@/bibledotcom/get-version';
 import prisma from '@/prisma/prisma';
+
+setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
 
 (async () => {
   // NOTE: You can use "getVersion" func to scrap all the versions available.
@@ -66,10 +66,7 @@ import prisma from '@/prisma/prisma';
       //   continue;
       // }
 
-      await getVerse(chap);
-      await getFootnote(chap);
-      await getHeading(chap);
-      await getReference(chap);
+      await getAll(chap);
       if (book.code === 'psa') {
         await getPsalmMeta(chap);
       }
