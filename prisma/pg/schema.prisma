@@ -82,7 +82,7 @@ model BookChapter {
   headings      BookHeading[]
   references    BookReference[]
   verses        BookVerse[]
-  PsalmMetadata PsalmMetadata?
+  psalmMetadata PsalmMetadata?
 
   @@unique([number, bookId])
   @@map("book_chapter")
@@ -164,7 +164,7 @@ model BookReference {
 }
 
 model PsalmMetadata {
-  id        String      @id @default(uuid())
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
   title     String
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
   updatedAt DateTime    @default(now()) @db.Timestamptz(3)
