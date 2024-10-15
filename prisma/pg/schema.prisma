@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model Version {
+  id            String          @id @default(dbgenerated("gen_random_uuid()"))
+  code          String
+  name          String
+  onlyNT        Boolean         @default(false)
+  onlyOT        Boolean         @default(false)
+  withApocrypha Boolean         @default(false)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @default(now()) @db.Timestamptz(3)
+  languageId    String
+  books         Book[]
+  language      VersionLanguage @relation(fields: [languageId], references: [id])
+  formats       VersionFormat[]
+
+  @@unique([code, languageId])
+  @@map("version")
+}
+
+model VersionFormat {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  type      String
+  ref       String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @db.Timestamptz(3)
+  versionId String
+  version   Version  @relation(fields: [versionId], references: [id])
+
+  @@unique([type, ref])
+  @@map("version_format")
+}
+
+model VersionLanguage {
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
+  code      String
+  name      String
+  webOrigin String
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @default(now()) @db.Timestamptz(3)
+  versions  Version[]
+
+  @@unique([code, webOrigin])
+  @@map("version_language")
+}
+
+model Book {
+  id        String        @id @default(dbgenerated("gen_random_uuid()"))
+  code      String
+  title     String
+  canon     String
+  order     Int
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime      @default(now()) @db.Timestamptz(3)
+  versionId String
+  version   Version       @relation(fields: [versionId], references: [id])
+  chapters  BookChapter[]
+
+  @@unique([code, versionId])
+  @@map("book")
+}
+
+model BookChapter {
+  id            String          @id @default(dbgenerated("gen_random_uuid()"))
+  number        Int
+  ref           String
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @default(now()) @db.Timestamptz(3)
+  bookId        String
+  book          Book            @relation(fields: [bookId], references: [id])
+  footnotes     BookFootnote[]
+  headings      BookHeading[]
+  references    BookReference[]
+  verses        BookVerse[]
+  psalmMetadata PsalmMetadata?
+
+  @@unique([number, bookId])
+  @@map("book_chapter")
+}
+
+model BookVerse {
+  id         String          @id @default(dbgenerated("gen_random_uuid()"))
+  number     Int
+  content    String
+  order      Int
+  parNumber  Int
+  parIndex   Int
+  isPoetry   Boolean         @default(false)
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
+  chapterId  String
+  footnotes  BookFootnote[]
+  headings   BookHeading[]
+  references BookReference[]
+  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
+
+  @@unique([number, order, chapterId])
+  @@map("book_verse")
+}
+
+model BookFootnote {
+  id        String       @id @default(dbgenerated("gen_random_uuid()"))
+  content   String
+  position  Int
+  order     Int
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @default(now()) @db.Timestamptz(3)
+  verseId   String?
+  headingId String?
+  chapterId String
+  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
+  verse     BookVerse?   @relation(fields: [verseId], references: [id])
+  heading   BookHeading? @relation(fields: [headingId], references: [id])
+
+  @@unique([order, verseId])
+  @@unique([order, headingId])
+  @@map("book_footnote")
+}
+
+model BookHeading {
+  id         String          @id @default(dbgenerated("gen_random_uuid()"))
+  content    String
+  order      Int
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @default(now()) @db.Timestamptz(3)
+  verseId    String
+  chapterId  String
+  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
+  verse      BookVerse       @relation(fields: [verseId], references: [id])
+  footnotes  BookFootnote[]
+  references BookReference[]
+
+  @@unique([order, verseId])
+  @@map("book_heading")
+}
+
+model BookReference {
+  id        String       @id @default(dbgenerated("gen_random_uuid()"))
+  content   String
+  position  Int          @default(0)
+  order     Int
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @default(now()) @db.Timestamptz(3)
+  verseId   String?
+  headingId String?
+  chapterId String
+  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
+  verse     BookVerse?   @relation(fields: [verseId], references: [id])
+  heading   BookHeading? @relation(fields: [headingId], references: [id])
+
+  @@unique([order, verseId])
+  @@unique([order, headingId])
+  @@map("book_reference")
+}
+
+model PsalmMetadata {
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  title     String
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @default(now()) @db.Timestamptz(3)
+  chapterId String      @unique
+  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+
+  @@map("psalm_metadata")
+}
+
+model SchemaMigrations {
+  version BigInt  @id
+  dirty   Boolean
+
+  @@map("schema_migrations")
+}
