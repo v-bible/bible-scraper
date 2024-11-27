@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
+import { CalendarEntry } from './get-ordinary-time';
 
 const getOrdinaryTimeSunday = async () => {
   const browser = await chromium.launch();
@@ -26,14 +27,11 @@ const getOrdinaryTimeSunday = async () => {
     },
   );
 
-  const rows = await page.locator('tr').all();
+  const yearARows = await page.locator('tr').all();
 
-  const res: Record<
-    string,
-    Record<'yearA' | 'yearB' | 'yearC', Record<string, string>>
-  > = {};
-  let count1 = 1;
-  for await (const row of rows) {
+  let res: CalendarEntry[] = [];
+  let weekOrder = 1;
+  for await (const row of yearARows) {
     const cellColor = await row.getAttribute('bgcolor');
 
     // NOTE: Skip header cells
@@ -55,17 +53,24 @@ const getOrdinaryTimeSunday = async () => {
       continue;
     }
 
-    res[count1] = {
-      ...res[count1]!,
-      yearA: {
+    res = [
+      ...res,
+      {
         firstReading,
         psalm,
         secondReading,
         gospel,
+        yearCycle: 'A',
+        yearNumber: '',
+        season: 'ot',
+        weekdayType: 'sunday',
+        weekOrder: `${weekOrder}`,
+        periodOfDay: '',
+        description: '',
       },
-    };
+    ];
 
-    count1 += 1;
+    weekOrder += 1;
   }
 
   await retry(
@@ -79,11 +84,11 @@ const getOrdinaryTimeSunday = async () => {
     },
   );
 
-  const rowsTwo = await page.locator('tr').all();
+  const yearBRows = await page.locator('tr').all();
 
-  count1 = 1;
+  weekOrder = 1;
 
-  for await (const row of rowsTwo) {
+  for await (const row of yearBRows) {
     const cellColor = await row.getAttribute('bgcolor');
 
     // NOTE: Skip header cells
@@ -107,17 +112,24 @@ const getOrdinaryTimeSunday = async () => {
       continue;
     }
 
-    res[count1] = {
-      ...res[count1]!,
-      yearB: {
+    res = [
+      ...res,
+      {
         firstReading,
         psalm,
         secondReading,
         gospel,
+        yearCycle: 'B',
+        yearNumber: '',
+        season: 'ot',
+        weekdayType: 'sunday',
+        weekOrder: `${weekOrder}`,
+        periodOfDay: '',
+        description: '',
       },
-    };
+    ];
 
-    count1 += 1;
+    weekOrder += 1;
   }
 
   await retry(
@@ -131,11 +143,11 @@ const getOrdinaryTimeSunday = async () => {
     },
   );
 
-  const rowsThree = await page.locator('tr').all();
+  const yearCRows = await page.locator('tr').all();
 
-  count1 = 1;
+  weekOrder = 1;
 
-  for await (const row of rowsThree) {
+  for await (const row of yearCRows) {
     const cellColor = await row.getAttribute('bgcolor');
 
     // NOTE: Skip header cells
@@ -159,17 +171,29 @@ const getOrdinaryTimeSunday = async () => {
       continue;
     }
 
-    res[count1] = {
-      ...res[count1]!,
-      yearC: {
+    res = [
+      ...res,
+      {
         firstReading,
         psalm,
         secondReading,
         gospel,
+        yearCycle: 'C',
+        yearNumber: '',
+        season: 'ot',
+        weekdayType: 'sunday',
+        weekOrder: `${weekOrder}`,
+        periodOfDay: '',
+        description: '',
       },
-    };
-    count1 += 1;
+    ];
+
+    weekOrder += 1;
   }
+
+  res = res.toSorted((a, b) => {
+    return +a.weekOrder - +b.weekOrder;
+  });
 
   fs.writeFile('ot-sunday.json', JSON.stringify(res, null, 2));
 
