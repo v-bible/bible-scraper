@@ -6,7 +6,7 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 
-const days = {
+export const days = {
   mon: 'monday',
   tues: 'tuesday',
   wed: 'wednesday',
@@ -16,7 +16,19 @@ const days = {
   sun: 'sunday',
 } as const;
 
-type Weekdays = (typeof days)[keyof typeof days];
+export type CalendarEntry = {
+  firstReading: string;
+  psalm: string;
+  secondReading: string;
+  gospel: string;
+  yearCycle: string;
+  yearNumber: string;
+  season: string;
+  weekdayType: string;
+  weekOrder: string;
+  periodOfDay: string;
+  description: string;
+};
 
 const getOrdinaryTime = async () => {
   const browser = await chromium.launch();
@@ -38,10 +50,12 @@ const getOrdinaryTime = async () => {
     },
   );
 
-  const rows = await page.locator('tr').all();
+  const yearOneRows = await page.locator('tr').all();
 
-  const res: Record<string, Record<Weekdays, Record<string, string>>> = {};
-  for await (const row of rows) {
+  let res: CalendarEntry[] = [];
+  let yearOneData: CalendarEntry[] = [];
+  let yearTwoData: CalendarEntry[] = [];
+  for await (const row of yearOneRows) {
     const cellColor = await row.getAttribute('bgcolor');
 
     // NOTE: Skip header cells
@@ -73,15 +87,22 @@ const getOrdinaryTime = async () => {
 
     const mapWeekday = days[weekDay.toLowerCase() as keyof typeof days];
 
-    // NOTE: firstReading1 adn psalm1 are first reading & psalm for year 1 respectively
-    res[newWeekNum] = {
-      ...res[newWeekNum]!,
-      [mapWeekday]: {
-        firstReading1,
-        psalm1,
+    yearOneData = [
+      ...yearOneData,
+      {
+        firstReading: firstReading1,
+        psalm: psalm1,
+        secondReading: '',
         gospel,
+        yearCycle: '',
+        yearNumber: '1',
+        season: 'ot',
+        weekdayType: mapWeekday,
+        weekOrder: newWeekNum,
+        periodOfDay: '',
+        description: '',
       },
-    };
+    ];
   }
 
   await retry(
@@ -95,9 +116,9 @@ const getOrdinaryTime = async () => {
     },
   );
 
-  const rowsTwo = await page.locator('tr').all();
+  const yearTwoRows = await page.locator('tr').all();
 
-  for await (const row of rowsTwo) {
+  for await (const row of yearTwoRows) {
     const cellColor = await row.getAttribute('bgcolor');
 
     // NOTE: Skip header cells
@@ -129,27 +150,35 @@ const getOrdinaryTime = async () => {
 
     const mapWeekday = days[weekDay.toLowerCase() as keyof typeof days];
 
-    if (gospel !== res[newWeekNum]?.[mapWeekday]?.gospel) {
-      console.log(
-        'Not match',
-        newWeekNum,
-        mapWeekday,
+    yearTwoData = [
+      ...yearTwoData,
+      {
+        firstReading: firstReading2,
+        psalm: psalm2,
+        secondReading: '',
         gospel,
-        res[newWeekNum]?.[mapWeekday]?.gospel,
-      );
-    }
-
-    res[newWeekNum] = {
-      ...res[newWeekNum]!,
-      [mapWeekday]: {
-        ...res[newWeekNum]?.[mapWeekday],
-        firstReading2,
-        psalm2,
-        gospel,
+        yearCycle: '',
+        yearNumber: '2',
+        season: 'ot',
+        weekdayType: mapWeekday,
+        weekOrder: newWeekNum,
+        periodOfDay: '',
+        description: '',
       },
-    };
+    ];
   }
 
+  yearOneData.forEach((r) => {
+    res = [...res, r];
+
+    res = [
+      ...res,
+      yearTwoData.find(
+        (r2) =>
+          r2.weekOrder === r.weekOrder && r2.weekdayType === r.weekdayType,
+      )!,
+    ];
+  });
   fs.writeFile('ot.json', JSON.stringify(res, null, 2));
 
   await context.close();
