@@ -1,7 +1,10 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
+import { writeFile } from 'fs/promises';
+import { uniqWith } from 'es-toolkit';
 import { Agent, setGlobalDispatcher } from 'undici';
+import { getProperName } from './get-proper-name';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
 import prisma from '@/prisma/prisma';
@@ -29,6 +32,8 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
     },
   });
 
+  let properNames = [];
+
   for (const book of books) {
     const chapters = await prisma.bookChapter.findMany({
       where: {
@@ -41,6 +46,15 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
 
     for (const chap of chapters) {
       await getAll(chap);
+
+      const properName = await getProperName(chap);
+
+      properNames.push(properName);
     }
   }
+
+  properNames = uniqWith(properNames.flat(), (a, b) => a.origin === b.origin);
+
+  // NOTE: Write to file
+  writeFile('proper-names.json', JSON.stringify(properNames, null, 2));
 })();
