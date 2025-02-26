@@ -11,7 +11,7 @@ import {
   previousSunday,
   subWeeks,
 } from 'date-fns';
-import { groupBy } from 'lodash';
+import { groupBy } from 'es-toolkit';
 import { chromium, devices } from 'playwright';
 import { logger } from '@/logger/logger';
 import catholicResourcesBookMapping from '@/usccb/catholic-resources-book-mapping.json';
