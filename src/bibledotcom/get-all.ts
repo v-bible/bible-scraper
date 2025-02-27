@@ -62,7 +62,21 @@ const getAll = async (
 
     // NOTE: Replace heading span with heading element
     document.querySelectorAll('[class*="ChapterContent_s" i]').forEach((el) => {
-      el.innerHTML = el.innerHTML.replaceAll(/(?<=<\/?)span(?=.*>)/gm, 'h1');
+      const cn = el.getAttribute('class');
+      // NOTE: Class name has syntax ChapterContent_s2__l6Ny0, so we can extract
+      // the level by matching _s\d+__.
+      const levelStr =
+        cn
+          ?.match(/_s\d+__/gm)?.[0]
+          .replaceAll('_', '')
+          .replace('s', '') ?? '1';
+      // NOTE: We only need the number from 1 to 6.
+      const level = parseInt(levelStr, 10) % 6;
+
+      el.innerHTML = el.innerHTML.replaceAll(
+        /(?<=<\/?)span(?=.*>)/gm,
+        `h${level}`,
+      );
     });
 
     // NOTE: Remove psalm metadata

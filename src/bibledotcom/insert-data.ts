@@ -82,10 +82,12 @@ export const insertData = async (
         },
         update: {
           order: vHeading.order,
+          level: vHeading.level,
           content: vHeading.content,
         },
         create: {
           order: vHeading.order,
+          level: vHeading.level,
           content: vHeading.content,
           verseId: newVerse.id,
           chapterId: chap.id,
