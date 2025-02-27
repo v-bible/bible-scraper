@@ -18,7 +18,7 @@ export type VData = {
     'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
   >;
   headings: Array<
-    Pick<BookHeading, 'content' | 'order'> & {
+    Pick<BookHeading, 'content' | 'level' | 'order'> & {
       footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
       references: Array<Pick<BookReference, 'position'> & { label: string }>;
     }
