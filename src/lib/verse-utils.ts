@@ -9,7 +9,7 @@ import type {
 
 const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gmu;
 const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^@]*\$@/gmu;
-const reHeadMatch = /#.*\n/gmu;
+const reHeadMatch = /(?<headingLevel>#+).*\n/gmu;
 const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gmu;
 const rePoetryMatch = /\\?~/gmu;
 
@@ -63,7 +63,7 @@ class VerseProcessor {
       .match(this.reHeadMatch);
 
     let headings: Array<
-      Pick<BookHeading, 'content' | 'order'> & {
+      Pick<BookHeading, 'content' | 'level' | 'order'> & {
         footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
         references: Array<Pick<BookReference, 'position'> & { label: string }>;
       }
@@ -98,8 +98,16 @@ class VerseProcessor {
           .replaceAll('#', '')
           .trim();
 
+        // NOTE: We want to get the number of '#' to determine the level of the
+        // heading in the content
+        // NOTE: Heading level starts from 1
+        const headingLevel =
+          [...h.matchAll(this.reHeadMatch)].at(0)?.groups?.headingLevel
+            ?.length || 1;
+
         return {
           content: headingContent,
+          level: headingLevel,
           order: headingOrder,
           footnotes: fnHeads,
           references: refHeads,

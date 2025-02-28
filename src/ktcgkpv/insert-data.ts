@@ -85,10 +85,15 @@ export const insertData = async (
         },
         update: {
           order: vHeading.order,
+          // NOTE: All heading from ktcgkpv is level 4 so we change it to 1
+          level:
+            vHeading.level === 4 && vHeading.order === 0 ? 1 : vHeading.level,
           content: vHeading.content,
         },
         create: {
           order: vHeading.order,
+          level:
+            vHeading.level === 4 && vHeading.order === 0 ? 1 : vHeading.level,
           content: vHeading.content,
           verseId: newVerse.id,
           chapterId: chap.id,
