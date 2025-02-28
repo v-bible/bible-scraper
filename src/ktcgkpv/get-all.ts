@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
 import { getParagraph } from '@/ktcgkpv/get-paragraph';
+import { getProperName, properNameTemplate } from '@/ktcgkpv/get-proper-name';
 import { getVerse } from '@/ktcgkpv/get-verse';
 import { insertData } from '@/ktcgkpv/insert-data';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
@@ -91,7 +92,9 @@ const getAll = async (
 
   const paragraphData = await getParagraph(chap);
 
-  const footnoteContentMap = await Promise.all(
+  const properName = await getProperName(chap);
+
+  let footnoteContentMap = await Promise.all(
     Object.entries(data.data?.notes || {}).map(
       async ([key, noteContent], order) => {
         const parsedContent = await parseMd(noteContent);
@@ -104,6 +107,17 @@ const getAll = async (
       },
     ),
   );
+
+  footnoteContentMap = [
+    ...footnoteContentMap,
+    ...properName.map((val, index) => {
+      return {
+        label: val.vietnamese.split('\n').at(0)!,
+        order: footnoteContentMap.length + index,
+        content: properNameTemplate(val),
+      };
+    }),
+  ];
 
   const refContentMap = await Promise.all(
     Object.entries(data.data?.references || {}).map(

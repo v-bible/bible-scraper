@@ -59,9 +59,24 @@ const getVerse = async (html: string): Promise<VData[] | null> => {
       el.innerHTML = `@${refLabelMatch?.[0]}&${el.innerHTML}@`;
     });
 
-    // NOTE: Then we wrap it with < for every sup as note. So the note character is <$a$>
+    // NOTE: Then we wrap it with < for every sup as footnote. So the note
+    // character is <$a$>
     document.querySelectorAll('sup[class*="note" i]').forEach((el) => {
       el.innerHTML = `<${el.innerHTML}>`;
+    });
+
+    // NOTE: Because the proper has no ref so we have to replace it with span
+    // element
+    document.querySelectorAll('a[class*="proper-name" i]').forEach((el) => {
+      // NOTE: We replace the a element with span element, but it doesn't important
+      // attributes so we don't need to copy it to new element
+      const newElement = document.createElement('span');
+      // NOTE: Add <$ so it can be parsed as footnotes. But it MUST have
+      // el.innerHTML because content within <$ will be deleted and not match
+      // with getParagraph
+      newElement.innerHTML = `${el.innerHTML}<$${el.innerHTML}$>`;
+
+      el.parentNode?.replaceChild(newElement, el);
     });
   });
 

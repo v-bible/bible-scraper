@@ -58,6 +58,17 @@ const getParagraph = async (
       el.outerHTML = `$${el.outerHTML}`;
     });
 
+    // NOTE: Because the proper has no ref so we have to replace it with span
+    // element
+    document.querySelectorAll('a[class*="proper-name" i]').forEach((el) => {
+      // NOTE: We replace the a element with span element, but it doesn't important
+      // attributes so we don't need to copy it to new element
+      const newElement = document.createElement('span');
+      newElement.innerHTML = el.innerHTML;
+
+      el.parentNode?.replaceChild(newElement, el);
+    });
+
     document.querySelectorAll('sup').forEach((el) => {
       el.remove();
     });
