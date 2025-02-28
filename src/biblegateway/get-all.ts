@@ -113,10 +113,16 @@ const getAll = async (
 
     // NOTE: Then we wrap references with @$, so the character is @$a$@
     document.querySelectorAll('crossref').forEach((el) => {
+      // NOTE: We don't link to ref here
+      el.innerHTML = el.innerHTML.replaceAll(/(?<=<\/?)a(?=.*>)/gm, 'span');
+
       el.innerHTML = `@$${el.innerHTML}$@`;
     });
 
     document.querySelectorAll("[class*='reference' i]").forEach((el) => {
+      // NOTE: We don't link to ref here
+      el.innerHTML = el.innerHTML.replaceAll(/(?<=<\/?)a(?=.*>)/gm, 'span');
+
       el.innerHTML = `@$${el.innerHTML}$@`;
       // NOTE: In case ref is heading, so we change to span for simpler than p
       el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)h\d+(?=.*>)/gm, 'span');
