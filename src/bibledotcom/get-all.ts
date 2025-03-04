@@ -84,8 +84,8 @@ const getAll = async (
       el.remove();
     });
 
-    // NOTE: Mark special word with b, and add $ so we will have a fake space
-    // after that.
+    // NOTE: Mark special word (like "CHÚA") with b, and add $ so we will have a
+    // fake space after that.
     document
       .querySelectorAll("[class*='ChapterContent_nd' i]")
       .forEach((el) => {
@@ -165,10 +165,16 @@ const getAll = async (
 
   // NOTE: We add "|@" because some cases ref is among headings
   const verses = bodyContent
+    // NOTE: Remove the "fake" space after special word (like "CHÚA") as
+    // mentioned above
     .replaceAll(/\*\*\$/gm, '**')
     // NOTE: Duplicate word of Jesus bold
     .replaceAll(/\*\*\*\*/gm, '**')
+    // NOTE: Remove incorrect verse num that has poetry characters
     ?.replaceAll(new RegExp(`^(\\\\~)?${reVerseNumMatch.source}$`, 'gmu'), '')
+    // NOTE: Split paragraph, but we don't want cross references (right before
+    // the verse) as new paragraph, also headings should be considered as new
+    // paragraph
     .split(/(?<!^(#|@).*\s*)\\?\n/gm)
     .filter((val) => !!val && val.trim() !== '');
 
