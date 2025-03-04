@@ -1,3 +1,5 @@
+Special cases should be handled specially:
+
 - biblegateway:
   - 1cor-1
   - 2sam-23

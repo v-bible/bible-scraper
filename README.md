@@ -3,7 +3,7 @@
   <h1>Bible Scraper</h1>
 
   <p>
-    Scrape Bible
+    Scrape bible from multiple resources
   </p>
 
 <!-- Badges -->
@@ -52,9 +52,10 @@
   - [Prerequisites](#bangbang-prerequisites)
   - [Run Locally](#running-run-locally)
 - [Usage](#eyes-usage)
+  - [Scripts](#scripts)
+  - [Implemented Features](#implemented-features)
 - [Contributing](#wave-contributing)
   - [Code of Conduct](#scroll-code-of-conduct)
-- [FAQ](#grey_question-faq)
 - [License](#warning-license)
 - [Contact](#handshake-contact)
 - [Acknowledgements](#gem-acknowledgements)
@@ -67,15 +68,18 @@
 
 ### :dart: Features
 
-- Scrape bible from [biblegateway.com](https://www.biblegateway.com/) and
-  [bible.com](https://www.bible.com/). Current supports:
+- Scrape bible from:
+  - [biblegateway.com](https://www.biblegateway.com/).
+  - [bible.com](https://www.bible.com/).
+  - [ktcgkpv.org](https://ktcgkpv.org/).
+- Currently supports:
   - Verses (with poetry).
   - Footnotes.
   - Headings.
   - References.
   - Psalm metadata (like author, title, etc.).
 - Progress logging.
-- Save to Postgres database.
+- Save to Postgres & SQLite database.
 
 <!-- Env Variables -->
 
@@ -167,6 +171,8 @@ pnpm prisma:generate
 
 ## :eyes: Usage
 
+### Scripts
+
 > [!NOTE]
 > To prevent the error `net::ERR_NETWORK_CHANGED`, you can temporarily disable
 > the ipv6 on your network adapter:
@@ -208,11 +214,39 @@ npx tsx ./src/catholic-resources/main.ts
 > Weekday OT between Year I & II. You can see it in
 > [`dumps/catholic-resources/note-ot.txt`](./dumps/catholic-resources/note-ot.txt).
 
-- Scrape bible(from [ktcgkpv.org](https://ktcgkpv.org/bible?version=1)):
+- Scrape bible (from [ktcgkpv.org](https://ktcgkpv.org/bible?version=1)):
 
 ```bash
 npx tsx ./src/ktcgkpv/main.ts
 ```
+
+- Inject FTS content to the SQLite database:
+
+```bash
+./src/scripts/inject_fts.sh
+```
+
+> [!NOTE]
+> You can update `SOURCE_DB` and `TARGET_DB` in the script to change the source
+> & destination database.
+
+### Implemented Features
+
+Comparing the scraped data from different sources:
+
+<!-- prettier-ignore-start -->
+
+| **Features**                    | **biblegateway.com** | **bible.com** | **ktcgkpv.org** |
+|---------------------------------|----------------------|---------------|-----------------|
+| Verse                           | ✔️                    | ✔️             | ✔️               |
+| Poetry                          | ✔️                    | ✔️             | ✔️               |
+| Footnote                        | ✔️                    | ✔️             | ✔️               |
+| Cross Reference                 | ✔️                    | ✔️             | ✔️               |
+| Psalm Metadata                  | ✔️                    | ✔️             | ✔️               |
+| Words of Jesus (red letter)     | ✔️                    | ✔️             | ❌               |
+| Proper Names (name translation) | ❌                    | ❌             | ✔️               |
+
+<!-- prettier-ignore-end -->
 
 <!-- Contributing -->
 
@@ -224,31 +258,23 @@ npx tsx ./src/ktcgkpv/main.ts
 
 Contributions are always welcome!
 
+Please read the [contribution guidelines](./CONTRIBUTING.md).
+
 <!-- Code of Conduct -->
 
 ### :scroll: Code of Conduct
 
-Please read the [Code of Conduct](https://github.com/v-bible/bible-scraper/blob/main/CODE_OF_CONDUCT.md).
-
-<!-- FAQ -->
-
-## :grey_question: FAQ
-
-- Question 1
-
-  - Answer 1.
-
-- Question 2
-
-  - Answer 2.
+Please read the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 <!-- License -->
 
 ## :warning: License
 
-Distributed under MIT license. See
-[LICENSE](https://github.com/v-bible/bible-scraper/blob/main/LICENSE)
-for more information.
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)** License.
+
+[![License: CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+See the **[LICENSE.md](./LICENSE.md)** file for full details.
 
 <!-- Contact -->
 
@@ -265,5 +291,10 @@ Project Link: [https://github.com/v-bible/bible-scraper](https://github.com/v-bi
 
 Here are useful resources and libraries that we have used in our projects:
 
-- [Bible.com](https://www.bible.com/): Bible.com website.
-- [BibleGateway.com](https://www.biblegateway.com/): BibleGateway.com website.
+- [bible.com](https://www.bible.com/): bible.com website.
+- [biblegateway.com](https://www.biblegateway.com/): biblegateway.com website.
+- [ktcgkpv.org](https://ktcgkpv.org/): Nhóm Phiên Dịch Các Giờ Kinh Phụng Vụ
+  website.
+- [The Lectionary for Mass (1998/2002 USA
+  Edition)](https://catholic-resources.org/Lectionary/1998USL.htm): compiled by
+  Felix Just, S.J., Ph.D.
