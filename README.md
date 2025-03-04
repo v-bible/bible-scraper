@@ -23,7 +23,7 @@
   <a href="https://github.com/v-bible/bible-scraper/issues/">
     <img src="https://img.shields.io/github/issues/v-bible/bible-scraper" alt="open issues" />
   </a>
-  <a href="https://github.com/v-bible/bible-scraper/blob/main/LICENSE">
+  <a href="https://github.com/v-bible/bible-scraper/blob/main/LICENSE.md">
     <img src="https://img.shields.io/github/license/v-bible/bible-scraper.svg" alt="license" />
   </a>
 </p>
