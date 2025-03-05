@@ -146,7 +146,3 @@ If you have any questions or need guidance, feel free to:
 - Join the **discussions** section to engage with the community.
 
 We appreciate your contributions! 🎉
-
-```
-
-```
