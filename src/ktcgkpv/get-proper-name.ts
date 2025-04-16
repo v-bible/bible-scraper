@@ -1,3 +1,4 @@
+/* eslint-disable no-unreachable-loop */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
@@ -68,43 +69,54 @@ const getProperName = async (
   await context.close();
   await browser.close();
 
-  const properData = await Promise.all(
-    allProperName.map(async (name) => {
-      const properFormData = new FormData();
-      properFormData.append('name', name);
+  let properData: ProperName[] = [];
 
-      const properReq = await fetch(
-        'https://ktcgkpv.org/bible/name-transliterate',
+  for await (const name of allProperName) {
+    const properFormData = new FormData();
+    properFormData.append('name', name);
+
+    const properReq = await fetch(
+      'https://ktcgkpv.org/bible/name-transliterate',
+      {
+        method: 'POST',
+        // @ts-ignore
+        body: properFormData,
+        redirect: 'follow',
+      },
+    );
+
+    try {
+      const res = ((await properReq.json()) as { data: ProperName[] }).data[0]!;
+      Object.keys(res).forEach((key) => {
+        const typedKey = key as keyof ProperName;
+        res[typedKey] = res[typedKey].replaceAll('<br />', '\n');
+      });
+
+      properData = [
+        ...properData,
         {
-          method: 'POST',
-          // @ts-ignore
-          body: properFormData,
-          redirect: 'follow',
+          english: res.english,
+          french: res.french,
+          latin: res.latin,
+          origin: res.origin,
+          vietnamese: res.vietnamese,
         },
-      );
+      ];
+    } catch (err) {
+      logger.error('Error getting proper name for %s', name);
+    }
 
-      try {
-        const res = ((await properReq.json()) as { data: ProperName[] })
-          .data[0]!;
-        Object.keys(res).forEach((key) => {
-          const typedKey = key as keyof ProperName;
-          res[typedKey] = res[typedKey].replaceAll('<br />', '\n');
-        });
-
-        return res;
-      } catch (err) {
-        logger.error('Error getting proper name for %s', name);
-      }
-
-      return {
+    properData = [
+      ...properData,
+      {
         english: '',
         french: '',
         latin: '',
         origin: '',
         vietnamese: '',
-      };
-    }),
-  );
+      },
+    ];
+  }
 
   logger.info('Get proper name for %s %s', chap.book.code, chap.number);
 

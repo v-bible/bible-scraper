@@ -91,35 +91,33 @@ const getVerse = async (html: string): Promise<VData[] | null> => {
     .or(newPage.locator("p[class*='poem' i]"))
     .all();
 
-  await Promise.all(
-    paragraphs.map(async (par) => {
-      const className = await par.getAttribute('class');
+  for await (const par of paragraphs) {
+    const className = await par.getAttribute('class');
 
-      const isPoetry = className?.includes('poem');
+    const isPoetry = className?.includes('poem');
 
-      // NOTE: num is the passed verseNum arg
-      await par.evaluate(
-        (node, { verseNum: num, isPoetry: poetry }) => {
-          // NOTE: Has a sup element but no text inside
-          if (node.textContent?.search(/\$\s\$/) !== -1) {
-            node.innerHTML = node.innerHTML.replace('$ $', `$${num}$`);
-            // NOTE: No sup element at all
-          } else if (node.textContent?.search(/\$\d+\$/) === -1) {
-            node.innerHTML = `${num}${node.innerHTML}`;
-          }
+    // NOTE: num is the passed verseNum arg
+    await par.evaluate(
+      (node, { verseNum: num, isPoetry: poetry }) => {
+        // NOTE: Has a sup element but no text inside
+        if (node.textContent?.search(/\$\s\$/) !== -1) {
+          node.innerHTML = node.innerHTML.replace('$ $', `$${num}$`);
+          // NOTE: No sup element at all
+        } else if (node.textContent?.search(/\$\d+\$/) === -1) {
+          node.innerHTML = `${num}${node.innerHTML}`;
+        }
 
-          if (poetry) {
-            node.innerHTML = `~${node.innerHTML}`;
-          }
+        if (poetry) {
+          node.innerHTML = `~${node.innerHTML}`;
+        }
 
-          // NOTE: This is the important part, so we still can differentiate even if
-          // the content is not within the p element (missing verse)
-          node.innerHTML = `<p>${node.innerHTML}</p>`;
-        },
-        { verseNum, isPoetry },
-      );
-    }),
-  );
+        // NOTE: This is the important part, so we still can differentiate even if
+        // the content is not within the p element (missing verse)
+        node.innerHTML = `<p>${node.innerHTML}</p>`;
+      },
+      { verseNum, isPoetry },
+    );
+  }
 
   // NOTE: Some cases like <p><p><sup></sup>..., the content is not within the p
   // element but when we call textContent it still maintain correct places

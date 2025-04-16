@@ -1,10 +1,8 @@
 /* eslint-disable no-restricted-syntax */
-import { mkdir, writeFile } from 'fs/promises';
-import { uniqWith } from 'es-toolkit';
+import { mkdir } from 'fs/promises';
 import { Agent, setGlobalDispatcher } from 'undici';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
-import { getProperName } from '@/ktcgkpv/get-proper-name';
 import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 
@@ -31,8 +29,6 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
     },
   });
 
-  const properNames: Awaited<ReturnType<typeof getProperName>>[] = [];
-
   await mkdir('./dist', { recursive: true });
 
   await withCheckpoint(
@@ -41,9 +37,9 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
       for await (const chap of chapters) {
         await getAll(chap);
 
-        const properName = await getProperName(chap);
+        // const properName = await getProperName(chap);
 
-        properNames.push(properName);
+        // properNames.push(properName);
 
         await setCheckpoint({
           bookCode: chap.book.code,
@@ -53,16 +49,5 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
       }
     },
     `./dist/${version.code}.json`,
-  );
-
-  const uniqProperNames = uniqWith(
-    properNames.flat(),
-    (a, b) => a.origin === b.origin,
-  );
-
-  // NOTE: Write to file
-  await writeFile(
-    './dist/proper-names.json',
-    JSON.stringify(uniqProperNames, null, 2),
   );
 })();
