@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
 import { getParagraph } from '@/ktcgkpv/get-paragraph';
+import { getProperName, properNameTemplate } from '@/ktcgkpv/get-proper-name';
 import { getVerse } from '@/ktcgkpv/get-verse';
 import { insertData } from '@/ktcgkpv/insert-data';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
@@ -63,35 +64,40 @@ const getAll = async (
 
   // NOTE: We will not iterate from the verseNumCount because we want to get all
   // verses
-  const verseData = await Promise.all(
-    allVerses.map(async (verseNum) => {
-      const verseFormData = new FormData();
-      verseFormData.append('version', `${versionMapping.KT2011.number}`);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  let verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
+
+  for await (const verseNum of allVerses) {
+    const verseFormData = new FormData();
+    verseFormData.append('version', `${versionMapping.KT2011.number}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    verseFormData.append('book', `${bookCodeList[chap.book.code]}`);
+    verseFormData.append('book_abbr', chap.book.code);
+    verseFormData.append('from_chapter', `${chap.number}`);
+    verseFormData.append('to_chapter', `${chap.number}`);
+    verseFormData.append('from_verse', `${verseNum}`);
+    verseFormData.append('to_verse', `${verseNum}`);
+
+    const verReq = await fetch('https://ktcgkpv.org/bible/content-view', {
+      method: 'POST',
       // @ts-ignore
-      verseFormData.append('book', `${bookCodeList[chap.book.code]}`);
-      verseFormData.append('book_abbr', chap.book.code);
-      verseFormData.append('from_chapter', `${chap.number}`);
-      verseFormData.append('to_chapter', `${chap.number}`);
-      verseFormData.append('from_verse', `${verseNum}`);
-      verseFormData.append('to_verse', `${verseNum}`);
+      body: verseFormData,
+      redirect: 'follow',
+    });
 
-      const verReq = await fetch('https://ktcgkpv.org/bible/content-view', {
-        method: 'POST',
-        // @ts-ignore
-        body: verseFormData,
-        redirect: 'follow',
-      });
+    const verseContent = (await verReq.json()) as ContentView;
 
-      const verseContent = (await verReq.json()) as ContentView;
-
-      return getVerse(verseContent.data.content);
-    }),
-  );
+    verseData = [
+      ...verseData,
+      ...((await getVerse(verseContent.data.content)) || []),
+    ];
+  }
 
   const paragraphData = await getParagraph(chap);
 
-  const footnoteContentMap = await Promise.all(
+  const properName = await getProperName(chap);
+
+  let footnoteContentMap = await Promise.all(
     Object.entries(data.data?.notes || {}).map(
       async ([key, noteContent], order) => {
         const parsedContent = await parseMd(noteContent);
@@ -104,6 +110,17 @@ const getAll = async (
       },
     ),
   );
+
+  footnoteContentMap = [
+    ...footnoteContentMap,
+    ...properName.map((val, index) => {
+      return {
+        label: val.vietnamese.split('\n').at(0)!,
+        order: footnoteContentMap.length + index,
+        content: properNameTemplate(val),
+      };
+    }),
+  ];
 
   const refContentMap = await Promise.all(
     Object.entries(data.data?.references || {}).map(

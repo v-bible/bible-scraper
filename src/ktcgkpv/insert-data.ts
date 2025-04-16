@@ -115,15 +115,24 @@ export const insertData = async (
       );
 
       for (const hFootnote of vHeading.footnotes) {
+        const testFootnote = (fn: (typeof fnMap)[number]) =>
+          fn?.label ===
+            `ci${chap.number}_${newVerse.number}_${hFootnote.label}` ||
+          (fn?.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
+            fn?.label.split('_').at(2)?.includes(`${hFootnote.label}`));
+
+        const testProperName = (fn: (typeof fnMap)[number]) => {
+          return fn?.label === hFootnote.label;
+        };
+
+        let hFootnoteData = null;
+
         // NOTE: Case like St 2, ci2_4b_q won't match ci2_4_q, so we have to
         // have loose check for this
-        const hFootnoteData = fnMap.find(
-          (fn) =>
-            fn?.label ===
-              `ci${chap.number}_${newVerse.number}_${hFootnote.label}` ||
-            (fn?.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
-              fn?.label.split('_').at(2)?.includes(`${hFootnote.label}`)),
-        );
+        hFootnoteData = fnMap.find(testFootnote);
+        if (!hFootnoteData) {
+          hFootnoteData = fnMap.find(testProperName);
+        }
 
         if (!hFootnoteData) {
           continue;
@@ -210,15 +219,24 @@ export const insertData = async (
     }
 
     for (const vFootnote of vData.footnotes) {
+      const testFootnote = (fn: (typeof fnMap)[number]) =>
+        fn?.label ===
+          `ci${chap.number}_${newVerse.number}_${vFootnote.label}` ||
+        (fn?.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
+          fn?.label.split('_').at(2)?.includes(`${vFootnote.label}`));
+
+      const testProperName = (fn: (typeof fnMap)[number]) => {
+        return fn?.label === vFootnote.label;
+      };
+
+      let vFootnoteData = null;
+
       // NOTE: Case like St 2, ci2_4b_q won't match ci2_4_q, so we have to
       // have loose check for this
-      const vFootnoteData = fnMap.find(
-        (fn) =>
-          fn?.label ===
-            `ci${chap.number}_${newVerse.number}_${vFootnote.label}` ||
-          (fn?.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
-            fn?.label.split('_').at(2)?.includes(`${vFootnote.label}`)),
-      );
+      vFootnoteData = fnMap.find(testFootnote);
+      if (!vFootnoteData) {
+        vFootnoteData = fnMap.find(testProperName);
+      }
 
       if (!vFootnoteData) {
         continue;

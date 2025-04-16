@@ -90,7 +90,11 @@ your `.env` file:
 
 - **App configs:**
 
-  `DB_URL`: Postgres database connection URL.
+  `DB_URL`: Postgres database connection URL. Example:
+
+  - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
+
+  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db`
 
   `LOG_LEVEL`: Log level.
 
@@ -157,15 +161,31 @@ docker-compose up -d
 
 Migrate the database:
 
-```bash
-pnpm prisma:migrate
-```
+- Sqlite:
+
+  ```bash
+  pnpm prisma:migrate --schema ./prisma/sqlite/schema.prisma
+  ```
+
+- Postgres:
+
+  ```bash
+  pnpm prisma:migrate --schema ./prisma/pg/schema.prisma
+  ```
 
 Generate Prisma client:
 
-```bash
-pnpm prisma:generate
-```
+- Sqlite:
+
+  ```bash
+  pnpm prisma:generate --schema ./prisma/sqlite/schema.prisma
+  ```
+
+- Postgres:
+
+  ```bash
+  pnpm prisma:generate --schema ./prisma/pg/schema.prisma
+  ```
 
 <!-- Usage -->
 

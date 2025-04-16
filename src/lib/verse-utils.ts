@@ -7,9 +7,15 @@ import type {
   BookVerse,
 } from '@prisma/client';
 
+// NOTE: All user-defined regex MUST contains groups mentioned in default
+// regexes below
+// NOTE: We add "\s" at the beginning because we don't want extra spaces before
+// footnotes
 const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gmu;
+// NOTE: This is for ktcgkpv ref type
 const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^@]*\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*\n/gmu;
+// NOTE: "\p{L}" is for unicode letter (Vietnamese characters from ktcgkpv)
 const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gmu;
 const rePoetryMatch = /\\?~/gmu;
 
@@ -145,6 +151,7 @@ class VerseProcessor {
       .matchAll(this.reRefMatch);
 
     const refs = calcPosition(referenceMatch, (match) =>
+      // REVIEW: This is only specific to ktcgkpv ref
       match.groups!.refLabel!.replaceAll('\\_', '_'),
     );
 
@@ -172,6 +179,8 @@ const calcPosition = (
     }
 
     return {
+      // NOTE: We minus previousLength to get the correct position because the
+      // current match also includes the previous matches
       position: matchVal.index - previousLength,
       label: labelSelector(matchVal),
     };

@@ -1,9 +1,9 @@
-/* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
+import { mkdir } from 'fs/promises';
 import { Agent, setGlobalDispatcher } from 'undici';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
+import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 
 setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
@@ -29,18 +29,25 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
     },
   });
 
-  for (const book of books) {
-    const chapters = await prisma.bookChapter.findMany({
-      where: {
-        bookId: book.id,
-      },
-      include: {
-        book: true,
-      },
-    });
+  await mkdir('./dist', { recursive: true });
 
-    for (const chap of chapters) {
-      await getAll(chap);
-    }
-  }
+  await withCheckpoint(
+    books,
+    async (chapters, setCheckpoint) => {
+      for await (const chap of chapters) {
+        await getAll(chap);
+
+        // const properName = await getProperName(chap);
+
+        // properNames.push(properName);
+
+        await setCheckpoint({
+          bookCode: chap.book.code,
+          chapterNumber: chap.number,
+          completed: true,
+        });
+      }
+    },
+    `./dist/${version.code}.json`,
+  );
 })();

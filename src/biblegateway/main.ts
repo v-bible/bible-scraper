@@ -1,10 +1,10 @@
-/* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
+import { mkdir } from 'fs/promises';
 import { getAll } from '@/biblegateway/get-all';
 import { getBook } from '@/biblegateway/get-book';
 import { getPsalmMeta } from '@/biblegateway/get-psalm-meta';
 import { getVersion } from '@/biblegateway/get-version';
+import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 
 (async () => {
@@ -40,21 +40,25 @@ import prisma from '@/prisma/prisma';
     },
   });
 
-  for (const book of books) {
-    const chapters = await prisma.bookChapter.findMany({
-      where: {
-        bookId: book.id,
-      },
-      include: {
-        book: true,
-      },
-    });
+  await mkdir('./dist', { recursive: true });
 
-    for (const chap of chapters) {
-      await getAll(chap);
-      if (book.code === 'ps') {
-        await getPsalmMeta(chap);
+  await withCheckpoint(
+    books,
+    async (chapters, setCheckpoint) => {
+      for await (const chap of chapters) {
+        await getAll(chap);
+
+        if (chap.book.code === 'ps') {
+          await getPsalmMeta(chap);
+        }
+
+        await setCheckpoint({
+          bookCode: chap.book.code,
+          chapterNumber: chap.number,
+          completed: true,
+        });
       }
-    }
-  }
+    },
+    `./dist/${version.code}.json`,
+  );
 })();
