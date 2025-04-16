@@ -8,7 +8,11 @@ import { chromium, devices } from 'playwright';
 import { getParagraph } from '@/biblegateway/get-paragraph';
 import { insertData } from '@/biblegateway/insert-data';
 import { parseMd } from '@/lib/remark';
-import { VerseProcessor, reVerseNumMatch } from '@/lib/verse-utils';
+import {
+  VerseProcessor,
+  reVerseNumMatch,
+  withNormalizeHeadingLevel,
+} from '@/lib/verse-utils';
 
 // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
 const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
@@ -266,7 +270,7 @@ const getAll = async (
     })
     .filter((v) => !!v);
 
-  await insertData(verseMap, chap, fnMap);
+  await insertData(withNormalizeHeadingLevel(verseMap), chap, fnMap);
 };
 
 export { getAll };

@@ -9,7 +9,11 @@ import { getParagraph } from '@/bibledotcom/get-paragraph';
 import { insertData } from '@/bibledotcom/insert-data';
 import { extractVerseNum } from '@/biblegateway/get-all';
 import { parseMd } from '@/lib/remark';
-import { VerseProcessor, reVerseNumMatch } from '@/lib/verse-utils';
+import {
+  VerseProcessor,
+  reVerseNumMatch,
+  withNormalizeHeadingLevel,
+} from '@/lib/verse-utils';
 
 const getAll = async (
   chap: Prisma.BookChapterGetPayload<{
@@ -226,7 +230,7 @@ const getAll = async (
     })
     .filter((v) => !!v);
 
-  await insertData(verseMap, chap);
+  await insertData(withNormalizeHeadingLevel(verseMap), chap);
 };
 
 export { getAll };
