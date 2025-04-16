@@ -6,6 +6,8 @@ import type {
   BookReference,
   BookVerse,
 } from '@prisma/client';
+import { uniq } from 'es-toolkit';
+import { type VData } from '@/ktcgkpv/get-verse';
 
 // NOTE: All user-defined regex MUST contains groups mentioned in default
 // regexes below
@@ -83,7 +85,7 @@ class VerseProcessor {
           .trim()
           .matchAll(this.reFnMatch);
 
-        const fnHeads = calcPosition(
+        const fnHeads = getLabelPosition(
           fnHeadMatch,
           (match) => match.groups!.fnNum!,
         );
@@ -94,7 +96,7 @@ class VerseProcessor {
           .trim()
           .matchAll(this.reRefMatch);
 
-        const refHeads = calcPosition(refHeadMatch, (match) =>
+        const refHeads = getLabelPosition(refHeadMatch, (match) =>
           match.groups!.refLabel!.replaceAll('\\_', '_'),
         );
 
@@ -133,7 +135,7 @@ class VerseProcessor {
       .trim()
       .matchAll(this.reFnMatch);
 
-    const footnotes = calcPosition(
+    const footnotes = getLabelPosition(
       footnoteMatch,
       (match) => match.groups!.fnNum!,
     );
@@ -150,7 +152,7 @@ class VerseProcessor {
       .trim()
       .matchAll(this.reRefMatch);
 
-    const refs = calcPosition(referenceMatch, (match) =>
+    const refs = getLabelPosition(referenceMatch, (match) =>
       // REVIEW: This is only specific to ktcgkpv ref
       match.groups!.refLabel!.replaceAll('\\_', '_'),
     );
@@ -159,7 +161,7 @@ class VerseProcessor {
   }
 }
 
-const calcPosition = (
+const getLabelPosition = (
   matches: IterableIterator<RegExpExecArray>,
   labelSelector: (match: RegExpExecArray) => string,
 ) => {
@@ -187,9 +189,31 @@ const calcPosition = (
   });
 };
 
+const normalizeHeadingLevel = (headings: VData['headings']) => {
+  const levels = headings.map((heading) => heading.level).toSorted();
+  const normalizedLevels = uniq(levels).map((level, idx) => {
+    return {
+      level,
+      normalizedLevel: idx + 1,
+    };
+  });
+
+  return headings.map((heading) => {
+    const normalizedLevel =
+      normalizedLevels.find((level) => level.level === heading.level)
+        ?.normalizedLevel || heading.level;
+
+    return {
+      ...heading,
+      level: normalizedLevel,
+    };
+  });
+};
+
 export {
   VerseProcessor,
-  calcPosition,
+  getLabelPosition,
+  normalizeHeadingLevel,
   reFnMatch,
   reRefMatch,
   reHeadMatch,

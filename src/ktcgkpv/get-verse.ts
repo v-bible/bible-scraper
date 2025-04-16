@@ -10,7 +10,7 @@ import type {
 } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { parseMd } from '@/lib/remark';
-import { VerseProcessor } from '@/lib/verse-utils';
+import { VerseProcessor, normalizeHeadingLevel } from '@/lib/verse-utils';
 
 export type VData = {
   verse: Pick<
@@ -147,7 +147,7 @@ const getVerse = async (html: string): Promise<VData[] | null> => {
           parNumber: 0,
           parIndex: 0,
         },
-        headings: processor.processHeading(verse),
+        headings: normalizeHeadingLevel(processor.processHeading(verse)),
         footnotes: processor.processVerseFn(verse),
         references: processor.processVerseRef(verse),
       };
