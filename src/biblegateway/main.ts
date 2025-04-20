@@ -59,6 +59,6 @@ import prisma from '@/prisma/prisma';
         });
       }
     },
-    `./dist/${version.code}.json`,
+    { fileName: `./dist/${version.code}.json` },
   );
 })();

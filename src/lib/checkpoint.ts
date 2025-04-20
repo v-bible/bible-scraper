@@ -18,8 +18,18 @@ const withCheckpoint = async (
     }>[],
     setCheckpoint: (cp: Checkpoint) => Promise<void>,
   ) => Promise<void>,
-  fileName: string = './checkpoint.json',
+  options?: {
+    fileName?: string;
+    force?: boolean;
+    forceChapters?: number[];
+  },
 ) => {
+  const {
+    fileName = './checkpoint.json',
+    force = false,
+    forceChapters = [],
+  } = options || {};
+
   // Open file to read, create new file is not exists
   try {
     await readFile(fileName, 'utf-8');
@@ -58,19 +68,31 @@ const withCheckpoint = async (
     await writeFile(fileName, JSON.stringify(initialData, null, 2), 'utf-8');
   }
 
-  const filteredChapters = chapters.filter((chap) => {
-    if (!parsedData) {
-      return true;
-    }
+  let filteredChapters = [];
 
-    const checkpointIdx = parsedData.findIndex(
-      (item: Checkpoint) =>
-        item.bookCode === chap.book.code &&
-        item.chapterNumber === chap.number &&
-        !item.completed,
-    );
-    return checkpointIdx !== -1;
-  });
+  if (forceChapters.length > 0) {
+    filteredChapters = chapters.filter((chap) => {
+      return forceChapters.includes(chap.number);
+    });
+  } else {
+    filteredChapters = chapters.filter((chap) => {
+      if (force) {
+        return true;
+      }
+
+      if (!parsedData) {
+        return true;
+      }
+
+      const checkpointIdx = parsedData.findIndex(
+        (item: Checkpoint) =>
+          item.bookCode === chap.book.code &&
+          item.chapterNumber === chap.number &&
+          !item.completed,
+      );
+      return checkpointIdx !== -1;
+    });
+  }
 
   await fn(filteredChapters, async (cp: Checkpoint) => {
     const idx = parsedData.findIndex(
