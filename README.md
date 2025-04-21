@@ -94,7 +94,7 @@ your `.env` file:
 
   - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
 
-  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db`
+  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db?connection_limit=1&socket_timeout=10`
 
   `LOG_LEVEL`: Log level.
 
