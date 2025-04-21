@@ -164,13 +164,13 @@ Migrate the database:
 - Sqlite:
 
   ```bash
-  pnpm prisma:migrate --schema ./prisma/sqlite/schema.prisma
+  pnpm prisma:migrate:sqlite
   ```
 
 - Postgres:
 
   ```bash
-  pnpm prisma:migrate --schema ./prisma/pg/schema.prisma
+  pnpm prisma:migrate:pg
   ```
 
 Generate Prisma client:
