@@ -65,7 +65,7 @@ const getAll = async (
 
   // NOTE: We will not iterate from the verseNumCount because we want to get all
   // verses
-  let verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
+  const verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
 
   for await (const verseNum of allVerses) {
     const verseFormData = new FormData();
@@ -88,10 +88,12 @@ const getAll = async (
 
     const verseContent = (await verReq.json()) as ContentView;
 
-    verseData = [
-      ...verseData,
-      ...((await getVerse(verseContent.data.content)) || []),
-    ];
+    const newData = await getVerse(verseContent.data.content);
+    if (!newData) {
+      continue;
+    }
+
+    verseData.push(...newData);
   }
 
   const paragraphData = await getParagraph(chap);
