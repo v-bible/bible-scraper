@@ -141,9 +141,9 @@ const getAll = async (
       el.remove();
     });
 
-    // NOTE: Replace span wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with b element
     document.querySelectorAll("[class*='woj' i]").forEach((el) => {
-      el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)span(?=.*>)/gm, 'b');
+      el.innerHTML = `<b>${el.innerHTML}</b>`;
     });
   });
 

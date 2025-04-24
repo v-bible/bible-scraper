@@ -64,7 +64,7 @@ const getAll = async (
         el.innerHTML = `<$${el.innerHTML}$>`;
       });
 
-    // NOTE: Replace heading span with heading element
+    // NOTE: Wrap inner heading span with heading element
     document.querySelectorAll('[class*="ChapterContent_s" i]').forEach((el) => {
       const cn = el.getAttribute('class');
       // NOTE: Class name has syntax ChapterContent_s2__l6Ny0, so we can extract
@@ -77,10 +77,7 @@ const getAll = async (
       // NOTE: We only need the number from 1 to 6.
       const level = parseInt(levelStr, 10) % 6;
 
-      el.innerHTML = el.innerHTML.replaceAll(
-        /(?<=<\/?)span(?=.*>)/gm,
-        `h${level}`,
-      );
+      el.innerHTML = `<h${level}>${el.innerHTML}</h${level}>`;
     });
 
     // NOTE: Remove psalm metadata
@@ -96,11 +93,11 @@ const getAll = async (
         el.innerHTML = `<b>${el.outerHTML}</b>$`;
       });
 
-    // NOTE: Replace span wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with b element
     document
       .querySelectorAll("[class*='ChapterContent_wj___' i]")
       .forEach((el) => {
-        el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)span(?=.*>)/gm, 'b');
+        el.innerHTML = `<b>${el.innerHTML}</b>`;
       });
   });
 
@@ -172,8 +169,6 @@ const getAll = async (
     // NOTE: Remove the "fake" space after special word (like "CHÚA") as
     // mentioned above
     .replaceAll(/\*\*\$/gm, '**')
-    // NOTE: Duplicate word of Jesus bold
-    .replaceAll(/\*\*\*\*/gm, '**')
     // NOTE: Remove incorrect verse num that has poetry characters
     ?.replaceAll(new RegExp(`^(\\\\~)?${reVerseNumMatch.source}$`, 'gmu'), '')
     // NOTE: Split paragraph, but we don't want cross references (right before
