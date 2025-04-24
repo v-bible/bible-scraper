@@ -198,12 +198,14 @@ const getAll = async (
       const processedVerse = processor.processVerse(verse);
 
       const parData = paragraphData.find(
-        (p) => p.content === processedVerse.content,
+        (p) => p.content === processedVerse.content && !p.isChecked,
       );
 
       if (verseNum === null || !parData) {
         return null;
       }
+
+      parData.isChecked = true;
 
       if (verseNum !== verseOrderTrack.number) {
         verseOrderTrack.number = verseNum;

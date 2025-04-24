@@ -151,12 +151,14 @@ const getAll = async (
     .filter((v) => !!v)
     .map((verse) => {
       const parData = paragraphData.find(
-        (p) => p.content === verse.verse.content,
+        (p) => p.content === verse.verse.content && !p.isChecked,
       );
 
       if (!parData) {
         return null;
       }
+
+      parData.isChecked = true;
 
       if (verse?.verse.number !== verseOrderTrack.number) {
         verseOrderTrack.number = verse.verse.number;
