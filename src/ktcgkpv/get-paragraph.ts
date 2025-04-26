@@ -95,6 +95,7 @@ const getParagraph = async (
           content: v.replaceAll(/\s\$/gm, '').trim(),
           parNum,
           parIndex,
+          isChecked: false,
         };
       });
     })

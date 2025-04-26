@@ -48,6 +48,6 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
         });
       }
     },
-    `./dist/${version.code}.json`,
+    { fileName: `./dist/${version.code}.json` },
   );
 })();

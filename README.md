@@ -94,7 +94,7 @@ your `.env` file:
 
   - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
 
-  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db`
+  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db?connection_limit=1&socket_timeout=10`
 
   `LOG_LEVEL`: Log level.
 
@@ -164,13 +164,13 @@ Migrate the database:
 - Sqlite:
 
   ```bash
-  pnpm prisma:migrate --schema ./prisma/sqlite/schema.prisma
+  pnpm prisma:migrate:sqlite
   ```
 
 - Postgres:
 
   ```bash
-  pnpm prisma:migrate --schema ./prisma/pg/schema.prisma
+  pnpm prisma:migrate:pg
   ```
 
 Generate Prisma client:

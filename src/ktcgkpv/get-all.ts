@@ -11,6 +11,7 @@ import { getVerse } from '@/ktcgkpv/get-verse';
 import { insertData } from '@/ktcgkpv/insert-data';
 import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
 import { parseMd } from '@/lib/remark';
+import { withNormalizeHeadingLevel } from '@/lib/verse-utils';
 
 export type ContentView = {
   data: {
@@ -64,7 +65,7 @@ const getAll = async (
 
   // NOTE: We will not iterate from the verseNumCount because we want to get all
   // verses
-  let verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
+  const verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
 
   for await (const verseNum of allVerses) {
     const verseFormData = new FormData();
@@ -87,10 +88,12 @@ const getAll = async (
 
     const verseContent = (await verReq.json()) as ContentView;
 
-    verseData = [
-      ...verseData,
-      ...((await getVerse(verseContent.data.content)) || []),
-    ];
+    const newData = await getVerse(verseContent.data.content);
+    if (!newData) {
+      continue;
+    }
+
+    verseData.push(...newData);
   }
 
   const paragraphData = await getParagraph(chap);
@@ -148,12 +151,14 @@ const getAll = async (
     .filter((v) => !!v)
     .map((verse) => {
       const parData = paragraphData.find(
-        (p) => p.content === verse.verse.content,
+        (p) => p.content === verse.verse.content && !p.isChecked,
       );
 
       if (!parData) {
         return null;
       }
+
+      parData.isChecked = true;
 
       if (verse?.verse.number !== verseOrderTrack.number) {
         verseOrderTrack.number = verse.verse.number;
@@ -164,6 +169,7 @@ const getAll = async (
 
       return {
         ...verse,
+        headings: verse.headings,
         verse: {
           ...verse.verse,
           parNumber: parData.parNum,
@@ -174,7 +180,12 @@ const getAll = async (
     })
     .filter((v) => !!v);
 
-  await insertData(verseMap, chap, footnoteContentMap, refContentMap);
+  await insertData(
+    withNormalizeHeadingLevel(verseMap),
+    chap,
+    footnoteContentMap,
+    refContentMap,
+  );
 };
 
 export { getAll };

@@ -113,6 +113,7 @@ const getParagraph = async (
           content: v.trim(),
           parNum,
           parIndex,
+          isChecked: false,
         };
       });
     })

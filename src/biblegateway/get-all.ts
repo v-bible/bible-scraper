@@ -8,7 +8,11 @@ import { chromium, devices } from 'playwright';
 import { getParagraph } from '@/biblegateway/get-paragraph';
 import { insertData } from '@/biblegateway/insert-data';
 import { parseMd } from '@/lib/remark';
-import { VerseProcessor, reVerseNumMatch } from '@/lib/verse-utils';
+import {
+  VerseProcessor,
+  reVerseNumMatch,
+  withNormalizeHeadingLevel,
+} from '@/lib/verse-utils';
 
 // NOTE: Match the chap and verse num in the class string. Ex: "Gen-2-4".
 const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
@@ -137,9 +141,9 @@ const getAll = async (
       el.remove();
     });
 
-    // NOTE: Replace span wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with b element
     document.querySelectorAll("[class*='woj' i]").forEach((el) => {
-      el.outerHTML = el.outerHTML.replaceAll(/(?<=<\/?)span(?=.*>)/gm, 'b');
+      el.innerHTML = `<b>${el.innerHTML}</b>`;
     });
   });
 
@@ -234,12 +238,14 @@ const getAll = async (
       const processedVerse = processor.processVerse(verse);
 
       const parData = paragraphData.find(
-        (p) => p.content === processedVerse.content,
+        (p) => p.content === processedVerse.content && !p.isChecked,
       );
 
       if (verseNum === null || !parData) {
         return null;
       }
+
+      parData.isChecked = true;
 
       if (verseNum !== verseOrderTrack.number) {
         verseOrderTrack.number = verseNum;
@@ -266,7 +272,7 @@ const getAll = async (
     })
     .filter((v) => !!v);
 
-  await insertData(verseMap, chap, fnMap);
+  await insertData(withNormalizeHeadingLevel(verseMap), chap, fnMap);
 };
 
 export { getAll };

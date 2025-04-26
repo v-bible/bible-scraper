@@ -100,8 +100,8 @@ const getVerse = async (html: string): Promise<VData[] | null> => {
     await par.evaluate(
       (node, { verseNum: num, isPoetry: poetry }) => {
         // NOTE: Has a sup element but no text inside
-        if (node.textContent?.search(/\$\s\$/) !== -1) {
-          node.innerHTML = node.innerHTML.replace('$ $', `$${num}$`);
+        if (node.textContent?.search(/\$\s*\$/) !== -1) {
+          node.innerHTML = node.innerHTML.replace(/\$\s*\$/, `$${num}$`);
           // NOTE: No sup element at all
         } else if (node.textContent?.search(/\$\d+\$/) === -1) {
           node.innerHTML = `${num}${node.innerHTML}`;
@@ -113,7 +113,7 @@ const getVerse = async (html: string): Promise<VData[] | null> => {
 
         // NOTE: This is the important part, so we still can differentiate even if
         // the content is not within the p element (missing verse)
-        node.innerHTML = `<p>${node.innerHTML}</p>`;
+        node.outerHTML = `<p>${node.outerHTML}</p>`;
       },
       { verseNum, isPoetry },
     );
