@@ -124,9 +124,9 @@ const getProperName = async (
 };
 
 const properNameTemplate = (properName: ProperName) => {
-  return `English: ${properName.english} - French: ${properName.french} - Latin: ${properName.latin} - Origin: ${properName.origin} - Vietnamese: ${properName.vietnamese}`.replaceAll(
+  return `English: ${properName.english} | French: ${properName.french} | Latin: ${properName.latin} | Origin: ${properName.origin} | Vietnamese: ${properName.vietnamese}`.replaceAll(
     '\n',
-    ' ',
+    '-',
   );
 };
 
