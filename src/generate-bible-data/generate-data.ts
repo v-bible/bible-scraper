@@ -1,5 +1,6 @@
+/* eslint-disable no-continue */
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { type Prisma } from '@prisma/client';
 
@@ -33,17 +34,17 @@ export const presets = {
 
 const generateBibleMetadata = async (
   { versionCode, langCode, webOrigin, origin } = presets.ktcgkpv,
-  baseDir = '../../dist/data/books/bible/versions/',
+  baseDir = '../../dist/books/bible/versions',
 ) => {
-  const baseFolder = path.join(__dirname, baseDir);
+  const baseMetadataFolder = path.join(__dirname, baseDir);
 
-  if (!existsSync(baseFolder)) {
-    await mkdir(baseFolder, {
+  if (!existsSync(baseMetadataFolder)) {
+    await mkdir(baseMetadataFolder, {
       recursive: true,
     });
   }
 
-  const fileName = path.join(baseFolder, 'metadata.json');
+  const fileName = path.join(baseMetadataFolder, 'metadata.json');
 
   // Open file to read, create new file is not exists
   try {
@@ -95,7 +96,7 @@ const generateBibleData = async (
       webOrigin,
       origin,
     },
-    '../../dist/data/books/bible/versions/',
+    '../../dist/books/bible/versions',
   );
 
   const getAllBooks = await fetch(
@@ -114,7 +115,7 @@ const generateBibleData = async (
 
   const baseFolder = path.join(
     __dirname,
-    '../../dist/data/books/bible/versions/',
+    '../../dist/books/bible/versions/',
     origin,
     versionCode.toLocaleLowerCase(),
   );
@@ -131,79 +132,91 @@ const generateBibleData = async (
 
   // eslint-disable-next-line no-restricted-syntax
   for await (const book of books) {
-    await Promise.all(
-      book.chapters.map(async (chap) => {
-        await mkdir(path.join(baseFolder, book.code, chap.number.toString()), {
-          recursive: true,
-        });
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const chap of book.chapters) {
+      await mkdir(path.join(baseFolder, book.code, chap.number.toString()), {
+        recursive: true,
+      });
 
-        const getBookChapterText = await fetch(
-          `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/text?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
-        );
+      const getBookChapterText = await fetch(
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/text?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+      );
 
-        const { text } = await getBookChapterText.json();
+      const { text } = await getBookChapterText.json();
 
-        if (!text) {
-          console.log('Error (md)', book.code, chap.number);
+      if (!text) {
+        console.log('Error (md)', book.code, chap.number);
 
-          return;
-        }
+        continue;
+      }
 
-        await writeFile(
-          path.join(
-            baseFolder,
-            book.code,
-            chap.number.toString(),
-            `${chap.number}.md`,
-          ),
-          text,
-        );
+      await writeFile(
+        path.join(
+          baseFolder,
+          book.code,
+          chap.number.toString(),
+          `${chap.number}.md`,
+        ),
+        text,
+      );
 
-        const getBookChapterHtml = await fetch(
-          `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/html?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
-        );
+      const getBookChapterHtml = await fetch(
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/html?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+      );
 
-        const { html } = await getBookChapterHtml.json();
+      const { html } = await getBookChapterHtml.json();
 
-        if (!html) {
-          console.log('Error (html)', book.code, chap.number);
+      if (!html) {
+        console.log('Error (html)', book.code, chap.number);
 
-          return;
-        }
+        continue;
+      }
 
-        await writeFile(
-          path.join(
-            baseFolder,
-            book.code,
-            chap.number.toString(),
-            `${chap.number}.html`,
-          ),
-          html,
-        );
+      await writeFile(
+        path.join(
+          baseFolder,
+          book.code,
+          chap.number.toString(),
+          `${chap.number}.html`,
+        ),
+        html,
+      );
 
-        const getBookChapterJson = await fetch(
-          `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
-        );
+      const getBookChapterJson = await fetch(
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+      );
 
-        const res = await getBookChapterJson.json();
+      const res = await getBookChapterJson.json();
 
-        if (!res) {
-          console.log('Error (json)', book.code, chap.number);
+      if (!res) {
+        console.log('Error (json)', book.code, chap.number);
 
-          return;
-        }
+        continue;
+      }
 
-        await writeFile(
-          path.join(
-            baseFolder,
-            book.code,
-            chap.number.toString(),
-            `${chap.number}.json`,
-          ),
-          JSON.stringify(res, null, 2),
-        );
-      }),
-    );
+      await writeFile(
+        path.join(
+          baseFolder,
+          book.code,
+          chap.number.toString(),
+          `${chap.number}.json`,
+        ),
+        JSON.stringify(res, null, 2),
+      );
+
+      await mkdir(path.join(__dirname, '../../dist/data/books/bible/'), {
+        recursive: true,
+      });
+
+      await appendFile(
+        path.join(
+          __dirname,
+          '../../dist/data/books/bible/',
+          `${origin}-${versionCode.toLocaleLowerCase()}.jsonl`,
+        ),
+        `${JSON.stringify(res)}\n`,
+      );
+    }
   }
 };
 
