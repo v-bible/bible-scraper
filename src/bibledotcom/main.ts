@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import { mkdir } from 'fs/promises';
 import { Agent, setGlobalDispatcher } from 'undici';
-import { getAll } from './get-all';
+import { getAll } from '@/bibledotcom/get-all';
 import { getBook } from '@/bibledotcom/get-book';
 import { getPsalmMeta } from '@/bibledotcom/get-psalm-meta';
 import { getVersionByLang } from '@/bibledotcom/get-version';

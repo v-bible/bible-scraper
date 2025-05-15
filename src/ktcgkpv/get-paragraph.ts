@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
 import type { ContentView } from '@/ktcgkpv/get-all';
-import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
+import { versionMapping } from '@/ktcgkpv/mapping';
 import { parseMd } from '@/lib/remark';
 
 const getParagraph = async (
@@ -15,12 +15,16 @@ const getParagraph = async (
       book: true;
     };
   }>,
+  versionCode: keyof typeof versionMapping = 'KT2011',
 ) => {
   const formdata = new FormData();
-  formdata.append('version', `${versionMapping.KT2011.number}`);
+  formdata.append('version', `${versionMapping[versionCode].number}`);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  formdata.append('book', `${bookCodeList[chap.book.code]}`);
+  formdata.append(
+    'book',
+    // @ts-ignore
+    `${versionMapping[versionCode].bookList[chap.book.code]}`,
+  );
   formdata.append('book_abbr', chap.book.code);
   formdata.append('from_chapter', `${chap.number}`);
   formdata.append('to_chapter', `${chap.number}`);

@@ -9,7 +9,7 @@ import { getParagraph } from '@/ktcgkpv/get-paragraph';
 import { getProperName, properNameTemplate } from '@/ktcgkpv/get-proper-name';
 import { getVerse } from '@/ktcgkpv/get-verse';
 import { insertData } from '@/ktcgkpv/insert-data';
-import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
+import { versionMapping } from '@/ktcgkpv/mapping';
 import { parseMd } from '@/lib/remark';
 import { withNormalizeHeadingLevel } from '@/lib/verse-utils';
 
@@ -29,12 +29,16 @@ const getAll = async (
       book: true;
     };
   }>,
+  versionCode: keyof typeof versionMapping = 'KT2011',
 ) => {
   const formdata = new FormData();
-  formdata.append('version', `${versionMapping.KT2011.number}`);
+  formdata.append('version', `${versionMapping[versionCode].number}`);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  formdata.append('book', `${bookCodeList[chap.book.code]}`);
+  formdata.append(
+    'book',
+    // @ts-ignore
+    `${versionMapping[versionCode].bookList[chap.book.code]}`,
+  );
   formdata.append('book_abbr', chap.book.code);
   formdata.append('from_chapter', `${chap.number}`);
   formdata.append('to_chapter', `${chap.number}`);
@@ -51,6 +55,10 @@ const getAll = async (
   const page = await context.newPage();
 
   const data = (await req.json()) as ContentView;
+
+  if (!data.data?.content) {
+    throw new Error(`No content found ${chap.book.code} ${chap.number}`);
+  }
 
   await page.setContent(data.data.content, {
     waitUntil: 'load',
@@ -69,10 +77,13 @@ const getAll = async (
 
   for await (const verseNum of allVerses) {
     const verseFormData = new FormData();
-    verseFormData.append('version', `${versionMapping.KT2011.number}`);
+    verseFormData.append('version', `${versionMapping[versionCode].number}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    verseFormData.append('book', `${bookCodeList[chap.book.code]}`);
+    verseFormData.append(
+      'book',
+      // @ts-ignore
+      `${versionMapping[versionCode].bookList[chap.book.code]}`,
+    );
     verseFormData.append('book_abbr', chap.book.code);
     verseFormData.append('from_chapter', `${chap.number}`);
     verseFormData.append('to_chapter', `${chap.number}`);
@@ -96,9 +107,9 @@ const getAll = async (
     verseData.push(...newData);
   }
 
-  const paragraphData = await getParagraph(chap);
+  const paragraphData = await getParagraph(chap, versionCode);
 
-  const properName = await getProperName(chap);
+  const properName = await getProperName(chap, versionCode);
 
   let footnoteContentMap = await Promise.all(
     Object.entries(data.data?.notes || {}).map(

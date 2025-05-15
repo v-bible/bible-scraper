@@ -3,17 +3,20 @@ import { mkdir } from 'fs/promises';
 import { Agent, setGlobalDispatcher } from 'undici';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
+import { versionMapping } from '@/ktcgkpv/mapping';
 import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 
 setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
 
 (async () => {
-  await getBook();
+  const versionCode = 'KT2011' satisfies keyof typeof versionMapping;
+
+  await getBook(versionCode);
 
   const version = await prisma.version.findFirstOrThrow({
     where: {
-      code: 'KT2011',
+      code: versionCode,
       language: {
         webOrigin: 'https://ktcgkpv.org/',
       },
@@ -35,7 +38,7 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
     books,
     async (chapters, setCheckpoint) => {
       for await (const chap of chapters) {
-        await getAll(chap);
+        await getAll(chap, versionCode);
 
         // const properName = await getProperName(chap);
 

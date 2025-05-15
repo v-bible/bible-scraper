@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { CalendarEntry } from './get-ordinary-time';
+import { CalendarEntry } from '@/catholic-resources/get-ordinary-time';
 
 const getOrdinaryTimeSunday = async () => {
   const browser = await chromium.launch();
