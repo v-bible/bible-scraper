@@ -186,13 +186,21 @@ const generateBibleData = async (
         `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
       );
 
-      const res = await getBookChapterJson.json();
+      let res = await getBookChapterJson.json();
 
       if (!res) {
         console.log('Error (json)', book.code, chap.number);
 
         continue;
       }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { chapters, ...bookData } = book;
+
+      res = {
+        ...res,
+        book: bookData,
+      };
 
       await writeFile(
         path.join(
