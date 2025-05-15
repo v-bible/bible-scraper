@@ -3,6 +3,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { Prisma } from '@prisma/client';
+import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
 import { getParagraph } from '@/ktcgkpv/get-paragraph';
@@ -12,6 +13,7 @@ import { insertData } from '@/ktcgkpv/insert-data';
 import { versionMapping } from '@/ktcgkpv/mapping';
 import { parseMd } from '@/lib/remark';
 import { withNormalizeHeadingLevel } from '@/lib/verse-utils';
+import { logger } from '@/logger/logger';
 
 export type ContentView = {
   data: {
@@ -31,73 +33,84 @@ const getAll = async (
   }>,
   versionCode: keyof typeof versionMapping = 'KT2011',
 ) => {
-  const formdata = new FormData();
-  formdata.append('version', `${versionMapping[versionCode].number}`);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  formdata.append(
-    'book',
-    // @ts-ignore
-    `${versionMapping[versionCode].bookList[chap.book.code]}`,
-  );
-  formdata.append('book_abbr', chap.book.code);
-  formdata.append('from_chapter', `${chap.number}`);
-  formdata.append('to_chapter', `${chap.number}`);
-
-  const req = await fetch('https://ktcgkpv.org/bible/content-view', {
-    method: 'POST',
-    // @ts-ignore
-    body: formdata,
-    redirect: 'follow',
-  });
-
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
   const page = await context.newPage();
 
-  const data = (await req.json()) as ContentView;
+  // NOTE: Special cases like from version JRAI, book "Hră phian tal dua",
+  // chapter 11, verse 29 has non-breaking space character in request.
+  // However, in verseNum has normal space character, so we need to replace
+  // with non-breaking space character
+  // NOTE: In version JRAI, book 2 Sammuel, chap 19, verse 1 has verse num "1
+  // (18, 33)" or "5(4)" so we need to remove any number in parentheses
 
-  if (!data.data?.content) {
-    throw new Error(`No content found ${chap.book.code} ${chap.number}`);
-  }
+  // So instead of get data from bible/content-view, we get verses from
+  // "versePopover" to avoid verse number edge cases as mentioned above
+  await retry(
+    async () => {
+      await page.goto(
+        `https://ktcgkpv.org/bible?version=${versionMapping[versionCode].number}`,
+      );
+    },
+    {
+      retries: 5,
+    },
+  );
 
-  await page.setContent(data.data.content, {
-    waitUntil: 'load',
-  });
+  const bookNumberId =
+    versionMapping[versionCode].bookList[
+      chap.book
+        .code as keyof (typeof versionMapping)[typeof versionCode]['bookList']
+    ];
+
+  await page.locator('button[id="bookSelection" i]').click();
+
+  await page.locator(`button[data-book-id="${bookNumberId}" i]`).click();
+
+  await page.locator(`button[id='btnFromChapter']`).click();
+
+  await page
+    .locator(`[id='chapterPopover'] a[data-chapter="${chap.number}"]`)
+    .first()
+    .click();
 
   const allVerses = await page
-    .locator("sup[class*='verse-num' i]")
+    .locator("[id='versePopover'] li")
     .allTextContents();
-
-  await context.close();
-  await browser.close();
 
   // NOTE: We will not iterate from the verseNumCount because we want to get all
   // verses
   const verseData: NonNullable<Awaited<ReturnType<typeof getVerse>>> = [];
 
   for await (const verseNum of allVerses) {
-    const verseFormData = new FormData();
-    verseFormData.append('version', `${versionMapping[versionCode].number}`);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    verseFormData.append(
-      'book',
-      // @ts-ignore
-      `${versionMapping[versionCode].bookList[chap.book.code]}`,
-    );
-    verseFormData.append('book_abbr', chap.book.code);
-    verseFormData.append('from_chapter', `${chap.number}`);
-    verseFormData.append('to_chapter', `${chap.number}`);
-    verseFormData.append('from_verse', `${verseNum}`);
-    verseFormData.append('to_verse', `${verseNum}`);
-
     const verReq = await fetch('https://ktcgkpv.org/bible/content-view', {
       method: 'POST',
-      // @ts-ignore
-      body: verseFormData,
+      body: new URLSearchParams({
+        version: `${versionMapping[versionCode].number}`,
+        book: `${versionMapping[versionCode].bookList[chap.book.code as keyof (typeof versionMapping)[typeof versionCode]['bookList']]}`,
+        book_abbr: chap.book.code,
+        from_chapter: `${chap.number}`,
+        to_chapter: `${chap.number}`,
+        from_verse: `${verseNum}`,
+        to_verse: `${verseNum}`,
+      }).toString(),
       redirect: 'follow',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
 
     const verseContent = (await verReq.json()) as ContentView;
+
+    if (!verseContent.data?.content) {
+      logger.warn(
+        `No content found for ${chap.book.code} ${chap.number} ${verseNum}`,
+      );
+
+      throw new Error(
+        `No content found for ${chap.book.code} ${chap.number} ${verseNum}`,
+      );
+    }
 
     const newData = await getVerse(verseContent.data.content);
     if (!newData) {
@@ -110,6 +123,26 @@ const getAll = async (
   const paragraphData = await getParagraph(chap, versionCode);
 
   const properName = await getProperName(chap, versionCode);
+
+  const req = await fetch('https://ktcgkpv.org/bible/content-view', {
+    method: 'POST',
+    body: new URLSearchParams({
+      version: `${versionMapping[versionCode].number}`,
+      book: `${versionMapping[versionCode].bookList[chap.book.code as keyof (typeof versionMapping)[typeof versionCode]['bookList']]}`,
+      book_abbr: chap.book.code,
+      from_chapter: `${chap.number}`,
+      to_chapter: `${chap.number}`,
+    }).toString(),
+    redirect: 'follow',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+
+  const data = (await req.json()) as ContentView;
+
+  await context.close();
+  await browser.close();
 
   let footnoteContentMap = await Promise.all(
     Object.entries(data.data?.notes || {}).map(
