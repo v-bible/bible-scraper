@@ -6,7 +6,6 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { fetch } from 'undici';
 import { parseMd } from '@/lib/remark';
 
 const getParagraph = async (
