@@ -13,29 +13,69 @@ type GenerateBibleDataParams = {
 
 export const presets = {
   biblegateway: {
-    versionCode: 'BD2011',
-    langCode: 'vi',
-    webOrigin: 'https://www.biblegateway.com',
-    origin: 'biblegateway',
+    code: 'BD2011',
+    name: 'Bản Dịch 2011 (BD2011)',
+    language: {
+      code: 'vi',
+      origin: 'biblegateway',
+      webOrigin: 'https://www.biblegateway.com',
+    },
   },
   bibledotcom: {
-    versionCode: 'BD2011',
-    langCode: 'vie',
-    webOrigin: 'https://www.bible.com',
-    origin: 'bibledotcom',
+    code: 'BD2011',
+    name: 'Kinh Thánh Tiếng Việt, Bản Dịch 2011',
+    language: {
+      code: 'vie',
+      origin: 'bibledotcom',
+      webOrigin: 'https://www.bible.com',
+    },
   },
   ktcgkpv: {
-    versionCode: 'KT2011',
-    langCode: 'vi',
-    webOrigin: 'https://ktcgkpv.org/',
-    origin: 'ktcgkpv',
+    code: 'KT2011',
+    name: 'KPA : ấn bản KT 2011',
+    language: {
+      code: 'vi',
+      origin: 'ktcgkpv',
+      webOrigin: 'https://ktcgkpv.org/',
+    },
   },
-} satisfies Record<string, GenerateBibleDataParams>;
+} satisfies Record<
+  string,
+  Prisma.VersionGetPayload<{
+    select: {
+      code: true;
+      name: true;
+      id: false;
+      createdAt: false;
+      updatedAt: false;
+      onlyNT: false;
+      onlyOT: false;
+      withApocrypha: false;
+      language: {
+        select: {
+          code: true;
+          origin: true;
+          webOrigin: true;
+          id: false;
+          name: false;
+          createdAt: false;
+          updatedAt: false;
+          versions: false;
+        };
+      };
+    };
+  }>
+>;
 
 const generateBibleMetadata = async (
-  { versionCode, langCode, webOrigin, origin } = presets.ktcgkpv,
+  version = presets.ktcgkpv,
   baseDir = '../../dist/books/bible/versions',
 ) => {
+  const {
+    code: versionCode,
+    language: { code: langCode, webOrigin, origin },
+  } = version;
+
   const baseMetadataFolder = path.join(__dirname, baseDir);
 
   if (!existsSync(baseMetadataFolder)) {
@@ -86,18 +126,15 @@ const generateBibleMetadata = async (
 };
 
 const generateBibleData = async (
-  { versionCode, langCode, webOrigin, origin } = presets.ktcgkpv,
+  version = presets.ktcgkpv,
   baseUrl = 'http://localhost:8081/api',
 ) => {
-  await generateBibleMetadata(
-    {
-      versionCode,
-      langCode,
-      webOrigin,
-      origin,
-    },
-    '../../dist/books/bible/versions',
-  );
+  const {
+    code: versionCode,
+    language: { code: langCode, webOrigin, origin },
+  } = version;
+
+  await generateBibleMetadata(version, '../../dist/books/bible/versions');
 
   const getAllBooks = await fetch(
     `${baseUrl}/v1/book?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
