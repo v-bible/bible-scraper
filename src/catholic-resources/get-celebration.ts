@@ -6,7 +6,7 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { format, isValid, parse } from 'date-fns';
 import { chromium, devices } from 'playwright';
-import { CalendarEntry } from './get-ordinary-time';
+import { CalendarEntry } from '@/catholic-resources/get-ordinary-time';
 
 const normalizeString = (val: string) => {
   return val

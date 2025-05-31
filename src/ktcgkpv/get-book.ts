@@ -98,9 +98,7 @@ const getBook = async (versionCode: keyof typeof versionMapping = 'KT2011') => {
     },
   );
 
-  const chapterTemplate = await page
-    .locator("[id='chapterPopover'] > ul > li")
-    .all();
+  const chapterTemplate = await page.locator("[id='chapterPopover'] li").all();
 
   const chapterMap: { [x: string]: string[] } = {};
 

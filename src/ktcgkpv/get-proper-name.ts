@@ -6,7 +6,7 @@
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
-import { bookCodeList, versionMapping } from '@/ktcgkpv/mapping';
+import { versionMapping } from '@/ktcgkpv/mapping';
 import { logger } from '@/logger/logger';
 
 export type ContentView = {
@@ -33,21 +33,21 @@ const getProperName = async (
       book: true;
     };
   }>,
+  versionCode: keyof typeof versionMapping = 'KT2011',
 ) => {
-  const formdata = new FormData();
-  formdata.append('version', `${versionMapping.KT2011.number}`);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  formdata.append('book', `${bookCodeList[chap.book.code]}`);
-  formdata.append('book_abbr', chap.book.code);
-  formdata.append('from_chapter', `${chap.number}`);
-  formdata.append('to_chapter', `${chap.number}`);
-
   const req = await fetch('https://ktcgkpv.org/bible/content-view', {
     method: 'POST',
-    // @ts-ignore
-    body: formdata,
+    body: new URLSearchParams({
+      version: `${versionMapping[versionCode].number}`,
+      book: `${versionMapping[versionCode].bookList[chap.book.code as keyof (typeof versionMapping)[typeof versionCode]['bookList']]}`,
+      book_abbr: chap.book.code,
+      from_chapter: `${chap.number}`,
+      to_chapter: `${chap.number}`,
+    }).toString(),
     redirect: 'follow',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
   });
 
   const browser = await chromium.launch();
@@ -72,16 +72,17 @@ const getProperName = async (
   let properData: ProperName[] = [];
 
   for await (const name of allProperName) {
-    const properFormData = new FormData();
-    properFormData.append('name', name);
-
     const properReq = await fetch(
       'https://ktcgkpv.org/bible/name-transliterate',
       {
         method: 'POST',
-        // @ts-ignore
-        body: properFormData,
+        body: new URLSearchParams({
+          name,
+        }).toString(),
         redirect: 'follow',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       },
     );
 
