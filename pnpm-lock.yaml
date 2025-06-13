@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@cliqz/adblocker-playwright':
         specifier: 1.34.0
-        version: 1.34.0(playwright@1.52.0)
+        version: 1.34.0(playwright@1.53.0)
       '@prisma/client':
         specifier: 5.20.0
         version: 5.20.0(prisma@5.20.0)
@@ -24,14 +24,14 @@ importers:
         specifier: 16.5.0
         version: 16.5.0
       es-toolkit:
-        specifier: 1.32.0
-        version: 1.32.0
+        specifier: 1.39.3
+        version: 1.39.3
       pdfjs-dist:
         specifier: 5.3.31
         version: 5.3.31
       playwright:
-        specifier: 1.52.0
-        version: 1.52.0
+        specifier: 1.53.0
+        version: 1.53.0
       rehype-parse:
         specifier: 9.0.1
         version: 9.0.1
@@ -121,8 +121,8 @@ importers:
         specifier: 5.20.0
         version: 5.20.0
       tsx:
-        specifier: 4.19.3
-        version: 4.19.3
+        specifier: 4.20.3
+        version: 4.20.3
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1134,8 +1134,8 @@ packages:
     resolution: {integrity: sha512-QCOllgZJtaUo9miYBcLChTUaHNjJF3PYs1VidD7AwiEj1kYxKeQTctLAezAOH5ZKRH0g2IgPn6KwB4IT8iRpvA==}
     engines: {node: '>= 0.4'}
 
-  es-toolkit@1.32.0:
-    resolution: {integrity: sha512-ZfSfHP1l6ubgW/B/FRtqb9bYdMvI6jizbOSfbwwJNcOQ1QE6TFsC3jpQkZ900uUPSR3t3SU5Ds7UWKnYz+uP8Q==}
+  es-toolkit@1.39.3:
+    resolution: {integrity: sha512-Qb/TCFCldgOy8lZ5uC7nLGdqJwSabkQiYQShmw4jyiPk1pZzaYWTwaYKYP7EgLccWYgZocMrtItrwh683voaww==}
 
   esbuild@0.25.2:
     resolution: {integrity: sha512-16854zccKPnC+toMywC+uKNeYSv+/eXkevRAfwRD/G9Cleq66m8XFIrigkbvauLLlCfDL45Q2cWegSg53gGBnQ==}
@@ -2050,8 +2050,13 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.52.0:
-    resolution: {integrity: sha512-JAwMNMBlxJ2oD1kce4KPtMkDeKGHQstdpFPcPH3maElAXon/QZeTvtsfXmTMRyO9TslfoYOXkSsvao2nE1ilTw==}
+  playwright-core@1.53.0:
+    resolution: {integrity: sha512-mGLg8m0pm4+mmtB7M89Xw/GSqoNC+twivl8ITteqvAndachozYe2ZA7srU6uleV1vEdAHYqjq+SV8SNxRRFYBw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.53.0:
+    resolution: {integrity: sha512-ghGNnIEYZC4E+YtclRn4/p6oYbdPiASELBIYkBXfaTVKreQUYbMUYQDwS12a8F0/HtIjr/CkGjtwABeFPGcS4Q==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2370,8 +2375,8 @@ packages:
   tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
 
-  tsx@4.19.3:
-    resolution: {integrity: sha512-4H8vUNGNjQ4V2EOoGw005+c+dGuPSnhpPBPHBtsZdGZBk/iJb4kguGlPWaZTZ3q5nMtFOEsY0nRDlh9PJyd6SQ==}
+  tsx@4.20.3:
+    resolution: {integrity: sha512-qjbnuR9Tr+FJOMBqJCW5ehvIo/buZq7vH7qD7JziU98h6l3qGy0a/yPFjwO+y0/T7GFpNgNAvEcPPVfyT8rrPQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -2668,11 +2673,11 @@ snapshots:
 
   '@cliqz/adblocker-extended-selectors@1.34.0': {}
 
-  '@cliqz/adblocker-playwright@1.34.0(playwright@1.52.0)':
+  '@cliqz/adblocker-playwright@1.34.0(playwright@1.53.0)':
     dependencies:
       '@cliqz/adblocker': 1.34.0
       '@cliqz/adblocker-content': 1.34.0
-      playwright: 1.52.0
+      playwright: 1.53.0
       tldts-experimental: 6.1.11
 
   '@cliqz/adblocker@1.34.0':
@@ -3636,7 +3641,7 @@ snapshots:
       is-date-object: 1.0.5
       is-symbol: 1.0.4
 
-  es-toolkit@1.32.0: {}
+  es-toolkit@1.39.3: {}
 
   esbuild@0.25.2:
     optionalDependencies:
@@ -4701,9 +4706,11 @@ snapshots:
 
   playwright-core@1.52.0: {}
 
-  playwright@1.52.0:
+  playwright-core@1.53.0: {}
+
+  playwright@1.53.0:
     dependencies:
-      playwright-core: 1.52.0
+      playwright-core: 1.53.0
     optionalDependencies:
       fsevents: 2.3.2
 
@@ -5037,7 +5044,7 @@ snapshots:
 
   tslib@2.6.2: {}
 
-  tsx@4.19.3:
+  tsx@4.20.3:
     dependencies:
       esbuild: 0.25.2
       get-tsconfig: 4.10.0
