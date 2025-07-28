@@ -6,11 +6,14 @@ import { Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
-import { getParagraph } from '@/ktcgkpv/get-paragraph';
-import { getProperName, properNameTemplate } from '@/ktcgkpv/get-proper-name';
-import { getVerse } from '@/ktcgkpv/get-verse';
-import { insertData } from '@/ktcgkpv/insert-data';
-import { versionMapping } from '@/ktcgkpv/mapping';
+import { getParagraph } from '@/ktcgkpv.org/get-paragraph';
+import {
+  getProperName,
+  properNameTemplate,
+} from '@/ktcgkpv.org/get-proper-name';
+import { getVerse } from '@/ktcgkpv.org/get-verse';
+import { insertData } from '@/ktcgkpv.org/insert-data';
+import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { parseMd } from '@/lib/remark';
 import { withNormalizeHeadingLevel } from '@/lib/verse-utils';
 import { logger } from '@/logger/logger';

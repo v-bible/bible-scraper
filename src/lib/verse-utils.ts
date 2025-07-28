@@ -7,17 +7,17 @@ import type {
   BookVerse,
 } from '@prisma/client';
 import { uniq } from 'es-toolkit';
-import { type VData } from '@/ktcgkpv/get-verse';
+import { type VData } from '@/ktcgkpv.org/get-verse';
 
 // NOTE: All user-defined regex MUST contains groups mentioned in default
 // regexes below
 // NOTE: We add "\s" at the beginning because we don't want extra spaces before
 // footnotes
 const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gmu;
-// NOTE: This is for ktcgkpv ref type
+// NOTE: This is for ktcgkpv.org ref type
 const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^@]*\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*\n/gmu;
-// NOTE: "\p{L}" is for unicode letter (Vietnamese characters from ktcgkpv)
+// NOTE: "\p{L}" is for unicode letter (Vietnamese characters from ktcgkpv.org)
 const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gmu;
 const rePoetryMatch = /\\?~/gmu;
 
@@ -153,7 +153,7 @@ class VerseProcessor {
       .matchAll(this.reRefMatch);
 
     const refs = getLabelPosition(referenceMatch, (match) =>
-      // REVIEW: This is only specific to ktcgkpv ref
+      // REVIEW: This is only specific to ktcgkpv.org ref
       match.groups!.refLabel!.replaceAll('\\_', '_'),
     );
 

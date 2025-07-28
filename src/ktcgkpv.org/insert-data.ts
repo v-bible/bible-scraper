@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 import type { Prisma } from '@prisma/client';
-import type { VData } from '@/ktcgkpv/get-verse';
+import type { VData } from '@/ktcgkpv.org/get-verse';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 

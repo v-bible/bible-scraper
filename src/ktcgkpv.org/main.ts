@@ -2,40 +2,29 @@
 import path from 'path';
 import { type Prisma } from '@prisma/client';
 import { Agent, setGlobalDispatcher } from 'undici';
-import { getAll } from '@/biblegateway/get-all';
-import { getBook } from '@/biblegateway/get-book';
-import { getPsalmMeta } from '@/biblegateway/get-psalm-meta';
-import { getVersion } from '@/biblegateway/get-version';
+import { getAll } from '@/ktcgkpv.org/get-all';
+import { getBook } from '@/ktcgkpv.org/get-book';
+import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 
 setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
 
 (async () => {
-  await getVersion();
+  const versionCode = 'KT2011' satisfies keyof typeof versionMapping;
+
+  await getBook(versionCode);
 
   const version = await prisma.version.findFirstOrThrow({
     where: {
-      code: 'BD2011',
+      code: versionCode,
       language: {
-        webOrigin: 'https://www.biblegateway.com',
+        webOrigin: 'https://ktcgkpv.org/',
       },
     },
     include: {
       formats: true,
     },
-  });
-
-  const versionFormat = await prisma.versionFormat.findFirstOrThrow({
-    where: {
-      versionId: version.id,
-      type: 'ebook',
-    },
-  });
-
-  await getBook({
-    type: versionFormat.type,
-    ref: versionFormat.ref,
   });
 
   const books = await prisma.book.findMany({
@@ -75,17 +64,14 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
       filePath: path.join(
         __dirname,
         '../../../dist',
-        `bible.com-${version.code}-checkpoint.json`,
+        `ktcgkpv.org-${version.code}-checkpoint.json`,
       ),
     });
 
   for await (const checkpoint of chapterCheckpoint) {
     const chapter = checkpoint.params;
 
-    await getAll(chapter);
-    if (chapter.book.code === 'ps') {
-      await getPsalmMeta(chapter);
-    }
+    await getAll(chapter, versionCode);
 
     setCheckpointComplete(checkpoint.id, true);
   }

@@ -5,9 +5,9 @@
 import type { BookVerse, Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { getParagraph } from '@/bibledotcom/get-paragraph';
-import { insertData } from '@/bibledotcom/insert-data';
-import { extractVerseNum } from '@/biblegateway/get-all';
+import { getParagraph } from '@/bible.com/get-paragraph';
+import { insertData } from '@/bible.com/insert-data';
+import { extractVerseNum } from '@/biblegateway.com/get-all';
 import { parseMd } from '@/lib/remark';
 import {
   VerseProcessor,

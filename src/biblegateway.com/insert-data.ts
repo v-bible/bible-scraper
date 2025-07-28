@@ -2,7 +2,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 import type { Prisma } from '@prisma/client';
-import { VData } from '@/ktcgkpv/get-verse';
+import { VData } from '@/ktcgkpv.org/get-verse';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
@@ -13,9 +13,13 @@ export const insertData = async (
       book: true;
     };
   }>,
+  fnMap: ({
+    label: string;
+    order: number;
+    content: string;
+  } | null)[],
 ) => {
   let refOrder = 0;
-  let fnOrder = 0;
 
   for (const vData of data) {
     if (!vData) {
@@ -73,7 +77,7 @@ export const insertData = async (
     }
 
     for (const vHeading of vData.headings) {
-      const newHeading = await prisma.bookHeading.upsert({
+      await prisma.bookHeading.upsert({
         where: {
           order_verseId: {
             order: vHeading.order,
@@ -107,109 +111,42 @@ export const insertData = async (
         vData.verse.number,
         vHeading.content,
       );
-
-      for (const hFootnote of vHeading.footnotes) {
-        await prisma.bookFootnote.upsert({
-          where: {
-            order_headingId: {
-              order: fnOrder,
-              headingId: newHeading.id,
-            },
-          },
-          update: {
-            order: fnOrder,
-            content: hFootnote.label.trim(),
-            position: hFootnote.position,
-          },
-          create: {
-            order: fnOrder,
-            content: hFootnote.label.trim(),
-            position: hFootnote.position,
-            headingId: newHeading.id,
-            chapterId: chap.id,
-          },
-        });
-
-        fnOrder += 1;
-
-        logger.info(
-          'Get heading footnote %s:%s for book %s',
-          chap.number,
-          vData.verse.number,
-          chap.book.title,
-        );
-
-        logger.debug(
-          'Heading footnote %s:%s content: %s',
-          chap.number,
-          vData.verse.number,
-          hFootnote.label.trim(),
-        );
-      }
-
-      for (const hRef of vHeading.references) {
-        await prisma.bookReference.upsert({
-          where: {
-            order_headingId: {
-              order: refOrder,
-              headingId: newHeading.id,
-            },
-          },
-          update: {
-            order: refOrder,
-            content: hRef.label.trim(),
-            position: hRef.position,
-          },
-          create: {
-            order: refOrder,
-            content: hRef.label.trim(),
-            position: hRef.position,
-            headingId: newHeading.id,
-            chapterId: chap.id,
-          },
-        });
-
-        refOrder += 1;
-
-        logger.info(
-          'Get heading reference %s:%s for book %s',
-          chap.number,
-          vData.verse.number,
-          chap.book.title,
-        );
-
-        logger.debug(
-          'Heading reference %s:%s content: %s',
-          chap.number,
-          vData.verse.number,
-          hRef.label.trim(),
-        );
-      }
     }
 
     for (const vFootnote of vData.footnotes) {
+      const vFootnoteContent = fnMap
+        .filter((fn) => fn?.label === vFootnote.label.replaceAll('\\', ''))
+        .at(0)!;
+
+      if (!vFootnoteContent) {
+        continue;
+      }
+
+      // NOTE: Sometimes footnote is not present
+      if (!vFootnoteContent) {
+        continue;
+      }
+
       await prisma.bookFootnote.upsert({
         where: {
           order_verseId: {
-            order: fnOrder,
+            order: vFootnoteContent.order,
             verseId: newVerse.id,
           },
         },
         update: {
-          order: fnOrder,
-          content: vFootnote.label.trim(),
+          order: vFootnoteContent.order,
+          content: vFootnoteContent.content.trim(),
           position: vFootnote.position,
         },
         create: {
-          order: fnOrder,
-          content: vFootnote.label.trim(),
+          order: vFootnoteContent.order,
+          content: vFootnoteContent.content.trim(),
           position: vFootnote.position,
           verseId: newVerse.id,
           chapterId: chap.id,
         },
       });
-
-      fnOrder += 1;
 
       logger.info(
         'Get footnote %s:%s for book %s',
@@ -222,7 +159,7 @@ export const insertData = async (
         'Footnote %s:%s content: %s',
         chap.number,
         vData.verse.number,
-        vFootnote.label.trim(),
+        vFootnoteContent.content.trim(),
       );
     }
 

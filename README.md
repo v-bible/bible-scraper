@@ -91,10 +91,9 @@ your `.env` file:
 - **App configs:**
 
   `DB_URL`: Postgres database connection URL. Example:
-
   - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
 
-  - Sqlite: `file:../../dumps/ktcgkpv_sqlite.db?connection_limit=1&socket_timeout=10`
+  - Sqlite: `file:../../dumps/ktcgkpv.org_sqlite.db?connection_limit=1&socket_timeout=10`
 
   `LOG_LEVEL`: Log level.
 
@@ -205,13 +204,13 @@ Generate Prisma client:
 - Scrape bible (from [biblegateway.com](https://www.biblegateway.com/)):
 
 ```bash
-npx tsx ./src/biblegateway/main.ts
+npx tsx ./src/biblegateway.com/main.ts
 ```
 
 - Scrape bible (from [bible.com](https://www.bible.com/)):
 
 ```bash
-npx tsx ./src/bibledotcom/main.ts
+npx tsx ./src/bible.com/main.ts
 ```
 
 > [!NOTE]
@@ -237,7 +236,7 @@ npx tsx ./src/catholic-resources/main.ts
 - Scrape bible (from [ktcgkpv.org](https://ktcgkpv.org/bible?version=1)):
 
 ```bash
-npx tsx ./src/ktcgkpv/main.ts
+npx tsx ./src/ktcgkpv.org/main.ts
 ```
 
 - Inject FTS content to the SQLite database:

@@ -2,10 +2,10 @@
 import path from 'path';
 import { type Prisma } from '@prisma/client';
 import { Agent, setGlobalDispatcher } from 'undici';
-import { getAll } from '@/bibledotcom/get-all';
-import { getBook } from '@/bibledotcom/get-book';
-import { getPsalmMeta } from '@/bibledotcom/get-psalm-meta';
-import { getVersionByLang } from '@/bibledotcom/get-version';
+import { getAll } from '@/bible.com/get-all';
+import { getBook } from '@/bible.com/get-book';
+import { getPsalmMeta } from '@/bible.com/get-psalm-meta';
+import { getVersionByLang } from '@/bible.com/get-version';
 import { withCheckpoint } from '@/lib/checkpoint';
 import prisma from '@/prisma/prisma';
 

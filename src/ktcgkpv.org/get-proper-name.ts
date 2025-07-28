@@ -6,7 +6,7 @@
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
-import { versionMapping } from '@/ktcgkpv/mapping';
+import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { logger } from '@/logger/logger';
 
 export type ContentView = {

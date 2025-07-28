@@ -12,30 +12,30 @@ type GenerateBibleDataParams = {
 };
 
 export const presets = {
-  biblegateway: {
+  'biblegateway.com': {
     code: 'BD2011',
     name: 'Bản Dịch 2011 (BD2011)',
     language: {
       code: 'vi',
-      origin: 'biblegateway',
+      origin: 'biblegateway.com',
       webOrigin: 'https://www.biblegateway.com',
     },
   },
-  bibledotcom: {
+  'bible.com': {
     code: 'BD2011',
     name: 'Kinh Thánh Tiếng Việt, Bản Dịch 2011',
     language: {
       code: 'vie',
-      origin: 'bibledotcom',
+      origin: 'bible.com',
       webOrigin: 'https://www.bible.com',
     },
   },
-  ktcgkpv: {
+  'ktcgkpv.org': {
     code: 'KT2011',
     name: 'KPA : ấn bản KT 2011',
     language: {
       code: 'vi',
-      origin: 'ktcgkpv',
+      origin: 'ktcgkpv.org',
       webOrigin: 'https://ktcgkpv.org/',
     },
   },
@@ -95,7 +95,7 @@ const checkConsecutiveVerses = (
 };
 
 const generateBibleMetadata = async (
-  version = presets.ktcgkpv,
+  version = presets['ktcgkpv.org'],
   baseDir = '../../dist/books/bible/versions',
 ) => {
   const {
@@ -153,7 +153,7 @@ const generateBibleMetadata = async (
 };
 
 const generateBibleData = async (
-  version = presets.ktcgkpv,
+  version = presets['ktcgkpv.org'],
   baseUrl = 'http://localhost:8081/api',
 ) => {
   const {

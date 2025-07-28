@@ -5,7 +5,7 @@
 // import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { versionMapping } from '@/ktcgkpv/mapping';
+import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 

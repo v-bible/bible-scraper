@@ -5,8 +5,8 @@ import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import type { BookVerse, Prisma } from '@prisma/client';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
-import { getParagraph } from '@/biblegateway/get-paragraph';
-import { insertData } from '@/biblegateway/insert-data';
+import { getParagraph } from '@/biblegateway.com/get-paragraph';
+import { insertData } from '@/biblegateway.com/insert-data';
 import { parseMd } from '@/lib/remark';
 import {
   VerseProcessor,

@@ -5,8 +5,8 @@
 import { Prisma } from '@prisma/client';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
-import type { ContentView } from '@/ktcgkpv/get-all';
-import { versionMapping } from '@/ktcgkpv/mapping';
+import type { ContentView } from '@/ktcgkpv.org/get-all';
+import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { parseMd } from '@/lib/remark';
 
 const getParagraph = async (
