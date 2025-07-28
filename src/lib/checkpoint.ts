@@ -1,112 +1,125 @@
-import { readFile, writeFile } from 'fs/promises';
-import { type Book, type Prisma } from '@prisma/client';
-import prisma from '@/prisma/prisma';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import path from 'path';
+import { logger } from '@/logger/logger';
 
-export type Checkpoint = {
-  bookCode: string;
-  chapterNumber: number;
+export type Checkpoint<T extends Record<string, unknown>> = {
+  id: string;
   completed: boolean;
+  params: T;
 };
 
-const withCheckpoint = async (
-  books: Book[],
-  fn: (
-    filteredChapters: Prisma.BookChapterGetPayload<{
-      include: {
-        book: true;
-      };
-    }>[],
-    setCheckpoint: (cp: Checkpoint) => Promise<void>,
-  ) => Promise<void>,
-  options?: {
-    fileName?: string;
-    force?: boolean;
-    forceChapters?: number[];
-  },
-) => {
-  const {
-    fileName = './checkpoint.json',
-    force = false,
-    forceChapters = [],
-  } = options || {};
+export type WithCheckpointOptions<T extends Record<string, unknown>> = {
+  // NOTE: If true, will return all checkpoints regardless of completion
+  // status
+  forceAll?: boolean;
+  // NOTE: If provided, will return only checkpoints with these ids
+  forceCheckpointId?: Checkpoint<T>['id'][];
+};
 
-  // Open file to read, create new file is not exists
+export type WithCheckpointParams<T extends Record<string, unknown>> = {
+  getInitialData: () => Promise<T[]>;
+  getCheckpointId: (item: T) => string;
+  filterCheckpoint: (data: Checkpoint<T>) => boolean;
+  sortCheckpoint?: (a: Checkpoint<T>, b: Checkpoint<T>) => number;
+  filePath?: string;
+  options?: WithCheckpointOptions<T>;
+};
+
+export type WithCheckpointReturn<T extends Record<string, unknown>> = {
+  filteredCheckpoint: Checkpoint<T>[];
+  getAllCheckpoint: () => Checkpoint<T>[];
+  setCheckpointComplete: (
+    checkpointId: Checkpoint<T>['id'],
+    completed: Checkpoint<T>['completed'],
+  ) => void;
+};
+
+const withCheckpoint = async <T extends Record<string, unknown>>({
+  getInitialData,
+  // NOTE: Function to set the checkpoint id based on the data
+  getCheckpointId,
+  filterCheckpoint,
+  sortCheckpoint,
+  filePath = path.join(__dirname, '../../', './checkpoint.json'),
+  options,
+}: WithCheckpointParams<T>): Promise<WithCheckpointReturn<T>> => {
+  const { forceAll = false, forceCheckpointId = [] } = options || {};
+
+  // NOTE: Open file to try to read, if not exists, create it with empty array
   try {
-    await readFile(fileName, 'utf-8');
-  } catch (error) {
-    await writeFile(fileName, '[]', 'utf-8');
-  }
+    const pathDir = path.dirname(filePath);
 
-  const data = await readFile(fileName, 'utf-8');
-
-  let parsedData = JSON.parse(data) as Checkpoint[];
-
-  const chapters = (
-    await Promise.all(
-      books.map((book) => {
-        return prisma.bookChapter.findMany({
-          where: {
-            bookId: book.id,
-          },
-          include: {
-            book: true,
-          },
-        });
-      }),
-    )
-  ).flat();
-
-  if (parsedData?.length === 0) {
-    const initialData: Checkpoint[] = chapters.map((chap) => ({
-      bookCode: chap.book.code,
-      chapterNumber: chap.number,
-      completed: false,
-    }));
-
-    parsedData = initialData;
-
-    await writeFile(fileName, JSON.stringify(initialData, null, 2), 'utf-8');
-  }
-
-  let filteredChapters = [];
-
-  if (forceChapters.length > 0) {
-    filteredChapters = chapters.filter((chap) => {
-      return forceChapters.includes(chap.number);
-    });
-  } else {
-    filteredChapters = chapters.filter((chap) => {
-      if (force) {
-        return true;
-      }
-
-      if (!parsedData) {
-        return true;
-      }
-
-      const checkpointIdx = parsedData.findIndex(
-        (item: Checkpoint) =>
-          item.bookCode === chap.book.code &&
-          item.chapterNumber === chap.number &&
-          !item.completed,
-      );
-      return checkpointIdx !== -1;
-    });
-  }
-
-  await fn(filteredChapters, async (cp: Checkpoint) => {
-    const idx = parsedData.findIndex(
-      (item: Checkpoint) =>
-        item.bookCode === cp.bookCode &&
-        item.chapterNumber === cp.chapterNumber,
-    );
-
-    if (idx !== -1) {
-      parsedData[idx]!.completed = cp.completed;
+    // Ensure the directory exists
+    if (!existsSync(pathDir)) {
+      mkdirSync(pathDir, { recursive: true });
     }
 
-    await writeFile(fileName, JSON.stringify(parsedData, null, 2), 'utf-8');
-  });
+    readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    writeFileSync(filePath, '[]', 'utf-8');
+  }
+
+  const checkpointFileData = readFileSync(filePath, 'utf-8');
+
+  let savedCheckpoint = JSON.parse(checkpointFileData) as Checkpoint<T>[];
+
+  if (savedCheckpoint?.length === 0) {
+    savedCheckpoint = (await getInitialData()).map((item) => {
+      return {
+        id: getCheckpointId(item),
+        params: item,
+        completed: false,
+      } satisfies Checkpoint<T>;
+    });
+
+    writeFileSync(filePath, JSON.stringify(savedCheckpoint, null, 2), 'utf-8');
+  }
+
+  let filteredCheckpoint: Checkpoint<T>[] = [];
+
+  if (forceAll) {
+    filteredCheckpoint = savedCheckpoint;
+  } else if (forceCheckpointId.length > 0) {
+    filteredCheckpoint = savedCheckpoint.filter((checkpoint) => {
+      return forceCheckpointId.includes(checkpoint.id);
+    });
+  } else if (filterCheckpoint) {
+    filteredCheckpoint = savedCheckpoint.filter(filterCheckpoint);
+  } else {
+    filteredCheckpoint = savedCheckpoint.filter((checkpoint) => {
+      return !checkpoint.completed;
+    });
+  }
+
+  if (sortCheckpoint) {
+    filteredCheckpoint.sort(sortCheckpoint);
+  }
+
+  return {
+    filteredCheckpoint,
+    getAllCheckpoint: () => {
+      return savedCheckpoint;
+    },
+    setCheckpointComplete: (checkpointId, completed) => {
+      const idx = savedCheckpoint.findIndex(
+        (checkpoint) => checkpointId === checkpoint.id,
+      );
+
+      if (idx !== -1) {
+        savedCheckpoint[idx]!.completed = completed;
+
+        writeFileSync(
+          filePath,
+          JSON.stringify(savedCheckpoint, null, 2),
+          'utf-8',
+        );
+      } else {
+        logger.error(
+          `Checkpoint with id ${checkpointId} not found in saved checkpoints.`,
+        );
+      }
+    },
+  };
 };
 
 export { withCheckpoint };

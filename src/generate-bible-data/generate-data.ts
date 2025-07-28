@@ -12,30 +12,30 @@ type GenerateBibleDataParams = {
 };
 
 export const presets = {
-  biblegateway: {
+  'biblegateway.com': {
     code: 'BD2011',
     name: 'Bản Dịch 2011 (BD2011)',
     language: {
       code: 'vi',
-      origin: 'biblegateway',
+      origin: 'biblegateway.com',
       webOrigin: 'https://www.biblegateway.com',
     },
   },
-  bibledotcom: {
+  'bible.com': {
     code: 'BD2011',
     name: 'Kinh Thánh Tiếng Việt, Bản Dịch 2011',
     language: {
       code: 'vie',
-      origin: 'bibledotcom',
+      origin: 'bible.com',
       webOrigin: 'https://www.bible.com',
     },
   },
-  ktcgkpv: {
+  'ktcgkpv.org': {
     code: 'KT2011',
     name: 'KPA : ấn bản KT 2011',
     language: {
       code: 'vi',
-      origin: 'ktcgkpv',
+      origin: 'ktcgkpv.org',
       webOrigin: 'https://ktcgkpv.org/',
     },
   },
@@ -67,8 +67,35 @@ export const presets = {
   }>
 >;
 
+const checkConsecutiveVerses = (
+  verses: Prisma.BookVerseGetPayload<undefined>[],
+): {
+  isConsecutive: boolean;
+  missingVerses: number[];
+} => {
+  const missingVerses: number[] = [];
+  const isConsecutive = true;
+
+  // NOTE: Sort verses by number to ensure they are in order
+  verses.sort((a, b) => a.number - b.number);
+
+  const maxVerseNumber = verses[verses.length - 1]!.number!;
+
+  for (let i = 1; i <= maxVerseNumber; i += 1) {
+    if (!verses.some((verse) => verse.number === i)) {
+      missingVerses.push(i);
+    }
+  }
+
+  if (missingVerses.length > 0) {
+    return { isConsecutive: false, missingVerses };
+  }
+
+  return { isConsecutive, missingVerses };
+};
+
 const generateBibleMetadata = async (
-  version = presets.ktcgkpv,
+  version = presets['ktcgkpv.org'],
   baseDir = '../../dist/books/bible/versions',
 ) => {
   const {
@@ -126,7 +153,7 @@ const generateBibleMetadata = async (
 };
 
 const generateBibleData = async (
-  version = presets.ktcgkpv,
+  version = presets['ktcgkpv.org'],
   baseUrl = 'http://localhost:8081/api',
 ) => {
   const {
@@ -223,9 +250,9 @@ const generateBibleData = async (
         `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
       );
 
-      let res = await getBookChapterJson.json();
+      let json = (await getBookChapterJson.json()) as Record<string, unknown>;
 
-      if (!res) {
+      if (!json) {
         console.log('Error (json)', book.code, chap.number);
 
         continue;
@@ -234,10 +261,20 @@ const generateBibleData = async (
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { chapters, ...bookData } = book;
 
-      res = {
-        ...res,
+      json = {
+        ...json,
         book: bookData,
       };
+
+      const check = checkConsecutiveVerses(
+        json.verses as Prisma.BookVerseGetPayload<undefined>[],
+      );
+
+      if (!check.isConsecutive) {
+        console.log(
+          `Missing verses in book ${book.code}, chapter ${chap.number}: ${check.missingVerses.join(', ')}`,
+        );
+      }
 
       await writeFile(
         path.join(
@@ -246,7 +283,7 @@ const generateBibleData = async (
           chap.number.toString(),
           `${chap.number}.json`,
         ),
-        JSON.stringify(res, null, 2),
+        JSON.stringify(json, null, 2),
       );
 
       await mkdir(path.join(__dirname, '../../dist/data/books/bible/'), {
@@ -259,7 +296,7 @@ const generateBibleData = async (
           '../../dist/data/books/bible/',
           `${origin}-${versionCode.toLocaleLowerCase()}.jsonl`,
         ),
-        `${JSON.stringify(res)}\n`,
+        `${JSON.stringify(json)}\n`,
       );
     }
   }
