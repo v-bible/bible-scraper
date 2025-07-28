@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import { writeFileSync } from 'fs';
-import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+import { PlaywrightBlocker } from '@ghostery/adblocker-playwright';
 import AsyncRetry from 'async-retry';
 import {
   eachDayOfInterval,
