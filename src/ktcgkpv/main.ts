@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-syntax */
-import { mkdir } from 'fs/promises';
+import path from 'path';
+import { type Prisma } from '@prisma/client';
 import { Agent, setGlobalDispatcher } from 'undici';
 import { getAll } from '@/ktcgkpv/get-all';
 import { getBook } from '@/ktcgkpv/get-book';
@@ -32,25 +33,46 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
     },
   });
 
-  await mkdir('./dist', { recursive: true });
+  const { filteredCheckpoint: chapterCheckpoint, setCheckpointComplete } =
+    await withCheckpoint<
+      Prisma.BookChapterGetPayload<{
+        include: {
+          book: true;
+        };
+      }>
+    >({
+      getInitialData: async () => {
+        return (
+          await Promise.all(
+            books.map((book) => {
+              return prisma.bookChapter.findMany({
+                where: {
+                  bookId: book.id,
+                },
+                include: {
+                  book: true,
+                },
+              });
+            }),
+          )
+        ).flat();
+      },
+      getCheckpointId: (data) => {
+        return data.id;
+      },
+      filterCheckpoint: (checkpoint) => !checkpoint.completed,
+      filePath: path.join(
+        __dirname,
+        '../../../dist',
+        `ktcgkpv.org-${version.code}-checkpoint.json`,
+      ),
+    });
 
-  await withCheckpoint(
-    books,
-    async (chapters, setCheckpoint) => {
-      for await (const chap of chapters) {
-        await getAll(chap, versionCode);
+  for await (const checkpoint of chapterCheckpoint) {
+    const chapter = checkpoint.params;
 
-        // const properName = await getProperName(chap);
+    await getAll(chapter, versionCode);
 
-        // properNames.push(properName);
-
-        await setCheckpoint({
-          bookCode: chap.book.code,
-          chapterNumber: chap.number,
-          completed: true,
-        });
-      }
-    },
-    { fileName: `./dist/${version.code}.json` },
-  );
+    setCheckpointComplete(checkpoint.id, true);
+  }
 })();
