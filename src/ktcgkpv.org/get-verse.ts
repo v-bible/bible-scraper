@@ -2,32 +2,12 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-import type {
-  BookFootnote,
-  BookHeading,
-  BookReference,
-  BookVerse,
-} from '@prisma/client';
 import { chromium, devices } from 'playwright';
+import { type VerseData } from '@/@types';
 import { parseMd } from '@/lib/remark';
 import { VerseProcessor } from '@/lib/verse-utils';
 
-export type VData = {
-  verse: Pick<
-    BookVerse,
-    'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
-  >;
-  headings: Array<
-    Pick<BookHeading, 'content' | 'level' | 'order'> & {
-      footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-      references: Array<Pick<BookReference, 'position'> & { label: string }>;
-    }
-  >;
-  footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-  references: Array<Pick<BookReference, 'position'> & { label: string }>;
-};
-
-const getVerse = async (html: string): Promise<VData[] | null> => {
+const getVerse = async (html: string): Promise<VerseData[] | null> => {
   const browser = await chromium.launch();
   const context = await browser.newContext(devices['Desktop Chrome']);
 

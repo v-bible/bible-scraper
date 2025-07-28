@@ -2,12 +2,12 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 import type { Prisma } from '@prisma/client';
-import { VData } from '@/ktcgkpv.org/get-verse';
+import { type VerseData } from '@/@types';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
 
 export const insertData = async (
-  data: VData[],
+  data: VerseData[],
   chap: Prisma.BookChapterGetPayload<{
     include: {
       book: true;
