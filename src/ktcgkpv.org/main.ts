@@ -63,7 +63,7 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
       filterCheckpoint: (checkpoint) => !checkpoint.completed,
       filePath: path.join(
         __dirname,
-        '../../../dist',
+        '../../dist',
         `ktcgkpv.org-${version.code}-checkpoint.json`,
       ),
     });
