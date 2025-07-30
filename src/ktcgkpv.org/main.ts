@@ -1,61 +1,39 @@
-/* eslint-disable no-restricted-syntax */
 import path from 'path';
 import { type Prisma } from '@prisma/client';
-import { Agent, setGlobalDispatcher } from 'undici';
-import { getAll } from '@/ktcgkpv.org/get-all';
-import { getBook } from '@/ktcgkpv.org/get-book';
+import { getBook } from '@/ktcgkpv.org/getBook';
+import { getVerse } from '@/ktcgkpv.org/getVerse';
+import { getVersion } from '@/ktcgkpv.org/getVersion';
 import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { withCheckpoint } from '@/lib/checkpoint';
-import prisma from '@/prisma/prisma';
 
-setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
-
-(async () => {
+const main = async () => {
   const versionCode = 'KT2011' satisfies keyof typeof versionMapping;
 
-  await getBook(versionCode);
+  const versions = await getVersion();
 
-  const version = await prisma.version.findFirstOrThrow({
-    where: {
-      code: versionCode,
-      language: {
-        webOrigin: 'https://ktcgkpv.org/',
-      },
-    },
-    include: {
-      formats: true,
-    },
-  });
+  const currentVersion = versions.find(
+    (v) => v.code === versionCode && v.formatType === 'ebook',
+  )!;
 
-  const books = await prisma.book.findMany({
-    where: {
-      versionId: version.id,
-    },
-  });
+  const books = await getBook(currentVersion);
+
+  const allChapters = books.flatMap(({ book, chapters }) =>
+    chapters.map((chapter) => ({
+      book,
+      ...chapter,
+    })),
+  );
 
   const { filteredCheckpoint: chapterCheckpoint, setCheckpointComplete } =
     await withCheckpoint<
-      Prisma.BookChapterGetPayload<{
+      Prisma.ChapterGetPayload<{
         include: {
           book: true;
         };
       }>
     >({
       getInitialData: async () => {
-        return (
-          await Promise.all(
-            books.map((book) => {
-              return prisma.bookChapter.findMany({
-                where: {
-                  bookId: book.id,
-                },
-                include: {
-                  book: true,
-                },
-              });
-            }),
-          )
-        ).flat();
+        return allChapters;
       },
       getCheckpointId: (data) => {
         return data.id;
@@ -64,15 +42,18 @@ setGlobalDispatcher(new Agent({ connect: { timeout: 60_000 } }));
       filePath: path.join(
         __dirname,
         '../../dist',
-        `ktcgkpv.org-${version.code}-checkpoint.json`,
+        `ktcgkpv.org-${versionCode}-checkpoint.json`,
       ),
     });
 
+  // eslint-disable-next-line no-restricted-syntax
   for await (const checkpoint of chapterCheckpoint) {
     const chapter = checkpoint.params;
 
-    await getAll(chapter, versionCode);
+    await getVerse(chapter.book, chapter, { versionCode });
 
     setCheckpointComplete(checkpoint.id, true);
   }
-})();
+};
+
+main();

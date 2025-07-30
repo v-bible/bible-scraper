@@ -1,21 +1,22 @@
-import type {
-  BookFootnote,
-  BookHeading,
-  BookReference,
-  BookVerse,
-} from '@prisma/client';
+import { type Footnote, type Heading, type Verse } from '@prisma/client';
 
 export type VerseData = {
   verse: Pick<
-    BookVerse,
-    'content' | 'number' | 'order' | 'isPoetry' | 'parIndex' | 'parNumber'
+    Verse,
+    | 'text'
+    | 'number'
+    | 'subVerseIndex'
+    | 'isPoetry'
+    | 'paragraphNumber'
+    | 'paragraphIndex'
+    | 'label'
   >;
   headings: Array<
-    Pick<BookHeading, 'content' | 'level' | 'order'> & {
-      footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-      references: Array<Pick<BookReference, 'position'> & { label: string }>;
+    Pick<Heading, 'text' | 'level' | 'sortOrder'> & {
+      footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
     }
   >;
-  footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-  references: Array<Pick<BookReference, 'position'> & { label: string }>;
+  footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
 };
+
+export type FootnoteData = Pick<Footnote, 'label' | 'type' | 'text'>;
