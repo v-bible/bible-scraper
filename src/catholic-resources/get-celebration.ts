@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
 import fs from 'fs/promises';
-import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+import { PlaywrightBlocker } from '@ghostery/adblocker-playwright';
 import retry from 'async-retry';
 import { format, isValid, parse } from 'date-fns';
 import { chromium, devices } from 'playwright';

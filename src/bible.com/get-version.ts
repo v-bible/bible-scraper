@@ -1,7 +1,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-await-in-loop */
-// import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
+// import { PlaywrightBlocker } from '@ghostery/adblocker-playwright';
 import retry from 'async-retry';
 import { chromium, devices } from 'playwright';
 import { fetch } from 'undici';
@@ -42,7 +42,8 @@ const getVersionByLang = async (langCode: string) => {
     const res = await fetch(
       `https://www.bible.com/api/bible/version/${bookId}`,
     );
-    const data = await res.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (await res.json()) as any;
 
     const hasAudio = data.audio;
 
@@ -168,7 +169,8 @@ const getVersionByLang = async (langCode: string) => {
 
 const getVersion = async () => {
   const res = await fetch('https://www.bible.com/api/bible/configuration');
-  const data = await res.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = (await res.json()) as any;
   const defaultVersions = data.response.data.default_versions;
 
   for (const ver of defaultVersions) {

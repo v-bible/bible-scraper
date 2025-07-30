@@ -7,7 +7,7 @@ import type {
   BookVerse,
 } from '@prisma/client';
 import { uniq } from 'es-toolkit';
-import { type VData } from '@/ktcgkpv.org/get-verse';
+import { type VerseData } from '@/@types';
 
 // NOTE: All user-defined regex MUST contains groups mentioned in default
 // regexes below
@@ -189,7 +189,7 @@ const getLabelPosition = (
   });
 };
 
-const withNormalizeHeadingLevel = (data: VData[]) => {
+const withNormalizeHeadingLevel = (data: VerseData[]) => {
   const levels = data
     .map((d) => d.headings)
     .flat()
