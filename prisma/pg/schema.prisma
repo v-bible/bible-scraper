@@ -63,27 +63,29 @@ model Chapter {
   headings      Heading[]
   verses        Verse[]
   psalmMetadata PsalmMetadata[] // Psalm instrument/musical directions
+  wordsOfJesus  WordsOfJesus[]
 
   @@unique([bookId, number])
   @@map("chapter")
 }
 
 model Verse {
-  id              String     @id @default(dbgenerated("gen_random_uuid()"))
+  id              String         @id @default(dbgenerated("gen_random_uuid()"))
   number          Int // Starts from 1
-  subVerseIndex   Int        @default(0) // For 1a, 1b verses. Starts from 0
+  subVerseIndex   Int            @default(0) // For 1a, 1b verses. Starts from 0
   text            String
-  paragraphNumber Int        @default(0) // Which paragraph this verse belongs to. Starts from 0
-  paragraphIndex  Int        @default(0) // Index within the paragraph. Starts from 0
-  isPoetry        Boolean    @default(false)
+  paragraphNumber Int            @default(0) // Which paragraph this verse belongs to. Starts from 0
+  paragraphIndex  Int            @default(0) // Index within the paragraph. Starts from 0
+  isPoetry        Boolean        @default(false)
   audioUrl        String?
   label           String // Verse labels like "1a", "1b", "1c"
-  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime   @default(now()) @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @default(now()) @db.Timestamptz(3)
   chapterId       String
   footnotes       Footnote[]
   headings        Heading[]
-  chapter         Chapter    @relation(fields: [chapterId], references: [id])
+  wordsOfJesus    WordsOfJesus[]
+  chapter         Chapter        @relation(fields: [chapterId], references: [id])
 
   @@unique([number, subVerseIndex, chapterId])
   @@index([chapterId, isPoetry]) // Query poetry verses
@@ -143,6 +145,23 @@ model PsalmMetadata {
 
   @@unique([sortOrder, chapterId])
   @@map("psalm_metadata")
+}
+
+model WordsOfJesus {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  textStart     Int // Character position start in verse text
+  textEnd       Int // Character position end in verse text
+  quotationText String // The actual words Jesus spoke
+  sortOrder     Int      @default(0) // Starts from 0
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  chapterId     String
+  verseId       String
+  verse         Verse    @relation(fields: [verseId], references: [id])
+  chapter       Chapter  @relation(fields: [chapterId], references: [id])
+
+  @@unique([sortOrder, verseId])
+  @@map("words_of_jesus")
 }
 
 model SchemaMigrations {
