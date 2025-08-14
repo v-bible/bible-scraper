@@ -2,73 +2,41 @@
 import { existsSync } from 'node:fs';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { type Prisma } from '@prisma/client';
+import { type Prisma, type Verse, type Version } from '@prisma/client';
 
 type GenerateBibleDataParams = {
-  versionCode: string;
-  langCode: string;
-  webOrigin: string;
-  origin: string;
+  code: string;
+  name: string;
+  language: string;
+  source: string;
 };
 
 export const presets = {
   'biblegateway.com': {
     code: 'BD2011',
     name: 'Bản Dịch 2011 (BD2011)',
-    language: {
-      code: 'vi',
-      origin: 'biblegateway.com',
-      webOrigin: 'https://www.biblegateway.com',
-    },
+    language: 'vi',
+    source: 'biblegateway.com',
   },
   'bible.com': {
     code: 'BD2011',
     name: 'Kinh Thánh Tiếng Việt, Bản Dịch 2011',
-    language: {
-      code: 'vie',
-      origin: 'bible.com',
-      webOrigin: 'https://www.bible.com',
-    },
+    language: 'vie',
+    source: 'bible.com',
   },
   'ktcgkpv.org': {
     code: 'KT2011',
     name: 'KPA : ấn bản KT 2011',
-    language: {
-      code: 'vi',
-      origin: 'ktcgkpv.org',
-      webOrigin: 'https://ktcgkpv.org/',
-    },
+    language: 'vi',
+    source: 'ktcgkpv.org',
   },
 } satisfies Record<
   string,
-  Prisma.VersionGetPayload<{
-    select: {
-      code: true;
-      name: true;
-      id: false;
-      createdAt: false;
-      updatedAt: false;
-      onlyNT: false;
-      onlyOT: false;
-      withApocrypha: false;
-      language: {
-        select: {
-          code: true;
-          origin: true;
-          webOrigin: true;
-          id: false;
-          name: false;
-          createdAt: false;
-          updatedAt: false;
-          versions: false;
-        };
-      };
-    };
-  }>
+  Pick<Version, 'code' | 'name' | 'language' | 'source'>
 >;
 
 const checkConsecutiveVerses = (
-  verses: Prisma.BookVerseGetPayload<undefined>[],
+  verses: Verse[],
 ): {
   isConsecutive: boolean;
   missingVerses: number[];
@@ -98,10 +66,7 @@ const generateBibleMetadata = async (
   version = presets['ktcgkpv.org'],
   baseDir = '../../dist/books/bible/versions',
 ) => {
-  const {
-    code: versionCode,
-    language: { code: langCode, webOrigin, origin },
-  } = version;
+  const { code, source, language, name } = version;
 
   const baseMetadataFolder = path.join(__dirname, baseDir);
 
@@ -127,10 +92,10 @@ const generateBibleMetadata = async (
   const isExist =
     parsedData.find(
       (item) =>
-        item.versionCode === versionCode &&
-        item.langCode === langCode &&
+        item.code === code &&
+        item.language === language &&
         // REVIEW: Change this later
-        item.origin === origin,
+        item.source === source,
     ) !== undefined;
 
   if (isExist) {
@@ -142,10 +107,10 @@ const generateBibleMetadata = async (
   parsedData = [
     ...parsedData,
     {
-      versionCode,
-      langCode,
-      origin,
-      webOrigin,
+      code,
+      language,
+      name,
+      source,
     },
   ];
 
@@ -156,15 +121,12 @@ const generateBibleData = async (
   version = presets['ktcgkpv.org'],
   baseUrl = 'http://localhost:8081/api',
 ) => {
-  const {
-    code: versionCode,
-    language: { code: langCode, webOrigin, origin },
-  } = version;
+  const { code, source, language } = version;
 
   await generateBibleMetadata(version, '../../dist/books/bible/versions');
 
   const getAllBooks = await fetch(
-    `${baseUrl}/v1/book?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+    `${baseUrl}/v1/book?versionCode=${code}&language=${language}&source=${source}`,
   );
 
   const {
@@ -180,8 +142,8 @@ const generateBibleData = async (
   const baseFolder = path.join(
     __dirname,
     '../../dist/books/bible/versions/',
-    origin,
-    versionCode.toLocaleLowerCase(),
+    source,
+    code.toLocaleLowerCase(),
   );
   if (!existsSync(baseFolder)) {
     await mkdir(baseFolder, {
@@ -203,7 +165,7 @@ const generateBibleData = async (
       });
 
       const getBookChapterText = await fetch(
-        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/text?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/text?versionCode=${code}&language=${language}&source=${source}`,
       );
 
       const { text } = await getBookChapterText.json();
@@ -225,7 +187,7 @@ const generateBibleData = async (
       );
 
       const getBookChapterHtml = await fetch(
-        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/html?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}/html?versionCode=${code}&language=${language}&source=${source}`,
       );
 
       const { html } = await getBookChapterHtml.json();
@@ -247,7 +209,7 @@ const generateBibleData = async (
       );
 
       const getBookChapterJson = await fetch(
-        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${versionCode}&langCode=${langCode}&webOrigin=${webOrigin}`,
+        `${baseUrl}/v1/book/${book.code}/chapter/${chap.number}?versionCode=${code}&language=${language}&source=${source}`,
       );
 
       let json = (await getBookChapterJson.json()) as Record<string, unknown>;
@@ -267,7 +229,7 @@ const generateBibleData = async (
       };
 
       const check = checkConsecutiveVerses(
-        json.verses as Prisma.BookVerseGetPayload<undefined>[],
+        json.verses as Prisma.VerseGetPayload<undefined>[],
       );
 
       if (!check.isConsecutive) {
@@ -294,7 +256,7 @@ const generateBibleData = async (
         path.join(
           __dirname,
           '../../dist/data/books/bible/',
-          `${origin}-${versionCode.toLocaleLowerCase()}.jsonl`,
+          `${source}-${code.toLocaleLowerCase()}.jsonl`,
         ),
         `${JSON.stringify(json)}\n`,
       );

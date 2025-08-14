@@ -1,11 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-use-before-define */
-import type {
-  BookFootnote,
-  BookHeading,
-  BookReference,
-  BookVerse,
-} from '@prisma/client';
+import type { Footnote, Heading, Verse } from '@prisma/client';
 import { uniq } from 'es-toolkit';
 import { type VerseData } from '@/@types';
 
@@ -14,11 +9,13 @@ import { type VerseData } from '@/@types';
 // NOTE: We add "\s" at the beginning because we don't want extra spaces before
 // footnotes
 const reFnMatch = /\s?<\$(?<fnNum>[^$]*)\$>/gmu;
-// NOTE: This is for ktcgkpv.org ref type
-const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^@]*\$@/gmu;
+// NOTE: Base ref match
+const reRefMatch = /@\$(?<refLabel>[^$]*)\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*\n/gmu;
-// NOTE: "\p{L}" is for unicode letter (Vietnamese characters from ktcgkpv.org)
-const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*)\$/gmu;
+// NOTE: "\p{L}" is for unicode letter (Vietnamese characters from ktcgkpv.org).
+// Example: $1$, $1a$, $ $ and $3-4$. The verseNum will only match the first
+// number in "$3-4$" case
+const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*| )(-\d+\p{L}*)?\$/gmu;
 const rePoetryMatch = /\\?~/gmu;
 
 class VerseProcessor {
@@ -47,6 +44,9 @@ class VerseProcessor {
   }
 
   processVerse(str: string) {
+    const verseNumMatch = this.reVerseNumMatch.exec(str);
+    const verseNum = parseInt(verseNumMatch?.groups?.verseNum || '', 10);
+
     let content = str
       .replaceAll(this.reHeadMatch, '')
       .replaceAll(this.reFnMatch, '')
@@ -60,9 +60,14 @@ class VerseProcessor {
     }
 
     return {
-      content: content.trim(),
+      label: verseNumMatch?.[0].replaceAll('$', '') || null,
+      number: Number.isNaN(verseNum) ? null : verseNum,
+      text: content.trim(),
       isPoetry,
-    } satisfies Pick<BookVerse, 'content' | 'isPoetry'>;
+    } satisfies Pick<Verse, 'text' | 'isPoetry'> & {
+      label: string | null;
+      number: number | null;
+    };
   }
 
   processHeading(str: string) {
@@ -71,9 +76,8 @@ class VerseProcessor {
       .match(this.reHeadMatch);
 
     let headings: Array<
-      Pick<BookHeading, 'content' | 'level' | 'order'> & {
-        footnotes: Array<Pick<BookFootnote, 'position'> & { label: string }>;
-        references: Array<Pick<BookReference, 'position'> & { label: string }>;
+      Pick<Heading, 'text' | 'level' | 'sortOrder'> & {
+        footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
       }
     > = [];
 
@@ -88,7 +92,10 @@ class VerseProcessor {
         const fnHeads = getLabelPosition(
           fnHeadMatch,
           (match) => match.groups!.fnNum!,
-        );
+        ).map((fn) => ({
+          ...fn,
+          type: 'footnote',
+        }));
 
         const refHeadMatch = h
           .replaceAll('#', '')
@@ -98,7 +105,10 @@ class VerseProcessor {
 
         const refHeads = getLabelPosition(refHeadMatch, (match) =>
           match.groups!.refLabel!.replaceAll('\\_', '_'),
-        );
+        ).map((fn) => ({
+          ...fn,
+          type: 'reference',
+        }));
 
         const headingContent = h
           .replaceAll(this.reFnMatch, '')
@@ -114,11 +124,10 @@ class VerseProcessor {
             ?.length || 1;
 
         return {
-          content: headingContent,
+          text: headingContent,
           level: headingLevel,
-          order: headingOrder,
-          footnotes: fnHeads,
-          references: refHeads,
+          sortOrder: headingOrder,
+          footnotes: [...fnHeads, ...refHeads],
         };
       });
     }
@@ -138,7 +147,10 @@ class VerseProcessor {
     const footnotes = getLabelPosition(
       footnoteMatch,
       (match) => match.groups!.fnNum!,
-    );
+    ).map((fn) => ({
+      ...fn,
+      type: 'footnote',
+    }));
 
     return footnotes;
   }
@@ -155,7 +167,10 @@ class VerseProcessor {
     const refs = getLabelPosition(referenceMatch, (match) =>
       // REVIEW: This is only specific to ktcgkpv.org ref
       match.groups!.refLabel!.replaceAll('\\_', '_'),
-    );
+    ).map((fn) => ({
+      ...fn,
+      type: 'reference',
+    }));
 
     return refs;
   }
@@ -164,7 +179,7 @@ class VerseProcessor {
 const getLabelPosition = (
   matches: IterableIterator<RegExpExecArray>,
   labelSelector: (match: RegExpExecArray) => string,
-) => {
+): Pick<Footnote, 'position' | 'label'>[] => {
   return [...matches].map((matchVal, idx, arr) => {
     if (idx === 0) {
       return {

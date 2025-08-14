@@ -11,168 +11,137 @@ datasource db {
 }
 
 model Version {
-  id            String          @id @default(uuid())
-  code          String
-  name          String
-  onlyNT        Boolean         @default(false)
-  onlyOT        Boolean         @default(false)
-  withApocrypha Boolean         @default(false)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @default(now())
-  languageId    String
-  books         Book[]
-  language      VersionLanguage @relation(fields: [languageId], references: [id])
-  formats       VersionFormat[]
+  id              String   @id @default(uuid())
+  code            String // KT2011, ESV, NIV
+  name            String // Full name
+  language        String // vi, en, es
+  source          String // bible.com, biblegateway.com
+  formatType      String // web, pdf, audio, api
+  sourceUrl       String // Original crawl URL
+  hasOldTestament Boolean  @default(true)
+  hasNewTestament Boolean  @default(true)
+  hasApocrypha    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now())
+  books           Book[]
 
-  @@unique([code, languageId])
+  @@unique([code, language, source, formatType])
+  @@index([language])
+  @@index([source])
+  @@index([formatType]) // Query by format type
   @@map("version")
 }
 
-model VersionFormat {
-  id        String   @id @default(uuid())
-  type      String
-  ref       String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  versionId String
-  version   Version  @relation(fields: [versionId], references: [id])
-
-  @@unique([type, ref])
-  @@map("version_format")
-}
-
-model VersionLanguage {
+model Book {
   id        String    @id @default(uuid())
-  code      String
-  name      String
-  origin    String    @default("")
-  webOrigin String
+  code      String // gen, exo, mt, mk
+  name      String // Genesis, Exodus, Matthew, Mark
+  testament String // ot, nt, apocrypha
+  bookOrder Int // Starts from 1
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now())
-  versions  Version[]
-
-  @@unique([code, webOrigin])
-  @@map("version_language")
-}
-
-model Book {
-  id        String        @id @default(uuid())
-  code      String
-  title     String
-  canon     String
-  order     Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @default(now())
   versionId String
-  version   Version       @relation(fields: [versionId], references: [id])
-  chapters  BookChapter[]
+  version   Version   @relation(fields: [versionId], references: [id])
+  chapters  Chapter[]
 
   @@unique([code, versionId])
+  @@index([versionId, bookOrder])
+  @@index([testament]) // Query by Old/New Testament
+  @@index([versionId, testament]) // Combined queries
   @@map("book")
 }
 
-model BookChapter {
+model Chapter {
   id            String          @id @default(uuid())
-  number        Int
-  ref           String
+  number        Int // Starts from 1
+  audioUrl      String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now())
   bookId        String
   book          Book            @relation(fields: [bookId], references: [id])
-  footnotes     BookFootnote[]
-  headings      BookHeading[]
-  references    BookReference[]
-  verses        BookVerse[]
-  psalmMetadata PsalmMetadata?
+  footnotes     Footnote[]
+  headings      Heading[]
+  verses        Verse[]
+  psalmMetadata PsalmMetadata[] // Psalm instrument/musical directions
 
-  @@unique([number, bookId])
-  @@map("book_chapter")
+  @@unique([bookId, number])
+  @@map("chapter")
 }
 
-model BookVerse {
-  id         String          @id @default(uuid())
-  number     Int
-  content    String
-  order      Int
-  parNumber  Int
-  parIndex   Int
-  isPoetry   Boolean         @default(false)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @default(now())
-  chapterId  String
-  footnotes  BookFootnote[]
-  headings   BookHeading[]
-  references BookReference[]
-  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
+model Verse {
+  id              String     @id @default(uuid())
+  number          Int // Starts from 1
+  subVerseIndex   Int        @default(0) // For 1a, 1b verses. Starts from 0
+  text            String
+  paragraphNumber Int        @default(0) // Which paragraph this verse belongs to. Starts from 0
+  paragraphIndex  Int        @default(0) // Index within the paragraph. Starts from 0
+  isPoetry        Boolean    @default(false)
+  audioUrl        String?
+  label           String // Verse labels like "1a", "1b", "1c"
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @default(now())
+  chapterId       String
+  footnotes       Footnote[]
+  headings        Heading[]
+  chapter         Chapter    @relation(fields: [chapterId], references: [id])
 
-  @@unique([number, order, chapterId])
-  @@map("book_verse")
+  @@unique([number, subVerseIndex, chapterId])
+  @@index([chapterId, isPoetry]) // Query poetry verses
+  @@index([chapterId, paragraphNumber]) // Query by paragraph
+  @@map("verse")
 }
 
-model BookFootnote {
-  id        String       @id @default(uuid())
-  content   String
-  position  Int
-  order     Int
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @default(now())
-  verseId   String?
-  headingId String?
+model Footnote {
+  id        String   @id @default(uuid())
+  type      String   @default("footnote") // footnote, cross-reference
+  label     String // a, b, c, 1, 2, 3, *
+  text      String
+  sortOrder Int      @default(0) // Starts from 0
+  position  Int // Starts from 0
   chapterId String
-  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
-  verse     BookVerse?   @relation(fields: [verseId], references: [id])
-  heading   BookHeading? @relation(fields: [headingId], references: [id])
+  verseId   String? // Optional: attached to specific verse
+  headingId String? // Optional: attached to specific heading
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  chapter   Chapter  @relation(fields: [chapterId], references: [id])
+  verse     Verse?   @relation(fields: [verseId], references: [id])
+  heading   Heading? @relation(fields: [headingId], references: [id])
 
-  @@unique([order, verseId])
-  @@unique([order, headingId])
-  @@map("book_footnote")
+  @@unique([sortOrder, verseId, type])
+  @@unique([sortOrder, headingId, type])
+  @@index([chapterId, sortOrder])
+  @@index([chapterId, type]) // Query by type
+  @@map("footnote")
 }
 
-model BookHeading {
-  id         String          @id @default(uuid())
-  content    String
-  level      Int             @default(0)
-  order      Int
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @default(now())
-  verseId    String
-  chapterId  String
-  chapter    BookChapter     @relation(fields: [chapterId], references: [id])
-  verse      BookVerse       @relation(fields: [verseId], references: [id])
-  footnotes  BookFootnote[]
-  references BookReference[]
-
-  @@unique([order, verseId])
-  @@map("book_heading")
-}
-
-model BookReference {
-  id        String       @id @default(uuid())
-  content   String
-  position  Int          @default(0)
-  order     Int
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @default(now())
-  verseId   String?
-  headingId String?
+model Heading {
+  id        String     @id @default(uuid())
+  text      String
+  level     Int        @default(1) // Starts from 1
+  sortOrder Int        @default(0) // Position within chapter. Starts from 0
   chapterId String
-  chapter   BookChapter  @relation(fields: [chapterId], references: [id])
-  verse     BookVerse?   @relation(fields: [verseId], references: [id])
-  heading   BookHeading? @relation(fields: [headingId], references: [id])
+  verseId   String // Required: attached to specific verse
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  chapter   Chapter    @relation(fields: [chapterId], references: [id])
+  verse     Verse      @relation(fields: [verseId], references: [id])
+  footnotes Footnote[]
 
-  @@unique([order, verseId])
-  @@unique([order, headingId])
-  @@map("book_reference")
+  @@unique([sortOrder, verseId])
+  @@index([chapterId, level]) // Query by heading level
+  @@map("heading")
 }
 
 model PsalmMetadata {
-  id        String      @id @default(uuid())
-  title     String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now())
-  chapterId String      @unique
-  chapter   BookChapter @relation(fields: [chapterId], references: [id])
+  id        String   @id @default(uuid())
+  text      String
+  sortOrder Int      @default(0) // Starts from 0
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id])
 
+  @@unique([sortOrder, chapterId])
   @@map("psalm_metadata")
 }
 
