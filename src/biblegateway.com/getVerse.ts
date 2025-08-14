@@ -18,7 +18,6 @@ const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
 
 const reRefMatch = /@\$(?<refLabel>[^@]*)\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*&&\n/gmu;
-const rePoetryMatch = /\\?&~$/gmu;
 
 export const extractVerseNum = (str: string, regex = reClassVerse) => {
   const match = regex.exec(str);
@@ -64,7 +63,6 @@ const getVerseData = (verse: string) => {
   const processor = new VerseProcessor({
     reRef: reRefMatch,
     reHead: reHeadMatch,
-    rePoetry: rePoetryMatch,
   });
 
   return {

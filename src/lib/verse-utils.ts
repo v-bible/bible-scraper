@@ -16,7 +16,9 @@ const reHeadMatch = /(?<headingLevel>#+).*\n/gmu;
 // Example: $1$, $1a$, $ $ and $3-4$. The verseNum will only match the first
 // number in "$3-4$" case
 const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*| )(-\d+\p{L}*)?\$/gmu;
-const rePoetryMatch = /\\?~/gmu;
+// NOTE: This regex is used to match poetry verses. It will match any string
+// that ends with "&~".
+const rePoetryMatch = /\\?&~$/gmu;
 
 class VerseProcessor {
   reFnMatch: RegExp;

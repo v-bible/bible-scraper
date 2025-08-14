@@ -14,13 +14,11 @@ type GetVerseProps = {
 
 const reRefMatch = /@\$(?<refLabel>[^@]*)\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*&&\n/gmu;
-const rePoetryMatch = /\\?&~$/gmu;
 
 const getVerseData = (verse: string) => {
   const processor = new VerseProcessor({
     reRef: reRefMatch,
     reHead: reHeadMatch,
-    rePoetry: rePoetryMatch,
   });
 
   return {

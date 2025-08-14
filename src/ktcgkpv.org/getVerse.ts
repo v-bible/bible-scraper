@@ -31,7 +31,6 @@ type ProperName = {
 
 const reRefMatch = /@(?<refLabel>ci\d+\\?_[^_]+\\?_[^&]+)&\$[^$]*\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*&&\n/gmu;
-const rePoetryMatch = /\\?&~$/gmu;
 
 const getFootnoteData = async (
   contentViewData: ContentView,
@@ -123,7 +122,6 @@ const getVerseData = (verse: string) => {
   const processor = new VerseProcessor({
     reRef: reRefMatch,
     reHead: reHeadMatch,
-    rePoetry: rePoetryMatch,
   });
 
   return {
