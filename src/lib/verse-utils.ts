@@ -1,6 +1,11 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-use-before-define */
-import type { Footnote, Heading, Verse } from '@prisma/client';
+import {
+  type Footnote,
+  type Heading,
+  type Verse,
+  type WordsOfJesus,
+} from '@prisma/client';
 import { uniq } from 'es-toolkit';
 import { type VerseData } from '@/@types';
 
@@ -19,6 +24,9 @@ const reVerseNumMatch = /\$(?<verseNum>\d+\p{L}*| )(-\d+\p{L}*)?\$/gmu;
 // NOTE: This regex is used to match poetry verses. It will match any string
 // that ends with "&~".
 const rePoetryMatch = /\\?&~$/gmu;
+// NOTE: This regex is used to match the words of Jesus in the Gospels.
+// It will match: "&$...$&" where "..." is the content of the words of Jesus.
+const reWordOfJesusMatch = /&\$(?<woj>[^$]*)\$&/gmu;
 
 class VerseProcessor {
   reFnMatch: RegExp;
@@ -31,18 +39,22 @@ class VerseProcessor {
 
   rePoetryMatch: RegExp;
 
+  reWordOfJesus: RegExp;
+
   constructor({
     reFn = reFnMatch,
     reRef = reRefMatch,
     reHead = reHeadMatch,
     reVerseNum = reVerseNumMatch,
     rePoetry = rePoetryMatch,
+    reWordOfJesus = reWordOfJesusMatch,
   }) {
     this.reFnMatch = reFn;
     this.reRefMatch = reRef;
     this.reHeadMatch = reHead;
     this.reVerseNumMatch = reVerseNum;
     this.rePoetryMatch = rePoetry;
+    this.reWordOfJesus = reWordOfJesus;
   }
 
   processVerse(str: string) {
@@ -53,7 +65,10 @@ class VerseProcessor {
       .replaceAll(this.reHeadMatch, '')
       .replaceAll(this.reFnMatch, '')
       .replaceAll(this.reRefMatch, '')
-      .replaceAll(this.reVerseNumMatch, '');
+      .replaceAll(this.reVerseNumMatch, '')
+      // NOTE: We only remove wrapper not content
+      .replaceAll(this.reWordOfJesus, '$1')
+      .trim();
 
     const isPoetry = content.search(this.rePoetryMatch) !== -1;
 
@@ -134,7 +149,11 @@ class VerseProcessor {
       });
     }
 
-    return headings;
+    return headings satisfies Array<
+      Pick<Heading, 'text' | 'level' | 'sortOrder'> & {
+        footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
+      }
+    >;
   }
 
   processVerseFn(str: string) {
@@ -143,6 +162,8 @@ class VerseProcessor {
       .replaceAll(this.reRefMatch, '')
       .replaceAll(this.reVerseNumMatch, '')
       .replace(this.rePoetryMatch, '')
+      // NOTE: We only remove wrapper not content
+      .replaceAll(this.reWordOfJesus, '$1')
       .trim()
       .matchAll(this.reFnMatch);
 
@@ -154,7 +175,9 @@ class VerseProcessor {
       type: 'footnote',
     }));
 
-    return footnotes;
+    return footnotes satisfies Array<
+      Pick<Footnote, 'type' | 'label' | 'position'>
+    >;
   }
 
   processVerseRef(str: string) {
@@ -163,6 +186,8 @@ class VerseProcessor {
       .replaceAll(this.reFnMatch, '')
       .replaceAll(this.reVerseNumMatch, '')
       .replace(this.rePoetryMatch, '')
+      // NOTE: We only remove wrapper not content
+      .replaceAll(this.reWordOfJesus, '$1')
       .trim()
       .matchAll(this.reRefMatch);
 
@@ -174,14 +199,41 @@ class VerseProcessor {
       type: 'reference',
     }));
 
-    return refs;
+    return refs satisfies Array<Pick<Footnote, 'type' | 'label' | 'position'>>;
+  }
+
+  processVerseWoj(str: string) {
+    const wojMatch = str
+      .replaceAll(this.reHeadMatch, '')
+      .replaceAll(this.reFnMatch, '')
+      .replaceAll(this.reRefMatch, '')
+      .replaceAll(this.reVerseNumMatch, '')
+      .replace(this.rePoetryMatch, '')
+      .trim()
+      .matchAll(this.reWordOfJesus);
+
+    return [...wojMatch].map((match, idx) => {
+      return {
+        sortOrder: idx,
+        textStart: match.index || 0,
+        // NOTE: Use match.groups!.woj!.length to get the length of the
+        // quotation text
+        textEnd: (match.index || 0) + match.groups!.woj!.length,
+        quotationText: match.groups!.woj!,
+      };
+    }) satisfies Array<
+      Pick<
+        WordsOfJesus,
+        'sortOrder' | 'textStart' | 'textEnd' | 'quotationText'
+      >
+    >;
   }
 }
 
 const getLabelPosition = (
   matches: IterableIterator<RegExpExecArray>,
   labelSelector: (match: RegExpExecArray) => string,
-): Pick<Footnote, 'position' | 'label'>[] => {
+) => {
   return [...matches].map((matchVal, idx, arr) => {
     if (idx === 0) {
       return {
@@ -203,7 +255,7 @@ const getLabelPosition = (
       position: matchVal.index - previousLength,
       label: labelSelector(matchVal),
     };
-  });
+  }) satisfies Pick<Footnote, 'position' | 'label'>[];
 };
 
 const withNormalizeHeadingLevel = (data: VerseData[]) => {
@@ -235,7 +287,7 @@ const withNormalizeHeadingLevel = (data: VerseData[]) => {
       ...d,
       headings: newHeadings,
     };
-  });
+  }) satisfies VerseData[];
 };
 
 export {

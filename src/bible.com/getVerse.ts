@@ -31,6 +31,7 @@ const getVerseData = (verse: string) => {
       ...processor.processVerseFn(verse),
       ...processor.processVerseRef(verse),
     ],
+    wordsOfJesus: processor.processVerseWoj(verse),
   };
 };
 
@@ -181,11 +182,11 @@ const getVerse = async (
         el.innerHTML = `<b>${el.outerHTML}</b>$`;
       });
 
-    // NOTE: Wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with &$...$&
     document
       .querySelectorAll("[class*='ChapterContent_wj___' i]")
       .forEach((el) => {
-        el.innerHTML = `<b>${el.innerHTML}</b>`;
+        el.innerHTML = `&$${el.innerHTML}$&`;
       });
   });
 
