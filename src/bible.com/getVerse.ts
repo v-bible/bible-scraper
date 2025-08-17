@@ -14,13 +14,11 @@ type GetVerseProps = {
 
 const reRefMatch = /@\$(?<refLabel>[^@]*)\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*&&\n/gmu;
-const rePoetryMatch = /\\?&~$/gmu;
 
 const getVerseData = (verse: string) => {
   const processor = new VerseProcessor({
     reRef: reRefMatch,
     reHead: reHeadMatch,
-    rePoetry: rePoetryMatch,
   });
 
   return {
@@ -33,6 +31,7 @@ const getVerseData = (verse: string) => {
       ...processor.processVerseFn(verse),
       ...processor.processVerseRef(verse),
     ],
+    wordsOfJesus: processor.processVerseWoj(verse),
   };
 };
 
@@ -183,11 +182,11 @@ const getVerse = async (
         el.innerHTML = `<b>${el.outerHTML}</b>$`;
       });
 
-    // NOTE: Wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with &$...$&
     document
       .querySelectorAll("[class*='ChapterContent_wj___' i]")
       .forEach((el) => {
-        el.innerHTML = `<b>${el.innerHTML}</b>`;
+        el.innerHTML = `&$${el.innerHTML}$&`;
       });
   });
 

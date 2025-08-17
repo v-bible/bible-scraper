@@ -1,4 +1,9 @@
-import { type Footnote, type Heading, type Verse } from '@prisma/client';
+import {
+  type Footnote,
+  type Heading,
+  type Verse,
+  type WordsOfJesus,
+} from '@prisma/client';
 
 export type VerseData = {
   verse: Pick<
@@ -17,6 +22,9 @@ export type VerseData = {
     }
   >;
   footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
+  wordsOfJesus?: Array<
+    Pick<WordsOfJesus, 'textStart' | 'textEnd' | 'sortOrder' | 'quotationText'>
+  >;
 };
 
 export type FootnoteData = Pick<Footnote, 'label' | 'type' | 'text'>;

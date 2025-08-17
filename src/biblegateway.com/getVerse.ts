@@ -18,7 +18,6 @@ const reClassVerse = /(?<name>\w+)-(?<chap>\d+)-(?<verseNum>\d+)/;
 
 const reRefMatch = /@\$(?<refLabel>[^@]*)\$@/gmu;
 const reHeadMatch = /(?<headingLevel>#+).*&&\n/gmu;
-const rePoetryMatch = /\\?&~$/gmu;
 
 export const extractVerseNum = (str: string, regex = reClassVerse) => {
   const match = regex.exec(str);
@@ -64,7 +63,6 @@ const getVerseData = (verse: string) => {
   const processor = new VerseProcessor({
     reRef: reRefMatch,
     reHead: reHeadMatch,
-    rePoetry: rePoetryMatch,
   });
 
   return {
@@ -77,6 +75,7 @@ const getVerseData = (verse: string) => {
       ...processor.processVerseFn(verse),
       ...processor.processVerseRef(verse),
     ],
+    wordsOfJesus: processor.processVerseWoj(verse),
   };
 };
 
@@ -252,9 +251,9 @@ const getVerse = async (
       el.remove();
     });
 
-    // NOTE: Wrap word of Jesus with b element
+    // NOTE: Wrap word of Jesus with &$...$&
     document.querySelectorAll("[class*='woj' i]").forEach((el) => {
-      el.innerHTML = `<b>${el.innerHTML}</b>`;
+      el.innerHTML = `&$${el.innerHTML}$&`;
     });
 
     // NOTE: All headings will be appended with "&&", which won't be split as

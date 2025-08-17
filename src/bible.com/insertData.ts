@@ -227,5 +227,45 @@ export const insertData = async (
         vFootnote.type,
       );
     }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const vWoj of data?.wordsOfJesus || []) {
+      await prisma.wordsOfJesus.upsert({
+        where: {
+          sortOrder_verseId: {
+            sortOrder: vWoj.sortOrder,
+            verseId: newVerse.id,
+          },
+        },
+        create: {
+          textStart: vWoj.textStart,
+          textEnd: vWoj.textEnd,
+          quotationText: vWoj.quotationText,
+          sortOrder: vWoj.sortOrder,
+          verseId: newVerse.id,
+          chapterId: chapter.id,
+        },
+        update: {
+          textStart: vWoj.textStart,
+          textEnd: vWoj.textEnd,
+          quotationText: vWoj.quotationText,
+          sortOrder: vWoj.sortOrder,
+        },
+      });
+
+      logger.info(
+        'Get words of Jesus %s:%s for book %s',
+        chapter.number,
+        data.verse.number,
+        book.name,
+      );
+
+      logger.debug(
+        'Words of Jesus %s:%s content: %s',
+        chapter.number,
+        data.verse.number,
+        vWoj.quotationText,
+      );
+    }
   }
 };
