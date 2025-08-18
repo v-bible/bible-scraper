@@ -5,6 +5,7 @@ import { getVerse } from '@/ktcgkpv.org/getVerse';
 import { getVersion } from '@/ktcgkpv.org/getVersion';
 import { versionMapping } from '@/ktcgkpv.org/mapping';
 import { withCheckpoint } from '@/lib/checkpoint';
+import { generateFTSIndex } from '@/lib/inject-fts';
 import { logger } from '@/logger/logger';
 
 const main = async () => {
@@ -72,6 +73,16 @@ const main = async () => {
   );
   logger.info(
     `📚 Processed ${chapterCheckpoint.length} chapters for version ${versionCode}`,
+  );
+
+  // Generate FTS index after scraping is complete
+  logger.info(`🔍 Generating FTS search index...`);
+  await generateFTSIndex(
+    path.join(
+      __dirname,
+      '../../dist',
+      `${versionCode.toLowerCase()}_fts.sqlite3`,
+    ),
   );
 };
 

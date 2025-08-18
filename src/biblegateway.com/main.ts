@@ -4,6 +4,7 @@ import { getBook } from '@/biblegateway.com/getBook';
 import { getVerse } from '@/biblegateway.com/getVerse';
 import { getVersion } from '@/biblegateway.com/getVersion';
 import { withCheckpoint } from '@/lib/checkpoint';
+import { generateFTSIndex } from '@/lib/inject-fts';
 import { logger } from '@/logger/logger';
 
 const main = async () => {
@@ -71,6 +72,16 @@ const main = async () => {
   );
   logger.info(
     `📚 Processed ${chapterCheckpoint.length} chapters for version ${versionCode}`,
+  );
+
+  // Generate FTS index after scraping is complete
+  logger.info(`🔍 Generating FTS search index...`);
+  await generateFTSIndex(
+    path.join(
+      __dirname,
+      '../../dist',
+      `${versionCode.toLowerCase()}_fts.sqlite3`,
+    ),
   );
 };
 
