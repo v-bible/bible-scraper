@@ -182,12 +182,12 @@ export const insertData = async (
     // eslint-disable-next-line no-restricted-syntax
     for await (const vFootnote of data.footnotes) {
       // NOTE: Reference have no footnote data
-      let vFootnoteContent = vFootnote.label;
+      let vFootnoteContent: string | undefined = vFootnote.label;
 
       if (vFootnote.type === 'footnote') {
         vFootnoteContent = fnMap
           .filter((fn) => fn?.label === vFootnote.label.replaceAll('\\', ''))
-          .at(0)!.text;
+          .at(0)?.text;
       }
 
       if (!vFootnoteContent) {

@@ -48,7 +48,9 @@ const getFootnoteData = async (locators: Locator[]) => {
         }
 
         return {
-          label: `[${fnId?.at(-1)}]`,
+          // NOTE: Footnote id has "fvi-BD2011-21514z" or "fvi-BD2011-21520ab"
+          // format
+          label: `[${fnId?.split('-').pop()?.replaceAll(/\d*/gmu, '')}]`,
           type: 'footnote',
           text: fnContent.trim(),
         };
@@ -105,7 +107,10 @@ const getVerse = async (
 
   const chapterHref = await page
     .locator('table')
-    .locator(`tr[class*="${book.code}-list" i]`)
+    .locator('tr', {
+      // NOTE: Add "." to differentiate ".jonah-list" vs ".nah-list"
+      has: page.locator(`[data-target*=".${book.code}-list" i]`),
+    })
     .locator('td')
     .locator('a', {
       hasText: new RegExp(`^${chapter.number}$`),
