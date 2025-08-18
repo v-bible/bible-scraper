@@ -130,6 +130,12 @@ export const insertData = async (
         }
 
         if (!hFootnoteData) {
+          logger.warn(
+            'Cannot find footnote for heading %s:%s - %s',
+            chapter.number,
+            data.verse.number,
+            hFootnote.label,
+          );
           // eslint-disable-next-line no-continue
           continue;
         }
@@ -215,6 +221,12 @@ export const insertData = async (
       }
 
       if (!vFootnoteData) {
+        logger.warn(
+          'Cannot find footnote for verse %s:%s - %s',
+          chapter.number,
+          data.verse.number,
+          vFootnote.label,
+        );
         // eslint-disable-next-line no-continue
         continue;
       }

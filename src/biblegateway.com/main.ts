@@ -4,8 +4,14 @@ import { getBook } from '@/biblegateway.com/getBook';
 import { getVerse } from '@/biblegateway.com/getVerse';
 import { getVersion } from '@/biblegateway.com/getVersion';
 import { withCheckpoint } from '@/lib/checkpoint';
+import { logger } from '@/logger/logger';
 
 const main = async () => {
+  const startTime = Date.now();
+  logger.info(
+    `🚀 Starting scraping biblegateway.com at ${new Date().toISOString()}`,
+  );
+
   const versionCode = 'BD2011';
 
   const versions = await getVersion();
@@ -53,6 +59,19 @@ const main = async () => {
 
     setCheckpointComplete(checkpoint.id, true);
   }
+
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+  const durationInSeconds = (duration / 1000).toFixed(2);
+  const durationInMinutes = (duration / 60000).toFixed(2);
+
+  logger.info(`✅ Scraping completed at ${new Date().toISOString()}`);
+  logger.info(
+    `⏱️  Total scraping time: ${durationInSeconds}s (${durationInMinutes}m)`,
+  );
+  logger.info(
+    `📚 Processed ${chapterCheckpoint.length} chapters for version ${versionCode}`,
+  );
 };
 
 main();
