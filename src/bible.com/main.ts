@@ -4,8 +4,13 @@ import { getBook } from '@/bible.com/getBook';
 import { getVerse } from '@/bible.com/getVerse';
 import { getVersionByLang } from '@/bible.com/getVersion';
 import { withCheckpoint } from '@/lib/checkpoint';
+import { generateFTSIndex } from '@/lib/inject-fts';
+import { logger } from '@/logger/logger';
 
 const main = async () => {
+  const startTime = Date.now();
+  logger.info(`🚀 Starting scraping bible.com at ${new Date().toISOString()}`);
+
   const versionCode = 'BD2011';
 
   // NOTE: You can use "getVersion" func to scrap all the versions available.
@@ -54,6 +59,29 @@ const main = async () => {
 
     setCheckpointComplete(checkpoint.id, true);
   }
+
+  const endTime = Date.now();
+  const duration = endTime - startTime;
+  const durationInSeconds = (duration / 1000).toFixed(2);
+  const durationInMinutes = (duration / 60000).toFixed(2);
+
+  logger.info(`✅ Scraping completed at ${new Date().toISOString()}`);
+  logger.info(
+    `⏱️  Total scraping time: ${durationInSeconds}s (${durationInMinutes}m)`,
+  );
+  logger.info(
+    `📚 Processed ${chapterCheckpoint.length} chapters for version ${versionCode}`,
+  );
+
+  // Generate FTS index after scraping is complete
+  logger.info(`🔍 Generating FTS search index...`);
+  await generateFTSIndex(
+    path.join(
+      __dirname,
+      '../../dist',
+      `${versionCode.toLowerCase()}_fts.sqlite3`,
+    ),
+  );
 };
 
 main();

@@ -106,10 +106,10 @@ class VerseProcessor {
           .trim()
           .matchAll(this.reFnMatch);
 
-        const fnHeads = getLabelPosition(
-          fnHeadMatch,
-          (match) => match.groups!.fnNum!,
-        ).map((fn) => ({
+        const fnHeads = getLabelPosition({
+          matches: fnHeadMatch,
+          labelSelector: (match) => match.groups!.fnNum!,
+        }).map((fn) => ({
           ...fn,
           type: 'footnote',
         }));
@@ -120,9 +120,11 @@ class VerseProcessor {
           .trim()
           .matchAll(this.reRefMatch);
 
-        const refHeads = getLabelPosition(refHeadMatch, (match) =>
-          match.groups!.refLabel!.replaceAll('\\_', '_'),
-        ).map((fn) => ({
+        const refHeads = getLabelPosition({
+          matches: refHeadMatch,
+          labelSelector: (match) =>
+            match.groups!.refLabel!.replaceAll('\\_', '_'),
+        }).map((fn) => ({
           ...fn,
           type: 'reference',
         }));
@@ -167,10 +169,10 @@ class VerseProcessor {
       .trim()
       .matchAll(this.reFnMatch);
 
-    const footnotes = getLabelPosition(
-      footnoteMatch,
-      (match) => match.groups!.fnNum!,
-    ).map((fn) => ({
+    const footnotes = getLabelPosition({
+      matches: footnoteMatch,
+      labelSelector: (match) => match.groups!.fnNum!,
+    }).map((fn) => ({
       ...fn,
       type: 'footnote',
     }));
@@ -191,10 +193,12 @@ class VerseProcessor {
       .trim()
       .matchAll(this.reRefMatch);
 
-    const refs = getLabelPosition(referenceMatch, (match) =>
-      // REVIEW: This is only specific to ktcgkpv.org ref
-      match.groups!.refLabel!.replaceAll('\\_', '_'),
-    ).map((fn) => ({
+    const refs = getLabelPosition({
+      matches: referenceMatch,
+      labelSelector: (match) =>
+        // REVIEW: This is only specific to ktcgkpv.org ref
+        match.groups!.refLabel!.replaceAll('\\_', '_'),
+    }).map((fn) => ({
       ...fn,
       type: 'reference',
     }));
@@ -212,16 +216,21 @@ class VerseProcessor {
       .trim()
       .matchAll(this.reWordOfJesus);
 
-    return [...wojMatch].map((match, idx) => {
+    const woj = getLabelPosition({
+      matches: wojMatch,
+      labelSelector: (match) => match.groups!.woj!,
+      // NOTE: We don't remove the woj label later so set keepLabel to true
+      keepLabel: true,
+    }).map((wojItem, idx) => {
       return {
         sortOrder: idx,
-        textStart: match.index || 0,
-        // NOTE: Use match.groups!.woj!.length to get the length of the
-        // quotation text
-        textEnd: (match.index || 0) + match.groups!.woj!.length,
-        quotationText: match.groups!.woj!,
+        textStart: wojItem.position,
+        textEnd: wojItem.position + wojItem.label.length,
+        quotationText: wojItem.label,
       };
-    }) satisfies Array<
+    });
+
+    return woj satisfies Array<
       Pick<
         WordsOfJesus,
         'sortOrder' | 'textStart' | 'textEnd' | 'quotationText'
@@ -230,30 +239,44 @@ class VerseProcessor {
   }
 }
 
-const getLabelPosition = (
-  matches: IterableIterator<RegExpExecArray>,
-  labelSelector: (match: RegExpExecArray) => string,
-) => {
+const getLabelPosition = ({
+  matches,
+  labelSelector,
+  keepLabel = false,
+}: {
+  matches: IterableIterator<RegExpExecArray>;
+  labelSelector: (match: RegExpExecArray) => string;
+  keepLabel?: boolean;
+}) => {
   return [...matches].map((matchVal, idx, arr) => {
+    const labelStr = labelSelector(matchVal);
+
     if (idx === 0) {
       return {
         position: matchVal.index,
-        label: labelSelector(matchVal),
+        label: labelStr,
       };
     }
 
     let previousLength = 0;
-    // NOTE: We want the whole string match so get the zero index
-    const previousMatch = arr.slice(0, idx).map((match) => match['0']);
+    const previousMatch = arr.slice(0, idx);
+    // NOTE: This will calculate the length of all previous matches, for some
+    // cases like footnote and ref the label will be removed later, but some
+    // cases like woj we need to keep label so we add back the label length
     for (const match of previousMatch) {
-      previousLength += match.length;
+      // NOTE: We want the whole string match so get the zero index
+      previousLength += match[0].length;
+
+      if (keepLabel) {
+        previousLength -= labelSelector(match).length; // Include the current match length
+      }
     }
 
     return {
       // NOTE: We minus previousLength to get the correct position because the
       // current match also includes the previous matches
       position: matchVal.index - previousLength,
-      label: labelSelector(matchVal),
+      label: labelStr,
     };
   }) satisfies Pick<Footnote, 'position' | 'label'>[];
 };

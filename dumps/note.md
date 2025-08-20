@@ -5,7 +5,8 @@ Special cases should be handled specially:
   - 2sam-23
   - gen-2
   - ps-36
-  - matt-6
+  - matt-15
+  - mark-9
 - ktcgkpv.org:
   - 1 cr-1
   - 2 sm-23
@@ -17,3 +18,4 @@ Special cases should be handled specially:
   - gen-2
   - mat-6
   - 1ki-19
+  - mrk-9

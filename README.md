@@ -101,7 +101,7 @@ your `.env` file:
   `DB_URL`: Postgres database connection URL. Example:
   - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
 
-  - Sqlite: `file:../../dumps/ktcgkpv.org_sqlite.db?connection_limit=1&socket_timeout=10`
+  - Sqlite: `file:../../dumps/ktcgkpv_org.sqlite3?connection_limit=1&socket_timeout=10`
 
   `LOG_LEVEL`: Log level.
 
@@ -236,9 +236,14 @@ npx tsx ./src/ktcgkpv.org/main.ts
 
 #### Inject FTS Content
 
+Inject FTS content for SQLite database:
+
 ```bash
-./src/scripts/inject_fts.sh
+npx tsx ./src/scripts/inject-fts.ts
 ```
+
+- Source DB: Defined from `DB_URL` environment variable for Prisma.
+- Target DB: Defined in the script.
 
 #### Others
 
@@ -339,6 +344,18 @@ Comparing the scraped data from different sources:
 > For missing verses like `tb 9: 3-4`, verse is stored as: number is `3` and label
 > is `3-4` or `ga 7: 37-38`, verse is stored as: number is `37` and label is
 > `37-38`.
+
+- Version: BD2011 - (biblegateway.com)
+
+| Book | Book Code | Missing Verses    | Notes                   |
+| ---- | --------- | ----------------- | ----------------------- |
+| Mác  | mark      | chapter 9: 45, 47 | Corrected: 45-46, 47-48 |
+
+- Version: BD2011 - (bible.com)
+
+| Book | Book Code | Missing Verses    | Notes                   |
+| ---- | --------- | ----------------- | ----------------------- |
+| Mác  | mrk       | chapter 9: 45, 47 | Corrected: 45-46, 47-48 |
 
 <!-- Contributing -->
 
