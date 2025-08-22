@@ -5,6 +5,7 @@ import prisma from '@/prisma/prisma';
 
 // FTS record type for the virtual table
 export type FTSRecord = {
+  objectId: string;
   content: string;
   sortOrder: number;
   bookCode: string;
@@ -36,6 +37,7 @@ async function setupDatabase(targetDbPath: string): Promise<Database.Database> {
 function createFTSTable(db: Database.Database, tableName: string): void {
   const createFTSQuery = `
     CREATE VIRTUAL TABLE IF NOT EXISTS ${tableName} USING fts5(
+      objectId,
       content,
       sortOrder,
       bookCode,
@@ -63,6 +65,7 @@ async function insertVerses(
   // Get verses using Prisma with proper joins
   const verses = await prisma.verse.findMany({
     select: {
+      id: true,
       text: true,
       number: true,
       chapterId: true,
@@ -90,14 +93,15 @@ async function insertVerses(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'verse');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'verse');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof verses) => {
     records.forEach((verse) => {
       insert.run(
+        verse.id,
         verse.text,
         verse.number,
         verse.chapter.book.code,
@@ -121,6 +125,7 @@ async function insertFootnotes(
   // Get footnotes using Prisma with proper joins
   const footnotes = await prisma.footnote.findMany({
     select: {
+      id: true,
       text: true,
       sortOrder: true,
       chapterId: true,
@@ -152,14 +157,15 @@ async function insertFootnotes(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'footnote');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'footnote');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof footnotes) => {
     records.forEach((footnote) => {
       insert.run(
+        footnote.id,
         footnote.text,
         footnote.sortOrder,
         footnote.chapter.book.code,
@@ -183,6 +189,7 @@ async function insertHeadings(
   // Get headings using Prisma with proper joins
   const headings = await prisma.heading.findMany({
     select: {
+      id: true,
       text: true,
       sortOrder: true,
       chapterId: true,
@@ -214,14 +221,15 @@ async function insertHeadings(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'heading');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'heading');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof headings) => {
     records.forEach((heading) => {
       insert.run(
+        heading.id,
         heading.text,
         heading.sortOrder,
         heading.chapter.book.code,
@@ -245,6 +253,7 @@ async function insertPsalmMetadata(
   // Get psalm metadata using Prisma with proper joins
   const psalmMetadata = await prisma.psalmMetadata.findMany({
     select: {
+      id: true,
       text: true,
       sortOrder: true,
       chapterId: true,
@@ -271,14 +280,15 @@ async function insertPsalmMetadata(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'psalm_metadata');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'psalm_metadata');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof psalmMetadata) => {
     records.forEach((metadata) => {
       insert.run(
+        metadata.id,
         metadata.text,
         metadata.sortOrder,
         metadata.chapter.book.code,
@@ -302,6 +312,7 @@ async function insertWordsOfJesus(
   // Get words of Jesus using Prisma with proper joins
   const wordsOfJesus = await prisma.wordsOfJesus.findMany({
     select: {
+      id: true,
       quotationText: true,
       sortOrder: true,
       chapterId: true,
@@ -334,14 +345,15 @@ async function insertWordsOfJesus(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'words_of_jesus');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'words_of_jesus');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof wordsOfJesus) => {
     records.forEach((woj) => {
       insert.run(
+        woj.id,
         woj.quotationText,
         woj.sortOrder,
         woj.chapter.book.code,
