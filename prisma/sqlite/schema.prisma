@@ -59,33 +59,30 @@ model Chapter {
   updatedAt     DateTime        @default(now())
   bookId        String
   book          Book            @relation(fields: [bookId], references: [id])
-  footnotes     Footnote[]
+  marks         Mark[]
   headings      Heading[]
   verses        Verse[]
   psalmMetadata PsalmMetadata[] // Psalm instrument/musical directions
-  wordsOfJesus  WordsOfJesus[]
 
   @@unique([bookId, number])
   @@map("chapter")
 }
 
 model Verse {
-  id              String         @id @default(uuid())
+  id              String    @id @default(uuid())
   number          Int // Starts from 1
-  subVerseIndex   Int            @default(0) // For 1a, 1b verses. Starts from 0
+  subVerseIndex   Int       @default(0) // For 1a, 1b verses. Starts from 0
   text            String
-  paragraphNumber Int            @default(0) // Which paragraph this verse belongs to. Starts from 0
-  paragraphIndex  Int            @default(0) // Index within the paragraph. Starts from 0
-  isPoetry        Boolean        @default(false)
+  paragraphNumber Int       @default(0) // Which paragraph this verse belongs to. Starts from 0
+  paragraphIndex  Int       @default(0) // Index within the paragraph. Starts from 0
+  isPoetry        Boolean   @default(false)
   audioUrl        String?
   label           String // Verse labels like "1a", "1b", "1c"
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now())
   chapterId       String
-  footnotes       Footnote[]
   headings        Heading[]
-  wordsOfJesus    WordsOfJesus[]
-  chapter         Chapter        @relation(fields: [chapterId], references: [id])
+  chapter         Chapter   @relation(fields: [chapterId], references: [id])
 
   @@unique([number, subVerseIndex, chapterId])
   @@index([chapterId, isPoetry]) // Query poetry verses
@@ -93,41 +90,38 @@ model Verse {
   @@map("verse")
 }
 
-model Footnote {
-  id        String   @id @default(uuid())
-  type      String   @default("footnote") // footnote, cross-reference
-  label     String // a, b, c, 1, 2, 3, *
-  text      String
-  sortOrder Int      @default(0) // Starts from 0
-  position  Int // Starts from 0
-  chapterId String
-  verseId   String? // Optional: attached to specific verse
-  headingId String? // Optional: attached to specific heading
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  chapter   Chapter  @relation(fields: [chapterId], references: [id])
-  verse     Verse?   @relation(fields: [verseId], references: [id])
-  heading   Heading? @relation(fields: [headingId], references: [id])
+model Mark {
+  id          String   @id @default(uuid())
+  kind        String   @default("footnote") // footnote, cross-reference
+  label       String // a, b, c, 1, 2, 3, *
+  content     String
+  sortOrder   Int      @default(0) // Starts from 0
+  startOffset Int // Starts from 0
+  endOffset   Int // Exclusive end
+  chapterId   String
+  targetId    String // Attached to specific verse
+  targetType  String // "verse" or "heading"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  chapter     Chapter  @relation(fields: [chapterId], references: [id])
 
-  @@unique([sortOrder, verseId, type])
-  @@unique([sortOrder, headingId, type])
+  @@unique([sortOrder, targetId, kind])
   @@index([chapterId, sortOrder])
-  @@index([chapterId, type]) // Query by type
-  @@map("footnote")
+  @@index([chapterId, kind]) // Query by kind
+  @@map("mark")
 }
 
 model Heading {
-  id        String     @id @default(uuid())
+  id        String   @id @default(uuid())
   text      String
-  level     Int        @default(1) // Starts from 1
-  sortOrder Int        @default(0) // Position within chapter. Starts from 0
+  level     Int      @default(1) // Starts from 1
+  sortOrder Int      @default(0) // Position within chapter. Starts from 0
   chapterId String
   verseId   String // Required: attached to specific verse
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now())
-  chapter   Chapter    @relation(fields: [chapterId], references: [id])
-  verse     Verse      @relation(fields: [verseId], references: [id])
-  footnotes Footnote[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  chapter   Chapter  @relation(fields: [chapterId], references: [id])
+  verse     Verse    @relation(fields: [verseId], references: [id])
 
   @@unique([sortOrder, verseId])
   @@index([chapterId, level]) // Query by heading level
@@ -145,23 +139,6 @@ model PsalmMetadata {
 
   @@unique([sortOrder, chapterId])
   @@map("psalm_metadata")
-}
-
-model WordsOfJesus {
-  id            String   @id @default(uuid())
-  textStart     Int // Character position start in verse text
-  textEnd       Int // Character position end in verse text
-  quotationText String // The actual words Jesus spoke
-  sortOrder     Int      @default(0) // Starts from 0
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now())
-  chapterId     String
-  verseId       String
-  verse         Verse    @relation(fields: [verseId], references: [id])
-  chapter       Chapter  @relation(fields: [chapterId], references: [id])
-
-  @@unique([sortOrder, verseId])
-  @@map("words_of_jesus")
 }
 
 model SchemaMigrations {
