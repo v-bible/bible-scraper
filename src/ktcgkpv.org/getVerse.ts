@@ -42,8 +42,8 @@ const getFootnoteData = async (
 
         return {
           label: key,
-          type: 'footnote',
-          text: parsedContent,
+          kind: 'footnote',
+          content: parsedContent,
         } satisfies FootnoteData;
       },
     ),
@@ -58,8 +58,8 @@ const getFootnoteData = async (
 
         return {
           label: key,
-          type: 'reference',
-          text: newRefContent,
+          kind: 'reference',
+          content: newRefContent,
         } satisfies FootnoteData;
       },
     ),
@@ -112,8 +112,8 @@ const getProperNameData = async (names: string[]): Promise<FootnoteData[]> => {
   return properNameMap.flat()?.map((properName) => {
     return {
       label: properName.vietnamese,
-      type: 'footnote',
-      text: properNameTemplate(properName),
+      kind: 'footnote',
+      content: properNameTemplate(properName),
     } satisfies FootnoteData;
   });
 };

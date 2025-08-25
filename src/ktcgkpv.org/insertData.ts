@@ -111,14 +111,14 @@ export const insertData = async (
       // eslint-disable-next-line no-restricted-syntax
       for await (const hFootnote of vHeading.footnotes) {
         const testFootnote = (fn: (typeof fnMap)[number]) =>
-          hFootnote.type === fn.type &&
+          hFootnote.kind === fn.kind &&
           (fn.label ===
             `ci${chapter.number}_${newVerse.number}_${hFootnote.label}` ||
             (fn.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
               fn.label.split('_').at(2)?.includes(`${hFootnote.label}`)));
 
         const testProperNameOrRef = (fn: (typeof fnMap)[number]) =>
-          hFootnote.type === fn.type && fn.label.includes(hFootnote.label);
+          hFootnote.kind === fn.kind && fn.label.includes(hFootnote.label);
 
         let hFootnoteData = null;
 
@@ -141,41 +141,45 @@ export const insertData = async (
         }
 
         const currentSortOrder =
-          hFootnoteData.type === 'footnote' ? fnOrder : refOrder;
+          hFootnoteData.kind === 'footnote' ? fnOrder : refOrder;
 
         // NOTE: Footnote label starts from 1
         const footnoteLabel =
-          hFootnoteData.type === 'footnote'
+          hFootnoteData.kind === 'footnote'
             ? `${currentSortOrder + 1}`
             : `${currentSortOrder + 1}@`;
 
-        await prisma.footnote.upsert({
+        await prisma.mark.upsert({
           where: {
-            sortOrder_headingId_type: {
+            sortOrder_targetId_kind: {
               sortOrder: currentSortOrder,
-              headingId: newHeading.id,
-              type: hFootnoteData.type,
+              targetId: newHeading.id,
+              kind: hFootnoteData.kind,
             },
           },
           create: {
-            type: hFootnoteData.type,
+            kind: hFootnoteData.kind,
             label: footnoteLabel,
-            text: hFootnoteData.text.trim(),
+            content: hFootnoteData.content.trim(),
             sortOrder: currentSortOrder,
-            position: hFootnote.position,
-            headingId: newHeading.id,
+            startOffset: hFootnote.startOffset,
+            endOffset: hFootnote.endOffset,
+            targetType: 'heading',
+            targetId: newHeading.id,
             chapterId: chapter.id,
           },
           update: {
-            type: hFootnoteData.type,
+            kind: hFootnoteData.kind,
             label: footnoteLabel,
-            text: hFootnoteData.text.trim(),
+            content: hFootnoteData.content.trim(),
             sortOrder: currentSortOrder,
-            position: hFootnote.position,
+            startOffset: hFootnote.startOffset,
+            endOffset: hFootnote.endOffset,
+            targetType: 'heading',
           },
         });
 
-        if (hFootnoteData.type === 'footnote') {
+        if (hFootnoteData.kind === 'footnote') {
           fnOrder += 1;
         } else {
           refOrder += 1;
@@ -186,15 +190,15 @@ export const insertData = async (
           chapter.number,
           data.verse.number,
           book.name,
-          hFootnoteData.type,
+          hFootnoteData.kind,
         );
 
         logger.debug(
           'Heading footnote %s:%s content: %s - %s',
           chapter.number,
           data.verse.number,
-          hFootnoteData.text.trim(),
-          hFootnoteData.type,
+          hFootnoteData.content.trim(),
+          hFootnoteData.kind,
         );
       }
     }
@@ -202,14 +206,14 @@ export const insertData = async (
     // eslint-disable-next-line no-restricted-syntax
     for await (const vFootnote of data.footnotes) {
       const testFootnote = (fn: (typeof fnMap)[number]) =>
-        vFootnote.type === fn.type &&
+        vFootnote.kind === fn.kind &&
         (fn.label ===
           `ci${chapter.number}_${newVerse.number}_${vFootnote.label}` ||
           (fn.label.split('_').at(1)?.includes(`${newVerse.number}`) &&
             fn.label.split('_').at(2)?.includes(`${vFootnote.label}`)));
 
       const testProperNameOrRef = (fn: (typeof fnMap)[number]) =>
-        vFootnote.type === fn.type && fn.label.includes(vFootnote.label);
+        vFootnote.kind === fn.kind && fn.label.includes(vFootnote.label);
 
       let vFootnoteData = null;
 
@@ -232,41 +236,45 @@ export const insertData = async (
       }
 
       const currentSortOrder =
-        vFootnoteData.type === 'footnote' ? fnOrder : refOrder;
+        vFootnoteData.kind === 'footnote' ? fnOrder : refOrder;
 
       // NOTE: Footnote label starts from 1
       const footnoteLabel =
-        vFootnoteData.type === 'footnote'
+        vFootnoteData.kind === 'footnote'
           ? `${currentSortOrder + 1}`
           : `${currentSortOrder + 1}@`;
 
-      await prisma.footnote.upsert({
+      await prisma.mark.upsert({
         where: {
-          sortOrder_verseId_type: {
+          sortOrder_targetId_kind: {
             sortOrder: currentSortOrder,
-            verseId: newVerse.id,
-            type: vFootnoteData.type,
+            targetId: newVerse.id,
+            kind: vFootnoteData.kind,
           },
         },
         create: {
-          type: vFootnoteData.type,
+          kind: vFootnoteData.kind,
           label: footnoteLabel,
-          text: vFootnoteData.text.trim(),
+          content: vFootnoteData.content.trim(),
           sortOrder: currentSortOrder,
-          position: vFootnote.position,
-          verseId: newVerse.id,
+          startOffset: vFootnote.startOffset,
+          endOffset: vFootnote.endOffset,
+          targetType: 'verse',
+          targetId: newVerse.id,
           chapterId: chapter.id,
         },
         update: {
-          type: vFootnoteData.type,
+          kind: vFootnoteData.kind,
           label: footnoteLabel,
-          text: vFootnoteData.text.trim(),
+          content: vFootnoteData.content.trim(),
           sortOrder: currentSortOrder,
-          position: vFootnote.position,
+          startOffset: vFootnote.startOffset,
+          endOffset: vFootnote.endOffset,
+          targetType: 'verse',
         },
       });
 
-      if (vFootnoteData.type === 'footnote') {
+      if (vFootnoteData.kind === 'footnote') {
         fnOrder += 1;
       } else {
         refOrder += 1;
@@ -277,15 +285,15 @@ export const insertData = async (
         chapter.number,
         data.verse.number,
         book.name,
-        vFootnoteData.type,
+        vFootnoteData.kind,
       );
 
       logger.debug(
         'Footnote %s:%s content: %s - %s',
         chapter.number,
         data.verse.number,
-        vFootnoteData.text.trim(),
-        vFootnoteData.type,
+        vFootnoteData.content.trim(),
+        vFootnoteData.kind,
       );
     }
   }

@@ -51,8 +51,8 @@ const getFootnoteData = async (locators: Locator[]) => {
           // NOTE: Footnote id has "fvi-BD2011-21514z" or "fvi-BD2011-21520ab"
           // format
           label: `[${fnId?.split('-').pop()?.replaceAll(/\d*/gmu, '')}]`,
-          type: 'footnote',
-          text: fnContent.trim(),
+          kind: 'footnote',
+          content: fnContent.trim(),
         };
       }),
     )
