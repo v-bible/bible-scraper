@@ -127,41 +127,45 @@ export const insertData = async (
         }
 
         const currentSortOrder =
-          hFootnote.type === 'footnote' ? fnOrder : refOrder;
+          hFootnote.kind === 'footnote' ? fnOrder : refOrder;
 
         // NOTE: Footnote label starts from 1
         const footnoteLabel =
-          hFootnote.type === 'footnote'
+          hFootnote.kind === 'footnote'
             ? `${currentSortOrder + 1}`
             : `${currentSortOrder + 1}@`;
 
-        await prisma.footnote.upsert({
+        await prisma.mark.upsert({
           where: {
-            sortOrder_headingId_type: {
+            sortOrder_targetId_kind: {
               sortOrder: currentSortOrder,
-              headingId: newHeading.id,
-              type: hFootnote.type,
+              targetId: newHeading.id,
+              kind: hFootnote.kind,
             },
           },
           create: {
-            type: hFootnote.type,
+            kind: hFootnote.kind,
             label: footnoteLabel,
-            text: hFootnoteContent.text.trim(),
+            content: hFootnoteContent.content.trim(),
             sortOrder: currentSortOrder,
-            position: hFootnote.position,
-            headingId: newHeading.id,
+            startOffset: hFootnote.startOffset,
+            endOffset: hFootnote.endOffset,
+            targetId: newHeading.id,
+            targetType: 'heading',
             chapterId: chapter.id,
           },
           update: {
-            type: hFootnote.type,
+            kind: hFootnote.kind,
             label: footnoteLabel,
-            text: hFootnoteContent.text.trim(),
+            content: hFootnoteContent.content.trim(),
             sortOrder: currentSortOrder,
-            position: hFootnote.position,
+            startOffset: hFootnote.startOffset,
+            endOffset: hFootnote.endOffset,
+            targetId: newHeading.id,
           },
         });
 
-        if (hFootnote.type === 'footnote') {
+        if (hFootnote.kind === 'footnote') {
           fnOrder += 1;
         } else {
           refOrder += 1;
@@ -172,7 +176,7 @@ export const insertData = async (
           chapter.number,
           data.verse.number,
           book.name,
-          hFootnote.type,
+          hFootnote.kind,
         );
 
         logger.debug(
@@ -180,7 +184,7 @@ export const insertData = async (
           chapter.number,
           data.verse.number,
           hFootnote.label.trim(),
-          hFootnote.type,
+          hFootnote.kind,
         );
       }
     }
@@ -190,10 +194,10 @@ export const insertData = async (
       // NOTE: Reference have no footnote data
       let vFootnoteContent: string | undefined = vFootnote.label;
 
-      if (vFootnote.type === 'footnote') {
+      if (vFootnote.kind === 'footnote') {
         vFootnoteContent = fnMap
           .filter((fn) => fn?.label === vFootnote.label.replaceAll('\\', ''))
-          .at(0)?.text;
+          .at(0)?.content;
       }
 
       if (!vFootnoteContent) {
@@ -208,41 +212,45 @@ export const insertData = async (
       }
 
       const currentSortOrder =
-        vFootnote.type === 'footnote' ? fnOrder : refOrder;
+        vFootnote.kind === 'footnote' ? fnOrder : refOrder;
 
       // NOTE: Footnote label starts from 1
       const footnoteLabel =
-        vFootnote.type === 'footnote'
+        vFootnote.kind === 'footnote'
           ? `${currentSortOrder + 1}`
           : `${currentSortOrder + 1}@`;
 
-      await prisma.footnote.upsert({
+      await prisma.mark.upsert({
         where: {
-          sortOrder_verseId_type: {
+          sortOrder_targetId_kind: {
             sortOrder: currentSortOrder,
-            verseId: newVerse.id,
-            type: vFootnote.type,
+            targetId: newVerse.id,
+            kind: vFootnote.kind,
           },
         },
         create: {
-          type: vFootnote.type,
+          kind: vFootnote.kind,
           label: footnoteLabel,
-          text: vFootnoteContent.trim(),
+          content: vFootnoteContent.trim(),
           sortOrder: currentSortOrder,
-          position: vFootnote.position,
-          verseId: newVerse.id,
+          startOffset: vFootnote.startOffset,
+          endOffset: vFootnote.endOffset,
+          targetType: 'verse',
+          targetId: newVerse.id,
           chapterId: chapter.id,
         },
         update: {
-          type: vFootnote.type,
+          kind: vFootnote.kind,
           label: footnoteLabel,
-          text: vFootnoteContent.trim(),
+          content: vFootnoteContent.trim(),
           sortOrder: currentSortOrder,
-          position: vFootnote.position,
+          startOffset: vFootnote.startOffset,
+          endOffset: vFootnote.endOffset,
+          targetType: 'verse',
         },
       });
 
-      if (vFootnote.type === 'footnote') {
+      if (vFootnote.kind === 'footnote') {
         fnOrder += 1;
       } else {
         refOrder += 1;
@@ -253,7 +261,7 @@ export const insertData = async (
         chapter.number,
         data.verse.number,
         book.name,
-        vFootnote.type,
+        vFootnote.kind,
       );
 
       logger.debug(
@@ -261,32 +269,39 @@ export const insertData = async (
         chapter.number,
         data.verse.number,
         vFootnote.label.trim(),
-        vFootnote.type,
+        vFootnote.kind,
       );
     }
 
     // eslint-disable-next-line no-restricted-syntax
     for await (const vWoj of data?.wordsOfJesus || []) {
-      await prisma.wordsOfJesus.upsert({
+      await prisma.mark.upsert({
         where: {
-          sortOrder_verseId: {
+          sortOrder_targetId_kind: {
             sortOrder: vWoj.sortOrder,
-            verseId: newVerse.id,
+            targetId: newVerse.id,
+            kind: 'words-of-jesus',
           },
         },
         create: {
-          textStart: vWoj.textStart,
-          textEnd: vWoj.textEnd,
-          quotationText: vWoj.quotationText,
+          kind: 'words-of-jesus',
+          label: '',
+          content: vWoj.content,
           sortOrder: vWoj.sortOrder,
-          verseId: newVerse.id,
+          startOffset: vWoj.startOffset,
+          endOffset: vWoj.endOffset,
+          targetType: 'verse',
+          targetId: newVerse.id,
           chapterId: chapter.id,
         },
         update: {
-          textStart: vWoj.textStart,
-          textEnd: vWoj.textEnd,
-          quotationText: vWoj.quotationText,
+          kind: 'words-of-jesus',
+          label: '',
+          content: vWoj.content,
           sortOrder: vWoj.sortOrder,
+          startOffset: vWoj.startOffset,
+          endOffset: vWoj.endOffset,
+          targetType: 'verse',
         },
       });
 
@@ -301,7 +316,7 @@ export const insertData = async (
         'Words of Jesus %s:%s content: %s',
         chapter.number,
         data.verse.number,
-        vWoj.quotationText,
+        vWoj.content,
       );
     }
   }
