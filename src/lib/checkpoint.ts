@@ -61,7 +61,9 @@ const withCheckpoint = async <T extends Record<string, unknown>>({
 
   const checkpointFileData = readFileSync(filePath, 'utf-8');
 
-  let savedCheckpoint = JSON.parse(checkpointFileData) as Checkpoint<T>[];
+  let savedCheckpoint = JSON.parse(
+    checkpointFileData || '[]',
+  ) as Checkpoint<T>[];
 
   if (savedCheckpoint?.length === 0) {
     savedCheckpoint = (await getInitialData()).map((item) => {
