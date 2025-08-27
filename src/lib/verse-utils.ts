@@ -1,11 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-use-before-define */
-import {
-  type Footnote,
-  type Heading,
-  type Verse,
-  type WordsOfJesus,
-} from '@prisma/client';
+import { type Heading, type Mark, type Verse } from '@prisma/client';
 import { uniq } from 'es-toolkit';
 import { type VerseData } from '@/@types';
 
@@ -94,7 +89,9 @@ class VerseProcessor {
 
     let headings: Array<
       Pick<Heading, 'text' | 'level' | 'sortOrder'> & {
-        footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
+        footnotes: Array<
+          Pick<Mark, 'startOffset' | 'endOffset' | 'label' | 'kind'>
+        >;
       }
     > = [];
 
@@ -111,7 +108,8 @@ class VerseProcessor {
           labelSelector: (match) => match.groups!.fnNum!,
         }).map((fn) => ({
           ...fn,
-          type: 'footnote',
+          kind: 'footnote',
+          endOffset: fn.startOffset,
         }));
 
         const refHeadMatch = h
@@ -126,7 +124,8 @@ class VerseProcessor {
             match.groups!.refLabel!.replaceAll('\\_', '_'),
         }).map((fn) => ({
           ...fn,
-          type: 'reference',
+          kind: 'reference',
+          endOffset: fn.startOffset,
         }));
 
         const headingContent = h
@@ -153,7 +152,9 @@ class VerseProcessor {
 
     return headings satisfies Array<
       Pick<Heading, 'text' | 'level' | 'sortOrder'> & {
-        footnotes: Array<Pick<Footnote, 'position' | 'label' | 'type'>>;
+        footnotes: Array<
+          Pick<Mark, 'startOffset' | 'endOffset' | 'label' | 'kind'>
+        >;
       }
     >;
   }
@@ -174,11 +175,12 @@ class VerseProcessor {
       labelSelector: (match) => match.groups!.fnNum!,
     }).map((fn) => ({
       ...fn,
-      type: 'footnote',
+      kind: 'footnote',
+      endOffset: fn.startOffset,
     }));
 
     return footnotes satisfies Array<
-      Pick<Footnote, 'type' | 'label' | 'position'>
+      Pick<Mark, 'kind' | 'label' | 'startOffset' | 'endOffset'>
     >;
   }
 
@@ -200,10 +202,13 @@ class VerseProcessor {
         match.groups!.refLabel!.replaceAll('\\_', '_'),
     }).map((fn) => ({
       ...fn,
-      type: 'reference',
+      kind: 'reference',
+      endOffset: fn.startOffset,
     }));
 
-    return refs satisfies Array<Pick<Footnote, 'type' | 'label' | 'position'>>;
+    return refs satisfies Array<
+      Pick<Mark, 'kind' | 'label' | 'startOffset' | 'endOffset'>
+    >;
   }
 
   processVerseWoj(str: string) {
@@ -224,17 +229,14 @@ class VerseProcessor {
     }).map((wojItem, idx) => {
       return {
         sortOrder: idx,
-        textStart: wojItem.position,
-        textEnd: wojItem.position + wojItem.label.length,
-        quotationText: wojItem.label,
+        startOffset: wojItem.startOffset,
+        endOffset: wojItem.startOffset + wojItem.label.length,
+        content: wojItem.label,
       };
     });
 
     return woj satisfies Array<
-      Pick<
-        WordsOfJesus,
-        'sortOrder' | 'textStart' | 'textEnd' | 'quotationText'
-      >
+      Pick<Mark, 'sortOrder' | 'startOffset' | 'endOffset' | 'content'>
     >;
   }
 }
@@ -253,7 +255,7 @@ const getLabelPosition = ({
 
     if (idx === 0) {
       return {
-        position: matchVal.index,
+        startOffset: matchVal.index,
         label: labelStr,
       };
     }
@@ -275,10 +277,10 @@ const getLabelPosition = ({
     return {
       // NOTE: We minus previousLength to get the correct position because the
       // current match also includes the previous matches
-      position: matchVal.index - previousLength,
+      startOffset: matchVal.index - previousLength,
       label: labelStr,
     };
-  }) satisfies Pick<Footnote, 'position' | 'label'>[];
+  }) satisfies Pick<Mark, 'startOffset' | 'label'>[];
 };
 
 const withNormalizeHeadingLevel = (data: VerseData[]) => {

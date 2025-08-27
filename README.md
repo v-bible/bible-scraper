@@ -58,6 +58,7 @@
     - [Others](#others)
   - [Storage](#storage)
   - [Implemented Features](#implemented-features)
+  - [FTS Content Structure](#fts-content-structure)
   - [Notes](#notes)
     - [Bible Version Denominations](#bible-version-denominations)
     - [Bible Old Testament Books Comparison](#bible-old-testament-books-comparison)
@@ -245,6 +246,11 @@ npx tsx ./src/scripts/inject-fts.ts
 - Source DB: Defined from `DB_URL` environment variable for Prisma.
 - Target DB: Defined in the script.
 
+> [!NOTE]
+> For table fields, please refer to the
+> [`prisma/sqlite/schema.prisma`](./prisma/sqlite/schema.prisma) and [FTS
+> Content Structure](#fts-content-structure)
+
 #### Others
 
 - Scrape Liturgical resources for **Ordinary Times** (Weekdays & Sundays) from
@@ -288,6 +294,24 @@ Comparing the scraped data from different sources:
 | Proper Names (name translation) | ❌                    | ❌             | ✔️               |
 
 <!-- prettier-ignore-end -->
+
+### FTS Content Structure
+
+The FTS content structure is as follows:
+
+```ts
+{
+  objectId: string; // Unique identifier for the content
+  content: string; // The text content to be indexed
+  sortOrder: number; // Sort order for the content
+  bookCode: string; // Code of the book (e.g., "gen" for Genesis)
+  bookName: string; // Name of the book (e.g., "Genesis")
+  testament: string; // Testament type (e.g., "ot", "nt")
+  chapterNumber: number; // Chapter number
+  chapterId: string; // Unique identifier for the chapter
+  type: 'verse' | 'footnote' | 'heading' | 'psalm_metadata' | 'words_of_jesus'; // Type of content
+}
+```
 
 ### Notes
 

@@ -5,6 +5,7 @@ import prisma from '@/prisma/prisma';
 
 // FTS record type for the virtual table
 export type FTSRecord = {
+  objectId: string;
   content: string;
   sortOrder: number;
   bookCode: string;
@@ -12,7 +13,9 @@ export type FTSRecord = {
   testament: string;
   chapterNumber: number;
   chapterId: string;
-  type: 'verse' | 'footnote' | 'heading' | 'psalm_metadata' | 'words_of_jesus';
+  verseNumber?: number; // For content attached to specific verses
+  type: 'verse' | 'mark' | 'heading' | 'psalm_metadata';
+  subType?: string; // For marks: 'footnote' | 'cross_reference'
 };
 
 async function setupDatabase(targetDbPath: string): Promise<Database.Database> {
@@ -36,6 +39,7 @@ async function setupDatabase(targetDbPath: string): Promise<Database.Database> {
 function createFTSTable(db: Database.Database, tableName: string): void {
   const createFTSQuery = `
     CREATE VIRTUAL TABLE IF NOT EXISTS ${tableName} USING fts5(
+      objectId,
       content,
       sortOrder,
       bookCode,
@@ -43,12 +47,17 @@ function createFTSTable(db: Database.Database, tableName: string): void {
       testament,
       chapterNumber,
       chapterId,
-      type
+      verseNumber,
+      type,
+      subType,
+      content_prefix='2 3'
     );
   `;
 
   db.exec(createFTSQuery);
-  logger.info(`FTS table '${tableName}' created/verified`);
+  logger.info(
+    `FTS table '${tableName}' created/verified with search optimization`,
+  );
 }
 
 function clearFTSTable(db: Database.Database, tableName: string): void {
@@ -63,6 +72,7 @@ async function insertVerses(
   // Get verses using Prisma with proper joins
   const verses = await prisma.verse.findMany({
     select: {
+      id: true,
       text: true,
       number: true,
       chapterId: true,
@@ -90,14 +100,15 @@ async function insertVerses(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'verse');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'verse');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof verses) => {
     records.forEach((verse) => {
       insert.run(
+        verse.id,
         verse.text,
         verse.number,
         verse.chapter.book.code,
@@ -118,17 +129,18 @@ async function insertFootnotes(
   targetDb: Database.Database,
   ftsTable: string,
 ): Promise<number> {
-  // Get footnotes using Prisma with proper joins
-  const footnotes = await prisma.footnote.findMany({
+  // Get footnotes using Mark model
+  const footnotes = await prisma.mark.findMany({
+    where: {
+      kind: 'footnote',
+    },
     select: {
-      text: true,
+      id: true,
+      content: true,
       sortOrder: true,
+      targetType: true,
+      targetId: true,
       chapterId: true,
-      verse: {
-        select: {
-          number: true,
-        },
-      },
       chapter: {
         select: {
           number: true,
@@ -150,23 +162,44 @@ async function insertFootnotes(
     ],
   });
 
+  // Get verse numbers for the targeted verses
+  const verseIds = footnotes.map((f) => f.targetId);
+  const verses = await prisma.verse.findMany({
+    where: {
+      id: { in: verseIds },
+    },
+    select: {
+      id: true,
+      number: true,
+    },
+  });
+
+  const verseMap = new Map(verses.map((v) => [v.id, v.number]));
+
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'footnote');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, verseNumber, type, subType
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'footnote', ?);
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof footnotes) => {
     records.forEach((footnote) => {
+      const { chapter } = footnote;
+      const { book } = chapter;
+      const verseNumber = verseMap.get(footnote.targetId) || 0;
+
       insert.run(
-        footnote.text,
+        footnote.id,
+        footnote.content,
         footnote.sortOrder,
-        footnote.chapter.book.code,
-        footnote.chapter.book.name,
-        footnote.chapter.book.testament,
-        footnote.chapter.number,
+        book.code,
+        book.name,
+        book.testament,
+        chapter.number,
         footnote.chapterId,
+        verseNumber,
+        footnote.targetType || 'general',
       );
     });
   });
@@ -183,6 +216,7 @@ async function insertHeadings(
   // Get headings using Prisma with proper joins
   const headings = await prisma.heading.findMany({
     select: {
+      id: true,
       text: true,
       sortOrder: true,
       chapterId: true,
@@ -214,14 +248,15 @@ async function insertHeadings(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'heading');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'heading');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof headings) => {
     records.forEach((heading) => {
       insert.run(
+        heading.id,
         heading.text,
         heading.sortOrder,
         heading.chapter.book.code,
@@ -245,6 +280,7 @@ async function insertPsalmMetadata(
   // Get psalm metadata using Prisma with proper joins
   const psalmMetadata = await prisma.psalmMetadata.findMany({
     select: {
+      id: true,
       text: true,
       sortOrder: true,
       chapterId: true,
@@ -271,14 +307,15 @@ async function insertPsalmMetadata(
 
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'psalm_metadata');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'psalm_metadata');
   `;
 
   const insert = targetDb.prepare(insertQuery);
   const insertMany = targetDb.transaction((records: typeof psalmMetadata) => {
     records.forEach((metadata) => {
       insert.run(
+        metadata.id,
         metadata.text,
         metadata.sortOrder,
         metadata.chapter.book.code,
@@ -295,21 +332,22 @@ async function insertPsalmMetadata(
   return psalmMetadata.length;
 }
 
-async function insertWordsOfJesus(
+async function insertCrossReferences(
   targetDb: Database.Database,
   ftsTable: string,
 ): Promise<number> {
-  // Get words of Jesus using Prisma with proper joins
-  const wordsOfJesus = await prisma.wordsOfJesus.findMany({
+  // Get cross-references using Mark model
+  const crossReferences = await prisma.mark.findMany({
+    where: {
+      kind: 'cross-reference',
+    },
     select: {
-      quotationText: true,
+      id: true,
+      content: true,
       sortOrder: true,
+      targetType: true,
+      targetId: true,
       chapterId: true,
-      verse: {
-        select: {
-          number: true,
-        },
-      },
       chapter: {
         select: {
           number: true,
@@ -327,35 +365,55 @@ async function insertWordsOfJesus(
     orderBy: [
       { chapter: { book: { bookOrder: 'asc' } } },
       { chapter: { number: 'asc' } },
-      { verse: { number: 'asc' } },
       { sortOrder: 'asc' },
     ],
   });
 
+  // Get verse numbers for the targeted verses
+  const verseIds = crossReferences.map((f) => f.targetId);
+  const verses = await prisma.verse.findMany({
+    where: {
+      id: { in: verseIds },
+    },
+    select: {
+      id: true,
+      number: true,
+    },
+  });
+
+  const verseMap = new Map(verses.map((v) => [v.id, v.number]));
+
   const insertQuery = `
     INSERT INTO ${ftsTable} (
-      content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, type
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'words_of_jesus');
+      objectId, content, sortOrder, bookCode, bookName, testament, chapterNumber, chapterId, verseNumber, type, subType
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'cross-reference', ?);
   `;
 
   const insert = targetDb.prepare(insertQuery);
-  const insertMany = targetDb.transaction((records: typeof wordsOfJesus) => {
-    records.forEach((woj) => {
+  const insertMany = targetDb.transaction((records: typeof crossReferences) => {
+    records.forEach((crossRef) => {
+      const { chapter } = crossRef;
+      const { book } = chapter;
+      const verseNumber = verseMap.get(crossRef.targetId) || 0;
+
       insert.run(
-        woj.quotationText,
-        woj.sortOrder,
-        woj.chapter.book.code,
-        woj.chapter.book.name,
-        woj.chapter.book.testament,
-        woj.chapter.number,
-        woj.chapterId,
+        crossRef.id,
+        crossRef.content,
+        crossRef.sortOrder,
+        book.code,
+        book.name,
+        book.testament,
+        chapter.number,
+        crossRef.chapterId,
+        verseNumber,
+        crossRef.targetType || 'general',
       );
     });
   });
 
-  insertMany(wordsOfJesus);
-  logger.info(`Inserted ${wordsOfJesus.length} words of Jesus entries`);
-  return wordsOfJesus.length;
+  insertMany(crossReferences);
+  logger.info(`Inserted ${crossReferences.length} cross-references`);
+  return crossReferences.length;
 }
 
 // Generate FTS index with optional custom database name
@@ -379,7 +437,7 @@ async function generateFTSIndex(
     totalRecords += await insertFootnotes(targetDb, ftsTableName);
     totalRecords += await insertHeadings(targetDb, ftsTableName);
     totalRecords += await insertPsalmMetadata(targetDb, ftsTableName);
-    totalRecords += await insertWordsOfJesus(targetDb, ftsTableName);
+    totalRecords += await insertCrossReferences(targetDb, ftsTableName);
 
     logger.info(`FTS injection completed`);
     logger.info(`Total records inserted: ${totalRecords.toLocaleString()}`);
