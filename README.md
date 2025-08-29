@@ -102,9 +102,14 @@ your `.env` file:
   `DB_URL`: Postgres database connection URL. Example:
   - Postgres: `postgres://postgres:postgres@localhost:5432/bible`
 
-  - Sqlite: `file:../../dumps/ktcgkpv_org.sqlite3?connection_limit=1&socket_timeout=10`
+  - Sqlite:
+    `file:../../dumps/ktcgkpv_org.sqlite3?connection_limit=1&socket_timeout=10`.
+    For Prisma ORM, you need to add `connection_limit` & `socket_timeout` to the
+    connection string to prevent too many connections error.
 
-  `LOG_LEVEL`: Log level.
+  `LOG_LEVEL`: Log level. Default: `info`.
+
+  `LOG_FILE_PATH`: Log file path. Default: `log.txt`.
 
 E.g:
 
@@ -112,6 +117,7 @@ E.g:
 # .env
 DB_URL="postgres://postgres:postgres@localhost:65439/bible"
 LOG_LEVEL=info
+LOG_FILE_PATH=log.txt
 ```
 
 You can also check out the file `.env.example` to see all required environment
