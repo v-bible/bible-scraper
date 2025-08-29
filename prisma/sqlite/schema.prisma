@@ -90,20 +90,33 @@ model Verse {
   @@map("verse")
 }
 
+enum MarkKind {
+  UNSPECIFIED
+  FOOTNOTE
+  REFERENCE
+  WORDS_OF_JESUS
+}
+
+enum MarkTargetType {
+  UNSPECIFIED
+  VERSE
+  HEADING
+}
+
 model Mark {
-  id          String   @id @default(uuid())
-  kind        String   @default("footnote") // footnote, cross-reference
+  id          String         @id @default(uuid())
+  kind        MarkKind       @default(FOOTNOTE) // footnote, cross-reference
   label       String // a, b, c, 1, 2, 3, *
   content     String
-  sortOrder   Int      @default(0) // Starts from 0
+  sortOrder   Int            @default(0) // Starts from 0
   startOffset Int // Starts from 0
   endOffset   Int // Exclusive end
   chapterId   String
   targetId    String // Attached to specific verse
-  targetType  String // "verse" or "heading"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  chapter     Chapter  @relation(fields: [chapterId], references: [id])
+  targetType  MarkTargetType // "verse" or "heading"
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now())
+  chapter     Chapter        @relation(fields: [chapterId], references: [id])
 
   @@unique([sortOrder, targetId, kind])
   @@index([chapterId, sortOrder])
