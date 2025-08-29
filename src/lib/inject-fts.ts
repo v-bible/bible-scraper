@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import { MarkKind } from '@prisma/client';
 import Database from 'better-sqlite3';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
@@ -15,7 +16,7 @@ export type FTSRecord = {
   chapterId: string;
   verseNumber?: number; // For content attached to specific verses
   type: 'verse' | 'mark' | 'heading' | 'psalm_metadata';
-  subType?: string; // For marks: 'footnote' | 'cross_reference'
+  subType?: MarkKind; // For marks: 'footnote' | 'cross_reference'
 };
 
 async function setupDatabase(targetDbPath: string): Promise<Database.Database> {
@@ -132,7 +133,7 @@ async function insertFootnotes(
   // Get footnotes using Mark model
   const footnotes = await prisma.mark.findMany({
     where: {
-      kind: 'footnote',
+      kind: MarkKind.FOOTNOTE,
     },
     select: {
       id: true,
@@ -339,7 +340,7 @@ async function insertCrossReferences(
   // Get cross-references using Mark model
   const crossReferences = await prisma.mark.findMany({
     where: {
-      kind: 'cross-reference',
+      kind: MarkKind.REFERENCE,
     },
     select: {
       id: true,

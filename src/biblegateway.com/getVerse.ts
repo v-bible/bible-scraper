@@ -1,5 +1,10 @@
 import { PlaywrightBlocker } from '@ghostery/adblocker-playwright';
-import { type Book, type Chapter, type Version } from '@prisma/client';
+import {
+  type Book,
+  type Chapter,
+  MarkKind,
+  type Version,
+} from '@prisma/client';
 import { retry } from 'es-toolkit';
 import { type Locator, chromium, devices } from 'playwright';
 import { type VerseData } from '@/@types';
@@ -51,7 +56,7 @@ const getFootnoteData = async (locators: Locator[]) => {
           // NOTE: Footnote id has "fvi-BD2011-21514z" or "fvi-BD2011-21520ab"
           // format
           label: `[${fnId?.split('-').pop()?.replaceAll(/\d*/gmu, '')}]`,
-          kind: 'footnote',
+          kind: MarkKind.FOOTNOTE,
           content: fnContent.trim(),
         };
       }),

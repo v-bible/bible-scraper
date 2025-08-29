@@ -1,4 +1,9 @@
-import { type Book, type Chapter } from '@prisma/client';
+import {
+  type Book,
+  type Chapter,
+  MarkKind,
+  MarkTargetType,
+} from '@prisma/client';
 import { type FootnoteData, type VerseData } from '@/@types';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
@@ -141,11 +146,11 @@ export const insertData = async (
         }
 
         const currentSortOrder =
-          hFootnoteData.kind === 'footnote' ? fnOrder : refOrder;
+          hFootnoteData.kind === MarkKind.FOOTNOTE ? fnOrder : refOrder;
 
         // NOTE: Footnote label starts from 1
         const footnoteLabel =
-          hFootnoteData.kind === 'footnote'
+          hFootnoteData.kind === MarkKind.FOOTNOTE
             ? `${currentSortOrder + 1}`
             : `${currentSortOrder + 1}@`;
 
@@ -164,7 +169,7 @@ export const insertData = async (
             sortOrder: currentSortOrder,
             startOffset: hFootnote.startOffset,
             endOffset: hFootnote.endOffset,
-            targetType: 'heading',
+            targetType: MarkTargetType.HEADING,
             targetId: newHeading.id,
             chapterId: chapter.id,
           },
@@ -175,11 +180,11 @@ export const insertData = async (
             sortOrder: currentSortOrder,
             startOffset: hFootnote.startOffset,
             endOffset: hFootnote.endOffset,
-            targetType: 'heading',
+            targetType: MarkTargetType.HEADING,
           },
         });
 
-        if (hFootnoteData.kind === 'footnote') {
+        if (hFootnoteData.kind === MarkKind.FOOTNOTE) {
           fnOrder += 1;
         } else {
           refOrder += 1;
@@ -236,11 +241,11 @@ export const insertData = async (
       }
 
       const currentSortOrder =
-        vFootnoteData.kind === 'footnote' ? fnOrder : refOrder;
+        vFootnoteData.kind === MarkKind.FOOTNOTE ? fnOrder : refOrder;
 
       // NOTE: Footnote label starts from 1
       const footnoteLabel =
-        vFootnoteData.kind === 'footnote'
+        vFootnoteData.kind === MarkKind.FOOTNOTE
           ? `${currentSortOrder + 1}`
           : `${currentSortOrder + 1}@`;
 
@@ -259,7 +264,7 @@ export const insertData = async (
           sortOrder: currentSortOrder,
           startOffset: vFootnote.startOffset,
           endOffset: vFootnote.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
           targetId: newVerse.id,
           chapterId: chapter.id,
         },
@@ -270,11 +275,11 @@ export const insertData = async (
           sortOrder: currentSortOrder,
           startOffset: vFootnote.startOffset,
           endOffset: vFootnote.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
         },
       });
 
-      if (vFootnoteData.kind === 'footnote') {
+      if (vFootnoteData.kind === MarkKind.FOOTNOTE) {
         fnOrder += 1;
       } else {
         refOrder += 1;

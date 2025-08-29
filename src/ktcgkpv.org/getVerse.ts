@@ -1,4 +1,4 @@
-import { type Book, type Chapter } from '@prisma/client';
+import { type Book, type Chapter, MarkKind } from '@prisma/client';
 import { mapValues, retry } from 'es-toolkit';
 import { chromium, devices } from 'playwright';
 import { type FootnoteData, type VerseData } from '@/@types';
@@ -42,7 +42,7 @@ const getFootnoteData = async (
 
         return {
           label: key,
-          kind: 'footnote',
+          kind: MarkKind.FOOTNOTE,
           content: parsedContent,
         } satisfies FootnoteData;
       },
@@ -58,7 +58,7 @@ const getFootnoteData = async (
 
         return {
           label: key,
-          kind: 'reference',
+          kind: MarkKind.REFERENCE,
           content: newRefContent,
         } satisfies FootnoteData;
       },
@@ -112,7 +112,7 @@ const getProperNameData = async (names: string[]): Promise<FootnoteData[]> => {
   return properNameMap.flat()?.map((properName) => {
     return {
       label: properName.vietnamese,
-      kind: 'footnote',
+      kind: MarkKind.FOOTNOTE,
       content: properNameTemplate(properName),
     } satisfies FootnoteData;
   });
