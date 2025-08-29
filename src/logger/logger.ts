@@ -6,7 +6,9 @@ const logger = createLogger({
   format: format.combine(format.timestamp(), format.splat(), format.json()),
   transports: [
     new transports.Console(),
-    new transports.File({ filename: 'scraping.log' }),
+    new transports.File({
+      filename: process.env.LOG_FILE_PATH || 'scraper.log',
+    }),
   ],
 });
 
