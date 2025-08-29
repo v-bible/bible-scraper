@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-use-before-define */
-import { type Heading, type Mark, type Verse } from '@prisma/client';
+import { type Heading, type Mark, MarkKind, type Verse } from '@prisma/client';
 import { uniq } from 'es-toolkit';
 import { type VerseData } from '@/@types';
 
@@ -108,7 +108,7 @@ class VerseProcessor {
           labelSelector: (match) => match.groups!.fnNum!,
         }).map((fn) => ({
           ...fn,
-          kind: 'footnote',
+          kind: MarkKind.FOOTNOTE,
           endOffset: fn.startOffset,
         }));
 
@@ -124,7 +124,7 @@ class VerseProcessor {
             match.groups!.refLabel!.replaceAll('\\_', '_'),
         }).map((fn) => ({
           ...fn,
-          kind: 'reference',
+          kind: MarkKind.REFERENCE,
           endOffset: fn.startOffset,
         }));
 
@@ -175,7 +175,7 @@ class VerseProcessor {
       labelSelector: (match) => match.groups!.fnNum!,
     }).map((fn) => ({
       ...fn,
-      kind: 'footnote',
+      kind: MarkKind.FOOTNOTE,
       endOffset: fn.startOffset,
     }));
 
@@ -202,7 +202,7 @@ class VerseProcessor {
         match.groups!.refLabel!.replaceAll('\\_', '_'),
     }).map((fn) => ({
       ...fn,
-      kind: 'reference',
+      kind: MarkKind.REFERENCE,
       endOffset: fn.startOffset,
     }));
 

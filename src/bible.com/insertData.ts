@@ -1,4 +1,9 @@
-import { type Book, type Chapter } from '@prisma/client';
+import {
+  type Book,
+  type Chapter,
+  MarkKind,
+  MarkTargetType,
+} from '@prisma/client';
 import { type VerseData } from '@/@types';
 import { logger } from '@/logger/logger';
 import prisma from '@/prisma/prisma';
@@ -110,11 +115,11 @@ export const insertData = async (
       // eslint-disable-next-line no-restricted-syntax
       for await (const hFootnote of vHeading.footnotes) {
         const currentSortOrder =
-          hFootnote.kind === 'footnote' ? fnOrder : refOrder;
+          hFootnote.kind === MarkKind.FOOTNOTE ? fnOrder : refOrder;
 
         // NOTE: Footnote label starts from 1
         const footnoteLabel =
-          hFootnote.kind === 'footnote'
+          hFootnote.kind === MarkKind.FOOTNOTE
             ? `${currentSortOrder + 1}`
             : `${currentSortOrder + 1}@`;
 
@@ -133,7 +138,7 @@ export const insertData = async (
             sortOrder: currentSortOrder,
             startOffset: hFootnote.startOffset,
             endOffset: hFootnote.endOffset,
-            targetType: 'heading',
+            targetType: MarkTargetType.HEADING,
             targetId: newHeading.id,
             chapterId: chapter.id,
           },
@@ -144,11 +149,11 @@ export const insertData = async (
             sortOrder: currentSortOrder,
             startOffset: hFootnote.startOffset,
             endOffset: hFootnote.endOffset,
-            targetType: 'heading',
+            targetType: MarkTargetType.HEADING,
           },
         });
 
-        if (hFootnote.kind === 'footnote') {
+        if (hFootnote.kind === MarkKind.FOOTNOTE) {
           fnOrder += 1;
         } else {
           refOrder += 1;
@@ -175,11 +180,11 @@ export const insertData = async (
     // eslint-disable-next-line no-restricted-syntax
     for await (const vFootnote of data.footnotes) {
       const currentSortOrder =
-        vFootnote.kind === 'footnote' ? fnOrder : refOrder;
+        vFootnote.kind === MarkKind.FOOTNOTE ? fnOrder : refOrder;
 
       // NOTE: Footnote label starts from 1
       const footnoteLabel =
-        vFootnote.kind === 'footnote'
+        vFootnote.kind === MarkKind.FOOTNOTE
           ? `${currentSortOrder + 1}`
           : `${currentSortOrder + 1}@`;
 
@@ -198,7 +203,7 @@ export const insertData = async (
           sortOrder: currentSortOrder,
           startOffset: vFootnote.startOffset,
           endOffset: vFootnote.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
           targetId: newVerse.id,
           chapterId: chapter.id,
         },
@@ -209,11 +214,11 @@ export const insertData = async (
           sortOrder: currentSortOrder,
           startOffset: vFootnote.startOffset,
           endOffset: vFootnote.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
         },
       });
 
-      if (vFootnote.kind === 'footnote') {
+      if (vFootnote.kind === MarkKind.FOOTNOTE) {
         fnOrder += 1;
       } else {
         refOrder += 1;
@@ -243,28 +248,28 @@ export const insertData = async (
           sortOrder_targetId_kind: {
             sortOrder: vWoj.sortOrder,
             targetId: newVerse.id,
-            kind: 'words-of-jesus',
+            kind: MarkKind.WORDS_OF_JESUS,
           },
         },
         create: {
-          kind: 'words-of-jesus',
+          kind: MarkKind.WORDS_OF_JESUS,
           label: '',
           content: vWoj.content,
           sortOrder: vWoj.sortOrder,
           startOffset: vWoj.startOffset,
           endOffset: vWoj.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
           targetId: newVerse.id,
           chapterId: chapter.id,
         },
         update: {
-          kind: 'words-of-jesus',
+          kind: MarkKind.WORDS_OF_JESUS,
           label: '',
           content: vWoj.content,
           sortOrder: vWoj.sortOrder,
           startOffset: vWoj.startOffset,
           endOffset: vWoj.endOffset,
-          targetType: 'verse',
+          targetType: MarkTargetType.VERSE,
         },
       });
 
